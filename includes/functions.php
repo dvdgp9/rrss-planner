@@ -23,6 +23,26 @@ function require_authentication() {
 }
 // ---- Fin Autenticación ----
 
+// ---- Gestión de Tokens Compartir ----
+function generate_share_token() {
+    return bin2hex(random_bytes(32)); // Genera un token seguro de 64 caracteres
+}
+
+function get_linea_id_from_token($token) {
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("SELECT linea_negocio_id FROM share_tokens WHERE token = ? AND is_active = TRUE");
+        $stmt->execute([$token]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['linea_negocio_id'] : null;
+    } catch (PDOException $e) {
+        // En un entorno de producción, sería mejor loguear el error que mostrarlo
+        error_log("Error validating share token: " . $e->getMessage());
+        return null;
+    }
+}
+// ---- Fin Gestión de Tokens Compartir ----
+
 // Función auxiliar para depuración
 function debug($data) {
     echo '<pre style="background-color: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 4px; overflow: auto;">';

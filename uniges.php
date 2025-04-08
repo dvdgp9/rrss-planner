@@ -105,6 +105,9 @@ try {
             <a href="publicacion_form.php?linea=<?php echo $lineaId; ?>" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nueva Publicación
             </a>
+            <button class="btn btn-secondary btn-share" data-linea-id="<?php echo $lineaId; ?>">
+                <i class="fas fa-share-alt"></i> Compartir
+            </button>
         </div>
         
         <div class="nav-simple">
@@ -476,5 +479,23 @@ try {
             });
         }
     </script>
+
+    <!-- Modal Compartir (misma estructura) -->
+    <div id="shareModal" class="modal-share">
+        <div class="modal-share-content">
+            <span class="close-share-modal">&times;</span>
+            <h2>Enlace para compartir (Solo Lectura)</h2>
+            <p>Copia este enlace para compartir una vista de solo lectura de las publicaciones de esta línea.</p>
+            <div class="share-link-container">
+                <input type="text" id="shareLinkInput" readonly>
+                <button id="copyShareLinkBtn" class="btn btn-primary"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+            <p id="copyMessage" style="color: green; margin-top: 10px; display: none;">¡Enlace copiado!</p>
+            <p id="shareError" style="color: red; margin-top: 10px; display: none;">Error al generar el enlace.</p>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script> 
+    <script src="assets/js/share.js"></script> 
 </body>
 </html> 
