@@ -1,5 +1,7 @@
 <?php
 require_once 'includes/functions.php';
+require_authentication();
+
 $lineaNombre = "Teiá";
 $lineaId = 4; // ID fijo para Teiá
 

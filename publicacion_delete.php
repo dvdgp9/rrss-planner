@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/functions.php';
+require_authentication();
 
 // Verificar si tenemos los parámetros necesarios
 if (!isset($_GET['id']) || !isset($_GET['linea'])) {

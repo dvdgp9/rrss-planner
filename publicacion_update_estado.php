@@ -1,5 +1,8 @@
 <?php
-require_once 'includes/functions.php';
+require_once '../includes/functions.php';
+require_authentication();
+
+header('Content-Type: application/json');
 
 // Verificar que sea una solicitud AJAX con POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

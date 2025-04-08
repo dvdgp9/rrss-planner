@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/functions.php';
+require_authentication();
 
 // Verificar que tengamos el parámetro de línea de negocio
 if (!isset($_GET['linea'])) {
@@ -60,10 +61,12 @@ $publicacion = [
 $redesSeleccionadas = [];
 $errores = [];
 
+// Obtener ID de la publicación para editar, si existe
+$publicacionId = isset($_GET['id']) ? intval($_GET['id']) : null;
+
 // Verificar si estamos editando
 if (isset($_GET['id'])) {
     $modo = 'editar';
-    $publicacionId = $_GET['id'];
     
     // Obtener la publicación
     $stmt = $db->prepare("SELECT * FROM publicaciones WHERE id = ? AND linea_negocio_id = ?");
@@ -386,10 +389,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
-<body>
+<body class="<?php echo $bodyClass; ?>">
     <div class="app-simple">
         <div class="header-simple">
-            <h1><?php echo ($modo === 'crear' ? 'Nueva' : 'Editar'); ?> Publicación - <?php echo $lineaNombre; ?></h1>
+            <div class="header-title-logo">
+                <img src="<?php echo $logoUrl; ?>" alt="Logo <?php echo $lineaNombre; ?>" class="header-logo">
+                <h1><?php echo ($modo === 'crear' ? 'Nueva' : 'Editar'); ?> Publicación - <?php echo $lineaNombre; ?></h1>
+            </div>
+            <a href="logout.php" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
         
         <div class="nav-simple">

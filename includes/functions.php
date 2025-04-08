@@ -1,5 +1,27 @@
 <?php
+// Iniciar sesión en todas las páginas que incluyan este archivo
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../config/db.php';
+
+// ---- Autenticación ----
+define('MASTER_PASSWORD_HASH', '$2y$12$CLIuTX.v/JWFu4dsytQvdOZHD/F7m8qREIy88Onb5EVBwXya6a.aq');
+
+function is_authenticated() {
+    return isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true;
+}
+
+function require_authentication() {
+    if (!is_authenticated()) {
+        // Guardar la URL a la que se intentaba acceder para redirigir después del login
+        $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI']; 
+        header('Location: login.php');
+        exit;
+    }
+}
+// ---- Fin Autenticación ----
 
 // Función auxiliar para depuración
 function debug($data) {

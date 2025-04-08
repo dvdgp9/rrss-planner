@@ -1,5 +1,7 @@
 <?php
 require_once 'includes/functions.php';
+require_authentication();
+
 $lineaNombre = "Ebone Servicios";
 $lineaId = 1; // ID fijo para Ebone Servicios
 
@@ -111,6 +113,7 @@ try {
             <a href="cubofit.php">CUBOFIT</a>
             <a href="uniges.php">Uniges-3</a>
             <a href="teia.php">Teiá</a>
+            <a href="logout.php" style="margin-left: auto; background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
         
         <?php if (isset($error)): ?>
