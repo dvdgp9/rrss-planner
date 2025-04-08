@@ -153,6 +153,7 @@ try {
                 $paginaUrl = '';
                 $logoUrl = '';
                 $colorPrincipal = '';
+                $colorSecundario = '';
                 $bgColorStyle = ''; // Para manejar el gradiente
 
                 switch($linea['id']) {
@@ -160,39 +161,42 @@ try {
                         $paginaUrl = 'ebone.php'; 
                         $logoUrl = 'assets/images/logos/logo-ebone.png'; 
                         $colorPrincipal = '#23AAC5';
-                        $bgColorStyle = 'background-color: ' . $colorPrincipal . ';';
+                        $colorSecundario = '#1a8da5'; // Color oscuro para gradiente
+                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
                     case 2: 
                         $paginaUrl = 'cubofit.php'; 
                         $logoUrl = 'assets/images/logos/logo-cubofit.png';
                         $colorPrincipal = '#E23633';
-                        $bgColorStyle = 'background-color: ' . $colorPrincipal . ';';
+                        $colorSecundario = '#c12f2c'; // Color oscuro para gradiente
+                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
                     case 3: 
                         $paginaUrl = 'uniges.php'; 
                         $logoUrl = 'assets/images/logos/logo-uniges.png';
-                        // Colores para el gradiente
                         $unigesColor1 = '#9B6FCE';
                         $unigesColor2 = '#032551';
-                        $colorPrincipal = $unigesColor1; // Usamos el primero como referencia si es necesario
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $unigesColor1 . ' 0%, ' . $unigesColor2 . ' 100%);';
+                        $colorPrincipal = $unigesColor1; 
+                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $unigesColor1 . ' 0%, ' . $unigesColor2 . ' 100%);'; // Ya era gradiente
                         break;
                     case 4: 
                         $paginaUrl = 'teia.php'; 
                         $logoUrl = 'assets/images/logos/logo-teia.jpg';
                         $colorPrincipal = '#009970';
-                        $bgColorStyle = 'background-color: ' . $colorPrincipal . ';';
+                        $colorSecundario = '#007a5a'; // Color oscuro para gradiente
+                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
                     default: 
                         $paginaUrl = 'index.php'; 
-                        $logoUrl = ''; // Sin logo específico
-                        $colorPrincipal = '#6c757d'; // Un gris por defecto
-                        $bgColorStyle = 'background-color: ' . $colorPrincipal . ';';
+                        $logoUrl = ''; 
+                        $colorPrincipal = '#6c757d'; 
+                        $colorSecundario = '#5a6268'; // Color oscuro por defecto
+                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
                 }
             ?>
             <div class="dashboard-card">
-                <div class="card-header" style="<?php echo $bgColorStyle; ?>">
+                <div class="card-header" style="<?php echo $bgColorStyle; ?> color: white;">
                     <h2><?php echo $linea['nombre']; ?></h2>
                     <?php if (!empty($logoUrl)): ?>
                         <div class="logo-icon">

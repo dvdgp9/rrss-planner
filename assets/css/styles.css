@@ -1352,14 +1352,29 @@ textarea.form-control {
 }
 
 /* Ajustar el color del botón copiar para que coincida con el de la línea actual si es posible */
-.linea-ebone .modal-share .btn-primary { background-color: #23AAC5; border-color: #23AAC5; }
-.linea-ebone .modal-share .btn-primary:hover { background-color: #1a8da5; border-color: #1a8da5; }
-.linea-cubofit .modal-share .btn-primary { background-color: #E23633; border-color: #E23633; }
-.linea-cubofit .modal-share .btn-primary:hover { background-color: #c12f2c; border-color: #c12f2c; }
-.linea-uniges .modal-share .btn-primary { background: linear-gradient(90deg, #9B6FCE 0%, #032551 100%); border: none; }
-.linea-uniges .modal-share .btn-primary:hover { background: linear-gradient(90deg, #8a5fb8 0%, #021c3f 100%); }
-.linea-teia .modal-share .btn-primary { background-color: #009970; border-color: #009970; }
-.linea-teia .modal-share .btn-primary:hover { background-color: #007a5a; border-color: #007a5a; }
+.linea-ebone .modal-share .btn-primary { 
+    background: linear-gradient(90deg, #23AAC5 0%, #106475 100%); 
+    border: none; 
+    color: white; /* Asegurar contraste */
+}
+
+.linea-cubofit .modal-share .btn-primary { 
+    background: linear-gradient(90deg, #E23633 0%, #a5201e 100%); 
+    border: none; 
+    color: white; /* Asegurar contraste */
+}
+
+.linea-uniges .modal-share .btn-primary { 
+    background: linear-gradient(90deg, #9B6FCE 0%, #032551 100%); 
+    border: none; 
+    color: white; /* Asegurar contraste */
+}
+
+.linea-teia .modal-share .btn-primary { 
+    background: linear-gradient(90deg, #009970 0%, #01523c 100%); 
+    border: none; 
+    color: white; /* Asegurar contraste */
+}
 
 /* ----- Fin Estilos Modal Compartir ----- */
 

@@ -28,27 +28,41 @@ if (!$token) {
             
             if ($lineaInfo) {
                 $lineaNombre = $lineaInfo['nombre'];
-                // Asignar logo y color según ID (similar a index.php)
+                // Asignar logo y color/gradiente según ID
+                $headerBgStyle = ''; // Variable para el estilo de fondo
                 switch($lineaInfo['id']) {
                     case 1: 
                         $lineaLogo = 'assets/images/logos/logo-ebone.png'; 
                         $lineaColor = '#23AAC5';
+                        $lineaColorDark = '#1a8da5';
+                        $headerBgStyle = 'background: linear-gradient(90deg, ' . $lineaColor . ' 0%, ' . $lineaColorDark . ' 100%);';
                         $lineaBodyClass = 'linea-ebone';
                         break;
                     case 2: 
                         $lineaLogo = 'assets/images/logos/logo-cubofit.png';
                         $lineaColor = '#E23633';
+                        $lineaColorDark = '#c12f2c';
+                        $headerBgStyle = 'background: linear-gradient(90deg, ' . $lineaColor . ' 0%, ' . $lineaColorDark . ' 100%);';
                         $lineaBodyClass = 'linea-cubofit';
                         break;
                     case 3: 
                         $lineaLogo = 'assets/images/logos/logo-uniges.png';
-                        $lineaColor = '#9B6FCE'; // Usar el primer color para simplicidad aquí
+                        $lineaColor = '#9B6FCE';
+                        $lineaColorDark = '#032551';
+                        $headerBgStyle = 'background: linear-gradient(90deg, ' . $lineaColor . ' 0%, ' . $lineaColorDark . ' 100%);';
                         $lineaBodyClass = 'linea-uniges';
                         break;
                     case 4: 
                         $lineaLogo = 'assets/images/logos/logo-teia.jpg';
                         $lineaColor = '#009970';
+                        $lineaColorDark = '#007a5a';
+                        $headerBgStyle = 'background: linear-gradient(90deg, ' . $lineaColor . ' 0%, ' . $lineaColorDark . ' 100%);';
                         $lineaBodyClass = 'linea-teia';
+                        break;
+                    default: // Caso por defecto, si algo falla
+                        $lineaColor = '#6c757d';
+                        $lineaColorDark = '#5a6268';
+                        $headerBgStyle = 'background: linear-gradient(90deg, ' . $lineaColor . ' 0%, ' . $lineaColorDark . ' 100%);';
                         break;
                 }
             }
@@ -130,11 +144,11 @@ if (!$token) {
 </head>
 <body class="share-view <?php echo $lineaBodyClass; ?>">
 
-    <div class="share-header" style="background-color: <?php echo $lineaColor; ?>;">
+    <div class="share-header" style="<?php echo $headerBgStyle; ?> color: white;">
         <?php if($lineaLogo): ?>
             <img src="<?php echo htmlspecialchars($lineaLogo); ?>" alt="Logo <?php echo htmlspecialchars($lineaNombre); ?>">
         <?php endif; ?>
-        <h1><?php echo htmlspecialchars($lineaNombre); ?> - Vista Compartida</h1>
+        <h1><?php echo htmlspecialchars($lineaNombre); ?> - Planificación Redes Sociales</h1>
     </div>
 
     <div class="share-container">
