@@ -271,7 +271,7 @@ try {
                             <td><?php echo date('d/m/y', strtotime($publicacion['fecha_programada'])); ?></td>
                             <td>
                                 <?php if (!empty($publicacion['imagen_url'])): ?>
-                                    <img src="<?php echo $publicacion['imagen_url']; ?>" alt="Miniatura" class="thumbnail" onclick="openImageModal('<?php echo $publicacion['imagen_url']; ?>')">
+                                    <img src="<?php echo htmlspecialchars($publicacion['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
                                 <?php else: ?>
                                     <div class="no-image"><i class="fas fa-image"></i></div>
                                 <?php endif; ?>

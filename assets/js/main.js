@@ -69,3 +69,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 }); 
+
+// --- Image Modal Logic ---
+document.addEventListener('DOMContentLoaded', function() {
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImageSrc');
+    const closeImageBtn = document.querySelector('.close-image-modal'); // Puede haber solo uno
+
+    if (imageModal && modalImage && closeImageBtn) {
+        // Abrir modal al hacer clic en una miniatura
+        document.body.addEventListener('click', function(event) {
+            if (event.target.classList.contains('thumbnail')) {
+                const imageSrc = event.target.src; // Asumimos que la URL completa está en src
+                if(imageSrc) {
+                    modalImage.src = imageSrc;
+                    imageModal.classList.add('show');
+                    // Opcional: prevenir scroll del body mientras el modal está abierto
+                    // document.body.style.overflow = 'hidden';
+                }
+            }
+        });
+
+        // Función para cerrar el modal
+        function closeModal() {
+            imageModal.classList.remove('show');
+            // Opcional: restaurar scroll del body
+            // document.body.style.overflow = 'auto';
+            // Esperar a que termine la animación de opacidad antes de limpiar src (opcional)
+            setTimeout(() => { 
+                if (!imageModal.classList.contains('show')) { // Doble check por si se reabre rápido
+                    modalImage.src = ''; 
+                }
+            }, 300); // 300ms coincide con la transición de opacidad
+        }
+
+        // Cerrar con el botón X
+        closeImageBtn.addEventListener('click', closeModal);
+
+        // Cerrar al hacer clic fuera de la imagen
+        imageModal.addEventListener('click', function(event) {
+            if (event.target === imageModal) { // Si el clic fue en el fondo del modal
+                closeModal();
+            }
+        });
+        
+        // Cerrar con la tecla Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && imageModal.classList.contains('show')) {
+                closeModal();
+            }
+        });
+    }
+}); 

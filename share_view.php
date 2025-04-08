@@ -166,11 +166,10 @@ if (!$token) {
                             <?php foreach ($publicaciones as $pub): ?>
                                 <tr>
                                     <td><?php echo formatFecha($pub['fecha_programada']); ?></td>
-                                    <td><?php echo nl2br(htmlspecialchars(truncateText($pub['contenido'], 150))); ?></td>
+                                    <td><?php echo nl2br(htmlspecialchars($pub['contenido'])); ?></td>
                                     <td>
                                         <?php if (!empty($pub['imagen_url'])): ?>
-                                            <img src="<?php echo htmlspecialchars($pub['imagen_url']); ?>" alt="Miniatura" class="thumbnail" 
-                                                 onclick="openImageModal('<?php echo htmlspecialchars($pub['imagen_url']); ?>')">
+                                            <img src="<?php echo htmlspecialchars($pub['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
                                         <?php else: ?>
                                             <div class="no-image"><i class="fas fa-image"></i></div>
                                         <?php endif; ?>
@@ -216,35 +215,13 @@ if (!$token) {
         <?php endif; ?>
     </div>
 
-    <!-- Modal para Imagen (reutilizamos estructura y JS si es necesario) -->
+    <!-- Modal para Imagen -->
     <div id="imageModal" class="modal-image">
         <span class="close-image-modal">&times;</span>
         <img class="modal-image-content" id="modalImageSrc">
     </div>
 
-    <script src="assets/js/main.js"></script> <!-- Incluir para el modal de imagen -->
-    <script>
-        // Script simple para el modal de imagen en esta página
-        const imageModal = document.getElementById('imageModal');
-        const modalImage = document.getElementById('modalImageSrc');
-        const closeImageBtn = document.querySelector('.close-image-modal');
-
-        function openImageModal(src) {
-            modalImage.src = src;
-            imageModal.style.display = 'flex';
-        }
-
-        if(closeImageBtn) {
-            closeImageBtn.onclick = function() {
-                imageModal.style.display = 'none';
-            }
-        }
-        window.onclick = function(event) {
-            if (event.target == imageModal) {
-                imageModal.style.display = 'none';
-            }
-        }
-    </script>
+    <script src="assets/js/main.js"></script> 
 
 </body>
 </html> 
