@@ -1,4 +1,7 @@
 <?php
+// Establecer zona horaria
+date_default_timezone_set('Europe/Madrid');
+
 // Iniciar sesión en todas las páginas que incluyan este archivo
 if (session_status() == PHP_SESSION_NONE) {
     session_start();

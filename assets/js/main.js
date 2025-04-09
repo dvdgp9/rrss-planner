@@ -68,56 +68,109 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-}); 
-
-// --- Image Modal Logic ---
-document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- Image Modal Logic (movido aquí dentro) ---
     const imageModal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImageSrc');
-    const closeImageBtn = document.querySelector('.close-image-modal'); // Puede haber solo uno
+    const closeImageBtn = imageModal ? imageModal.querySelector('.close-image-modal') : null;
 
     if (imageModal && modalImage && closeImageBtn) {
         // Abrir modal al hacer clic en una miniatura
         document.body.addEventListener('click', function(event) {
             if (event.target.classList.contains('thumbnail')) {
-                const imageSrc = event.target.src; // Asumimos que la URL completa está en src
+                const imageSrc = event.target.src;
                 if(imageSrc) {
                     modalImage.src = imageSrc;
                     imageModal.classList.add('show');
-                    // Opcional: prevenir scroll del body mientras el modal está abierto
-                    // document.body.style.overflow = 'hidden';
                 }
             }
         });
 
-        // Función para cerrar el modal
-        function closeModal() {
+        function closeImageModal() { // Renombrada para claridad
             imageModal.classList.remove('show');
-            // Opcional: restaurar scroll del body
-            // document.body.style.overflow = 'auto';
-            // Esperar a que termine la animación de opacidad antes de limpiar src (opcional)
             setTimeout(() => { 
-                if (!imageModal.classList.contains('show')) { // Doble check por si se reabre rápido
+                if (!imageModal.classList.contains('show')) {
                     modalImage.src = ''; 
                 }
-            }, 300); // 300ms coincide con la transición de opacidad
+            }, 300);
         }
-
-        // Cerrar con el botón X
-        closeImageBtn.addEventListener('click', closeModal);
-
-        // Cerrar al hacer clic fuera de la imagen
+        closeImageBtn.addEventListener('click', closeImageModal);
         imageModal.addEventListener('click', function(event) {
-            if (event.target === imageModal) { // Si el clic fue en el fondo del modal
-                closeModal();
+            if (event.target === imageModal) {
+                closeImageModal();
             }
         });
-        
-        // Cerrar con la tecla Escape
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape' && imageModal.classList.contains('show')) {
-                closeModal();
+                closeImageModal();
             }
         });
+    } // Fin Image Modal Logic
+    
+    // --- Feedback Display Modal Logic (Internal - movido aquí dentro) ---
+    const feedbackModal = document.getElementById('feedbackDisplayModal');
+    const feedbackModalContent = feedbackModal ? feedbackModal.querySelector('.feedback-display-list') : null;
+    const closeFeedbackBtn = feedbackModal ? feedbackModal.querySelector('.close-feedback-modal') : null;
+
+    if (feedbackModal && feedbackModalContent && closeFeedbackBtn) {
+        // Abrir modal al hacer clic en el indicador
+        document.body.addEventListener('click', function(event) {
+            const indicator = event.target.closest('.feedback-indicator');
+            if (indicator) {
+                event.preventDefault(); 
+                const pubId = indicator.dataset.publicacionId;
+                feedbackModalContent.innerHTML = 'Cargando feedback...';
+                feedbackModal.classList.add('show');
+
+                fetch(`get_feedback.php?publicacion_id=${pubId}`) 
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            displayInternalFeedback(feedbackModalContent, data.feedback);
+                        } else {
+                            feedbackModalContent.innerHTML = '<p style="color: red;">Error al cargar feedback.</p>';
+                        }
+                    })
+                    .catch(error => {
+                         console.error('Error fetching internal feedback:', error);
+                         feedbackModalContent.innerHTML = '<p style="color: red;">Error de conexión al cargar feedback.</p>';
+                    });
+            }
+        });
+
+        function closeFeedbackDisplayModal() {
+            feedbackModal.classList.remove('show');
+            setTimeout(() => { 
+                if (!feedbackModal.classList.contains('show')) {
+                   feedbackModalContent.innerHTML = 'Cargando feedback...'; 
+                }
+             }, 300);
+        }
+        closeFeedbackBtn.addEventListener('click', closeFeedbackDisplayModal);
+        feedbackModal.addEventListener('click', function(event) {
+            if (event.target === feedbackModal) {
+                closeFeedbackDisplayModal();
+            }
+        });
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && feedbackModal.classList.contains('show')) {
+                closeFeedbackDisplayModal();
+            }
+        });
+    } // Fin Feedback Display Modal Logic
+
+    // Función auxiliar para mostrar feedback (usada por el modal interno)
+    function displayInternalFeedback(container, feedbackItems) {
+        if (feedbackItems.length === 0) {
+            container.innerHTML = '<p><i>No se ha recibido feedback para esta publicación.</i></p>';
+            return;
+        }
+        let html = '<ul class="feedback-items-list">'; // Reusar clase de CSS si es apropiado
+        feedbackItems.forEach(item => {
+            html += `<li><strong>${item.created_at}:</strong> ${item.feedback_text}</li>`;
+        });
+        html += '</ul>';
+        container.innerHTML = html;
     }
-}); 
+    
+}); // Cierre del DOMContentLoaded principal 

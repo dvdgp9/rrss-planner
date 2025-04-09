@@ -763,7 +763,7 @@ textarea.form-control {
 
 .summary-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
 }
 
@@ -1471,4 +1471,181 @@ textarea.form-control {
     color: #fff;
     text-decoration: none;
 }
-/* ----- Fin Estilos Imagen Modal ----- */ 
+/* ----- Fin Estilos Imagen Modal ----- */
+
+/* ----- Estilos Feedback en Share View ----- */
+.feedback-row td {
+    /* Quitar padding vertical para que no haya tanto espacio extra */
+    padding-top: 5px !important;
+    padding-bottom: 15px !important;
+    /* Podríamos añadir un borde superior sutil si queremos separar visualmente */
+    /* border-top: 1px solid #eee; */ 
+}
+
+.btn-toggle-feedback {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+}
+
+.feedback-area {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.feedback-list {
+    margin-bottom: 20px;
+    max-height: 200px; /* Limitar altura si hay muchos comentarios */
+    overflow-y: auto; /* Añadir scroll si es necesario */
+    padding-right: 10px; /* Espacio para el scrollbar */
+}
+
+.feedback-items-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.feedback-items-list li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #ddd;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.feedback-items-list li:last-child {
+    border-bottom: none;
+}
+
+.feedback-items-list li strong {
+    color: #555; /* Color para la fecha */
+    margin-right: 5px;
+}
+
+.feedback-form textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.feedback-form .btn-submit-feedback {
+    /* Podríamos heredar el color de la línea si quisiéramos, 
+       pero un primario estándar puede ser más claro */
+    background-color: var(--primary-color, #23AAC5);
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+}
+
+.feedback-form .btn-submit-feedback:hover {
+     background-color: var(--primary-dark, #1a8da5);
+}
+
+.feedback-message {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+/* ----- Fin Estilos Feedback ----- */
+
+/* ----- Estilos Feedback Interno (Indicador y Modal) ----- */
+.feedback-indicator {
+    display: inline-flex; /* Para alinear icono y número */
+    align-items: center;
+    margin-left: 10px; /* Espacio respecto al badge de estado */
+    color: var(--secondary-color, #434A54);
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s;
+}
+
+.feedback-indicator:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--primary-color, #23AAC5);
+}
+
+.feedback-indicator i {
+    margin-right: 4px;
+}
+
+/* Modal para mostrar feedback (reutiliza estilos de .modal-share) */
+.modal-feedback-display {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); 
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-feedback-display.show {
+    display: flex;
+    opacity: 1; /* Asegurarse que se muestra si .show se usa */
+    animation: fadeInModal 0.3s; /* Reutilizar animación */
+}
+
+.modal-feedback-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 700px; /* Puede ser un poco más ancho */
+    position: relative;
+}
+
+.close-feedback-modal {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-feedback-modal:hover,
+.close-feedback-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-feedback-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    color: #333;
+}
+
+.feedback-display-list {
+    max-height: 60vh; /* Buena altura para el contenido */
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Reutilizamos .feedback-items-list y sus estilos li definidos antes */
+/* ----- Fin Estilos Feedback Interno ----- */
+
+/* --- Ajuste Layout Estado + Feedback --- */
+.status-feedback-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre el estado y el icono de feedback */
+} 

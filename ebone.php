@@ -29,11 +29,8 @@ try {
     $linea = $stmt->fetch();
     
     // 2. Construir la consulta principal de publicaciones
-    $sql = "
-        SELECT p.*, ln.nombre as linea_nombre 
-        FROM publicaciones p
-        JOIN lineas_negocio ln ON p.linea_negocio_id = ln.id
-    ";
+    $sql = "\n    SELECT \n        p.*, \n        GROUP_CONCAT(rs.nombre SEPARATOR '|') as nombres_redes, \n        COUNT(DISTINCT pf.id) as feedback_count \n    FROM publicaciones p\n    LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id\n    LEFT JOIN redes_sociales rs ON prs.red_social_id = rs.id\n    LEFT JOIN publication_feedback pf ON p.id = pf.publicacion_id -- Unir con tabla de feedback
+    WHERE p.linea_negocio_id = ?\n";
     
     // Añadir JOIN para filtrar por redes si es necesario
     if (!empty($redes_filtro)) {
@@ -41,12 +38,7 @@ try {
         $sql .= " JOIN publicacion_red_social prs_filter ON p.id = prs_filter.publicacion_id AND prs_filter.red_social_id IN ($placeholders) ";
     }
     
-    $sql .= " WHERE p.linea_negocio_id = ? ";
-    
-    // Añadir GROUP BY si se filtró por redes para evitar duplicados
-    if (!empty($redes_filtro)) {
-        $sql .= " GROUP BY p.id ";
-    }
+    $sql .= " GROUP BY p.id ";
     
     // Añadir ordenación
     $sql .= " ORDER BY p." . $sort_by . " " . $sort_dir . ", p.id DESC"; // Fallback sort por ID
@@ -102,9 +94,7 @@ try {
                 <img src="assets/images/logos/logo-ebone.png" alt="Logo <?php echo $lineaNombre; ?>" class="header-logo">
                 <h1><?php echo $lineaNombre; ?> - Publicaciones</h1>
             </div>
-            <a href="publicacion_form.php?linea=<?php echo $lineaId; ?>" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nueva Publicación
-            </a>
+            <!-- Botón Nueva Publicación movido al table-header -->
             <button class="btn btn-secondary btn-share" data-linea-id="<?php echo $lineaId; ?>">
                 <i class="fas fa-share-alt"></i> Compartir
             </button>
@@ -166,7 +156,10 @@ try {
         
         <div class="table-container">
             <div class="table-header">
-                <div class="table-title">Publicaciones</div>
+                <h2 class="table-title">Publicaciones</h2>
+                <a href="publicacion_form.php?linea=<?php echo $lineaId; ?>" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nueva Publicación
+                </a>
             </div>
             
             <table>
@@ -286,24 +279,33 @@ try {
                             </td>
                             <td><?php echo truncateText($publicacion['contenido'], 80); ?></td>
                             <td>
-                                <div class="estado-selector" data-id="<?php echo $publicacion['id']; ?>">
-                                    <span class="estado-badge badge <?php echo $badgeClass; ?>" onclick="toggleEstadoDropdown(this)">
-                                        <?php echo ucfirst($publicacion['estado']); ?>
-                                    </span>
-                                    <div class="estado-dropdown">
-                                        <div class="estado-dropdown-item <?php echo $publicacion['estado'] === 'borrador' ? 'active' : ''; ?>" 
-                                             data-estado="borrador" onclick="cambiarEstado(this)">
-                                            Borrador
-                                        </div>
-                                        <div class="estado-dropdown-item <?php echo $publicacion['estado'] === 'programado' ? 'active' : ''; ?>" 
-                                             data-estado="programado" onclick="cambiarEstado(this)">
-                                            Programado
-                                        </div>
-                                        <div class="estado-dropdown-item <?php echo $publicacion['estado'] === 'publicado' ? 'active' : ''; ?>" 
-                                             data-estado="publicado" onclick="cambiarEstado(this)">
-                                            Publicado
+                                <div class="status-feedback-wrapper">
+                                    <div class="estado-selector" data-id="<?php echo $publicacion['id']; ?>">
+                                        <span class="estado-badge badge <?php echo $badgeClass; ?>" onclick="toggleEstadoDropdown(this)">
+                                            <?php echo ucfirst($publicacion['estado']); ?>
+                                        </span>
+                                        <div class="estado-dropdown">
+                                            <div class="estado-dropdown-item <?php echo $publicacion['estado'] === 'borrador' ? 'active' : ''; ?>" 
+                                                 data-estado="borrador" onclick="cambiarEstado(this)">
+                                                Borrador
+                                            </div>
+                                            <div class="estado-dropdown-item <?php echo $publicacion['estado'] === 'programado' ? 'active' : ''; ?>" 
+                                                 data-estado="programado" onclick="cambiarEstado(this)">
+                                                Programado
+                                            </div>
+                                            <div class="estado-dropdown-item <?php echo $publicacion['estado'] === 'publicado' ? 'active' : ''; ?>" 
+                                                 data-estado="publicado" onclick="cambiarEstado(this)">
+                                                Publicado
+                                            </div>
                                         </div>
                                     </div>
+                                    <!-- Indicador de Feedback -->
+                                    <?php if ($publicacion['feedback_count'] > 0): ?>
+                                        <a href="#" class="feedback-indicator" data-publicacion-id="<?php echo $publicacion['id']; ?>" title="<?php echo $publicacion['feedback_count']; ?> comentarios">
+                                            <i class="fas fa-comments"></i> 
+                                            <span><?php echo $publicacion['feedback_count']; ?></span>
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td>
@@ -504,5 +506,18 @@ try {
 
     <script src="assets/js/main.js"></script> 
     <script src="assets/js/share.js"></script> <!-- Nuevo JS para compartir -->
+
+    <!-- Modal Genérico para Mostrar Feedback -->
+    <div id="feedbackDisplayModal" class="modal-feedback-display">
+        <div class="modal-feedback-content">
+            <span class="close-feedback-modal">&times;</span>
+            <h2>Feedback Recibido</h2>
+            <div class="feedback-display-list">
+                <!-- El contenido se cargará aquí vía JS -->
+                Cargando feedback...
+            </div>
+        </div>
+    </div>
+
 </body>
 </html> 
