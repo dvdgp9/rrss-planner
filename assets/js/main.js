@@ -173,4 +173,43 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = html;
     }
     
+    // --- Toggle Published Posts Logic ---
+    const toggleSwitch = document.getElementById('toggle-published');
+    const publicacionesTableBody = document.querySelector('.table-container table tbody'); // Renamed for clarity
+
+    function filterPublishedPosts() {
+        if (!publicacionesTableBody) return; // Exit if table body not found
+
+        const showPublished = toggleSwitch.checked;
+        // Select all main publication rows (including those that might be published)
+        const allMainRows = publicacionesTableBody.querySelectorAll('tr:not(.feedback-row)'); 
+
+        allMainRows.forEach(row => {
+            const isPublished = row.dataset.estado === 'publicado';
+            let displayStyle = ''; // Default: show
+
+            if (isPublished && !showPublished) {
+                displayStyle = 'none'; // Hide if it's published and toggle is off
+            }
+            
+            row.style.display = displayStyle;
+
+            // Find the next sibling, which might be the feedback row
+            const nextRow = row.nextElementSibling;
+            if (nextRow && nextRow.classList.contains('feedback-row')) {
+                // Apply the same display style to the feedback row
+                nextRow.style.display = displayStyle;
+            }
+        });
+    }
+
+    if (toggleSwitch && publicacionesTableBody) { // Check for table body existence too
+        // Add event listener
+        toggleSwitch.addEventListener('change', filterPublishedPosts);
+
+        // Initial filter on page load
+        filterPublishedPosts(); 
+    }
+    // --- End Toggle Published Posts Logic ---
+    
 }); // Cierre del DOMContentLoaded principal 

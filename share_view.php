@@ -166,6 +166,16 @@ if (!$token) {
             </div>
         <?php else: ?>
             <div class="table-container">
+                <!-- Toggle Switch HTML -->
+                <div class="table-actions" style="padding: 10px 15px; border-bottom: 1px solid #eee; background-color: #f9f9f9;"> 
+                    <div class="toggle-switch-container">
+                        <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-published" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
                 <table class="share-table"> 
                     <thead>
                         <tr>
@@ -184,7 +194,7 @@ if (!$token) {
                             </tr>
                         <?php else: ?>
                             <?php foreach ($publicaciones as $pub): ?>
-                                <tr>
+                                <tr data-estado="<?php echo htmlspecialchars($pub['estado']); ?>">
                                     <td><?php echo formatFecha($pub['fecha_programada']); ?></td>
                                     <td><?php echo nl2br(htmlspecialchars($pub['contenido'])); ?></td>
                                     <td>
@@ -258,154 +268,8 @@ if (!$token) {
         <img class="modal-image-content" id="modalImageSrc">
     </div>
 
-    <script src="assets/js/main.js"></script> 
-    <!-- Script para Feedback -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const shareToken = new URLSearchParams(window.location.search).get('token'); // Necesitamos el token actual
-
-        document.querySelectorAll('.btn-toggle-feedback').forEach(button => {
-            button.addEventListener('click', function() {
-                const pubId = this.dataset.publicacionId;
-                const feedbackArea = document.getElementById(`feedback-area-${pubId}`);
-                const feedbackListDiv = feedbackArea.querySelector('.feedback-list');
-                const feedbackCountSpan = this.querySelector('.feedback-count');
-
-                if (feedbackArea.style.display === 'none') {
-                    feedbackArea.style.display = 'block';
-                    feedbackListDiv.innerHTML = 'Cargando feedback...'; 
-                    feedbackCountSpan.textContent = '(...)';
-                    
-                    // Cargar feedback existente
-                    fetch(`get_feedback.php?publicacion_id=${pubId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                displayFeedback(feedbackListDiv, data.feedback);
-                                feedbackCountSpan.textContent = `(${data.feedback.length})`;
-                            } else {
-                                feedbackListDiv.innerHTML = '<p style="color: red;">Error al cargar feedback.</p>';
-                                feedbackCountSpan.textContent = '(Error)';
-                            }
-                        })
-                        .catch(error => {
-                             console.error('Error fetching feedback:', error);
-                             feedbackListDiv.innerHTML = '<p style="color: red;">Error de conexión al cargar feedback.</p>';
-                             feedbackCountSpan.textContent = '(Error)';
-                        });
-                } else {
-                    feedbackArea.style.display = 'none';
-                }
-            });
-        });
-        
-        document.querySelectorAll('.btn-submit-feedback').forEach(button => {
-            button.addEventListener('click', function() {
-                const feedbackArea = this.closest('.feedback-area');
-                const pubId = feedbackArea.id.split('-').pop(); // Obtener ID de pub del ID del área
-                const textarea = feedbackArea.querySelector('textarea');
-                const feedbackText = textarea.value.trim();
-                const feedbackListDiv = feedbackArea.querySelector('.feedback-list');
-                const messageP = feedbackArea.querySelector('.feedback-message');
-                const toggleButton = document.querySelector(`.btn-toggle-feedback[data-publicacion-id="${pubId}"]`);
-                const feedbackCountSpan = toggleButton ? toggleButton.querySelector('.feedback-count') : null;
-
-                if (!feedbackText || !shareToken) {
-                    showMessage(messageP, 'Por favor, escribe tu feedback.', 'red');
-                    return;
-                }
-
-                this.disabled = true; // Deshabilitar botón mientras se envía
-                this.textContent = 'Enviando...';
-
-                const formData = new FormData();
-                formData.append('publicacion_id', pubId);
-                formData.append('share_token', shareToken);
-                formData.append('feedback_text', feedbackText);
-
-                fetch('submit_feedback.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        textarea.value = ''; // Limpiar textarea
-                        showMessage(messageP, 'Feedback enviado. ¡Gracias!', 'green');
-                        // Añadir nuevo feedback a la lista visible
-                        appendFeedbackItem(feedbackListDiv, data.feedback);
-                        // Actualizar contador (si el span existe)
-                        if(feedbackCountSpan) {
-                           const currentCount = parseInt(feedbackCountSpan.textContent.match(/\d+/)?.[0] || 0);
-                           feedbackCountSpan.textContent = `(${currentCount + 1})`;
-                        }
-                    } else {
-                        showMessage(messageP, data.message || 'Error al enviar feedback.', 'red');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error submitting feedback:', error);
-                    showMessage(messageP, 'Error de conexión al enviar feedback.', 'red');
-                })
-                .finally(() => {
-                    this.disabled = false; // Rehabilitar botón
-                    this.textContent = 'Enviar Feedback';
-                });
-            });
-        });
-
-        function displayFeedback(container, feedbackItems) {
-            if (feedbackItems.length === 0) {
-                container.innerHTML = '<p><i>No hay feedback para esta publicación aún.</i></p>';
-                return;
-            }
-            let html = '<ul class="feedback-items-list">';
-            feedbackItems.forEach(item => {
-                html += `<li><strong>${item.created_at}:</strong> ${item.feedback_text}</li>`;
-            });
-            html += '</ul>';
-            container.innerHTML = html;
-        }
-        
-        function appendFeedbackItem(container, feedbackItem) {
-            // Si era el primer comentario, quitar el mensaje "No hay feedback"
-            const noFeedbackMsg = container.querySelector('p');
-            if (noFeedbackMsg && noFeedbackMsg.textContent.includes('No hay feedback')) {
-                container.innerHTML = '<ul class="feedback-items-list"></ul>';
-            }
-            const list = container.querySelector('.feedback-items-list');
-            if (list) {
-                const newItem = document.createElement('li');
-                newItem.innerHTML = `<strong>${formatDate(feedbackItem.created_at)}:</strong> ${feedbackItem.feedback_text}`; 
-                list.appendChild(newItem);
-            }
-        }
-
-        function showMessage(element, text, color) {
-            element.textContent = text;
-            element.style.color = color;
-            element.style.display = 'block';
-            setTimeout(() => { element.style.display = 'none'; }, 3000); // Ocultar después de 3s
-        }
-        
-        // Función auxiliar para formatear fecha (JS)
-        function formatDate(dateString) {
-           // Simple formato dd/mm/yyyy HH:MM, asumiendo que viene como YYYY-MM-DD HH:MM:SS
-           try {
-               const date = new Date(dateString.replace(' ', 'T')); // ISO 8601 ish
-               const day = String(date.getDate()).padStart(2, '0');
-               const month = String(date.getMonth() + 1).padStart(2, '0');
-               const year = date.getFullYear();
-               const hours = String(date.getHours()).padStart(2, '0');
-               const minutes = String(date.getMinutes()).padStart(2, '0');
-               return `${day}/${month}/${year} ${hours}:${minutes}`;
-           } catch (e) {
-               return dateString; // Fallback a la cadena original si falla
-           }
-        }
-
-    });
-    </script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/share_feedback.js"></script>
 
 </body>
 </html> 

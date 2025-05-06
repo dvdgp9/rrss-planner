@@ -157,9 +157,18 @@ try {
         <div class="table-container">
             <div class="table-header">
                 <h2 class="table-title">Publicaciones</h2>
-                <a href="publicacion_form.php?linea=<?php echo $lineaId; ?>" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nueva Publicación
-                </a>
+                <div class="table-actions">
+                    <div class="toggle-switch-container">
+                        <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-published" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <a href="publicacion_form.php?linea=<?php echo $lineaId; ?>" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Publicación
+                    </a>
+                </div>
             </div>
             
             <table>
@@ -268,7 +277,7 @@ try {
                                     break;
                             }
                         ?>
-                        <tr>
+                        <tr data-estado="<?php echo $publicacion['estado']; ?>">
                             <td><?php echo date('d/m/y', strtotime($publicacion['fecha_programada'])); ?></td>
                             <td>
                                 <?php if (!empty($publicacion['imagen_url'])): ?>
