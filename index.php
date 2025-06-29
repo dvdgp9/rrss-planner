@@ -91,8 +91,8 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador RRSS - Inicio</title>
-    <link rel="icon" type="image/png" href="assets/images/logos/isotipo-ebone.png">
+    <title>Lööp - Dashboard</title>
+    <link rel="icon" type="image/png" href="assets/images/logos/Loop-favicon.png">
     <!-- Google Fonts - Open Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -105,17 +105,10 @@ try {
 <body>
     <div class="app-simple">
         <div class="header-simple">
-            <h1>Dashboard - Planificador RRSS</h1>
+            <button id="btnNuevaLinea" class="btn btn-primary" style="position: absolute; top: 20px; right: 20px;"><i class="fas fa-plus"></i> Nueva Línea de Negocio</button>
         </div>
         
-        <div class="nav-simple">
-            <a href="index.php" class="active">Dashboard</a>
-            <a href="ebone.php">Ebone Servicios</a>
-            <a href="cubofit.php">CUBOFIT</a>
-            <a href="uniges.php">Uniges-3</a>
-            <a href="teia.php">Teiá</a>
-            <a href="logout.php" style="margin-left: auto; background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-        </div>
+        <?php require 'includes/nav.php'; ?>
         
         <?php if (isset($error)): ?>
             <div style="background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
@@ -146,61 +139,89 @@ try {
             </div>
         </div>
 
+        <!-- Modal para Nueva Línea de Negocio -->
+        <div id="modalNuevaLinea" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Crear Nueva Línea de Negocio</h2>
+                    <span class="close-button" id="closeNuevaLineaModal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="formNuevaLinea">
+                        <div class="form-group">
+                            <label for="nombreLinea">Nombre de la línea:</label>
+                            <input type="text" id="nombreLinea" name="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="logoFilenameLinea">Archivo del logo (ej: logo.png):</label>
+                            <input type="text" id="logoFilenameLinea" name="logo_filename" required>
+                            <small>Asegúrate de que el archivo exista en `assets/images/logos/`</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="slugLinea">Slug (ej: nombre-linea):</label>
+                            <input type="text" id="slugLinea" name="slug" required>
+                            <small>Usar minúsculas, números y guiones. Debe ser único.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Línea de Negocio</button>
+                    </form>
+                    <div id="modalNuevaLineaMessage" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin del Modal -->
+
         <!-- Cards de líneas de negocio -->
         <div class="dashboard-cards">
             <?php foreach ($lineasNegocio as $index => $linea): 
-                // Determinar URLs, logos y colores según el ID
-                $paginaUrl = '';
-                $logoUrl = '';
+                // Determinar URLs, logos y colores según el ID (y slug)
+                $paginaUrl = 'planner.php?slug=' . urlencode($linea['slug'] ?? 'error'); // Default URL structure
+                $logoUrl = 'assets/images/logos/' . ($linea['logo_filename'] ?? 'default.png');
                 $colorPrincipal = '';
                 $colorSecundario = '';
                 $bgColorStyle = ''; // Para manejar el gradiente
 
+                // Colores específicos (puedes ajustar o quitar el switch si el slug es suficiente)
                 switch($linea['id']) {
-                    case 1: 
-                        $paginaUrl = 'ebone.php'; 
-                        $logoUrl = 'assets/images/logos/logo-ebone.png'; 
+                    case 1: // Ebone
                         $colorPrincipal = '#23AAC5';
-                        $colorSecundario = '#1a8da5'; // Color oscuro para gradiente
+                        $colorSecundario = '#1a8da5'; 
                         $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
-                    case 2: 
-                        $paginaUrl = 'cubofit.php'; 
-                        $logoUrl = 'assets/images/logos/logo-cubofit.png';
+                    case 2: // Cubofit
                         $colorPrincipal = '#E23633';
-                        $colorSecundario = '#c12f2c'; // Color oscuro para gradiente
+                        $colorSecundario = '#c12f2c'; 
                         $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
-                    case 3: 
-                        $paginaUrl = 'uniges.php'; 
-                        $logoUrl = 'assets/images/logos/logo-uniges.png';
+                    case 3: // Uniges
                         $unigesColor1 = '#9B6FCE';
                         $unigesColor2 = '#032551';
                         $colorPrincipal = $unigesColor1; 
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $unigesColor1 . ' 0%, ' . $unigesColor2 . ' 100%);'; // Ya era gradiente
+                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $unigesColor1 . ' 0%, ' . $unigesColor2 . ' 100%);';
                         break;
-                    case 4: 
-                        $paginaUrl = 'teia.php'; 
-                        $logoUrl = 'assets/images/logos/logo-teia.jpg';
+                    case 4: // Teia
                         $colorPrincipal = '#009970';
-                        $colorSecundario = '#007a5a'; // Color oscuro para gradiente
+                        $colorSecundario = '#007a5a'; 
                         $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
-                    default: 
-                        $paginaUrl = 'index.php'; 
-                        $logoUrl = ''; 
+                    default: // Otros (usarán slug para URL pero colores por defecto)
+                        $logoUrl = 'assets/images/logos/' . ($linea['logo_filename'] ?? 'default.png'); 
                         $colorPrincipal = '#6c757d'; 
-                        $colorSecundario = '#5a6268'; // Color oscuro por defecto
+                        $colorSecundario = '#5a6268'; 
                         $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
                         break;
+                }
+
+                // Fallback por si el logo no existe
+                if (!file_exists($logoUrl)) {
+                    $logoUrl = 'assets/images/logos/default.png'; // Un logo genérico
                 }
             ?>
             <div class="dashboard-card">
                 <div class="card-header" style="<?php echo $bgColorStyle; ?> color: white;">
-                    <h2><?php echo $linea['nombre']; ?></h2>
-                    <?php if (!empty($logoUrl)): ?>
+                    <h2><?php echo htmlspecialchars($linea['nombre']); ?></h2>
+                    <?php if (!empty($logoUrl) && file_exists($logoUrl)): ?>
                         <div class="logo-icon">
-                            <img src="<?php echo $logoUrl; ?>" alt="Logo <?php echo $linea['nombre']; ?>">
+                            <img src="<?php echo htmlspecialchars($logoUrl); ?>" alt="Logo <?php echo htmlspecialchars($linea['nombre']); ?>">
                         </div>
                     <?php else: ?>
                         <div class="icon"><i class="fas fa-building"></i></div> <!-- Icono genérico si no hay logo -->
@@ -262,13 +283,15 @@ try {
                     <?php endif; ?>
                 </div>
                 <div class="card-footer">
-                    <a href="<?php echo $paginaUrl; ?>" class="btn">
-                        Ver todas las publicaciones
+                    <a href="<?php echo htmlspecialchars($paginaUrl); ?>" class="btn btn-sm">
+                        <i class="fas fa-list"></i> Ver todas las publicaciones
                     </a>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
     </div>
+
+    <script src="assets/js/main.js" defer></script>
 </body>
 </html>

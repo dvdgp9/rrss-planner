@@ -38,15 +38,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Confirmación para eliminación
+    // Confirmación para eliminación (solo para publicaciones RRSS, no blog posts)
     const deleteButtons = document.querySelectorAll('.action-btn.delete');
     if (deleteButtons.length) {
         deleteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (!confirm('¿Estás seguro que deseas eliminar esta publicación?')) {
-                    e.preventDefault();
-                }
-            });
+            // Excluir botones de blog posts que ya tienen su propia confirmación
+            if (!button.onclick || !button.onclick.toString().includes('deleteBlogPost')) {
+                button.addEventListener('click', function(e) {
+                    if (!confirm('¿Estás seguro que deseas eliminar esta publicación?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
         });
     }
     
@@ -212,4 +215,495 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // --- End Toggle Published Posts Logic ---
     
+    // --- JavaScript for Nueva Línea de Negocio Modal (Consolidado) ---
+    const modalNuevaLinea = document.getElementById('modalNuevaLinea');
+    const btnOpenModalNuevaLinea = document.getElementById('btnNuevaLinea');
+    const btnCloseModalNuevaLinea = document.getElementById('closeNuevaLineaModal');
+    const formNuevaLinea = document.getElementById('formNuevaLinea');
+    const messageAreaNuevaLinea = document.getElementById('modalNuevaLineaMessage');
+
+    if (btnOpenModalNuevaLinea) {
+        console.log('Boton "Nueva Línea" encontrado:', btnOpenModalNuevaLinea);
+        btnOpenModalNuevaLinea.onclick = function() {
+            console.log('Boton "Nueva Línea" CLICADO!');
+            if (modalNuevaLinea) {
+                console.log('Modal encontrado, aplicando .show:', modalNuevaLinea);
+                modalNuevaLinea.classList.add('show');
+            } else {
+                console.error('Modal "modalNuevaLinea" NO encontrado!');
+            }
+            if (messageAreaNuevaLinea) messageAreaNuevaLinea.textContent = '';
+            if (formNuevaLinea) formNuevaLinea.reset();
+        }
+    } else {
+        console.error('Boton "btnNuevaLinea" NO encontrado!');
+    }
+
+    if (btnCloseModalNuevaLinea) {
+        btnCloseModalNuevaLinea.onclick = function() {
+            if (modalNuevaLinea) {
+                modalNuevaLinea.classList.remove('show');
+            }
+        }
+    }
+
+    window.addEventListener('click', function(event) {
+        if (event.target == modalNuevaLinea) {
+            if (modalNuevaLinea) {
+                modalNuevaLinea.classList.remove('show');
+            }
+        }
+    });
+    
+    if (formNuevaLinea) {
+        formNuevaLinea.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (messageAreaNuevaLinea) messageAreaNuevaLinea.textContent = '';
+
+            const formData = new FormData(formNuevaLinea);
+            const slugInput = document.getElementById('slugLinea');
+
+            if (slugInput && slugInput.value && !/^[a-z0-9-]+$/.test(slugInput.value)) {
+                if (messageAreaNuevaLinea) messageAreaNuevaLinea.innerHTML = '<span style=\"color: red;\">El slug solo puede contener minúsculas, números y guiones.</span>';
+                return;
+            }
+
+            fetch('crear_linea_negocio.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (messageAreaNuevaLinea) messageAreaNuevaLinea.innerHTML = '<span style=\"color: green;\">' + data.message + '</span>';
+                    if (formNuevaLinea) formNuevaLinea.reset();
+                    setTimeout(() => {
+                        if (modalNuevaLinea) {
+                            modalNuevaLinea.classList.remove('show');
+                        }
+                    }, 2000);
+                } else {
+                    if (messageAreaNuevaLinea) messageAreaNuevaLinea.innerHTML = '<span style=\"color: red;\">Error: ' + (data.message || 'No se pudo crear la línea de negocio.') + '</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error en fetch para crear línea:', error);
+                if (messageAreaNuevaLinea) messageAreaNuevaLinea.innerHTML = '<span style=\"color: red;\">Ocurrió un error de conexión. Inténtalo de nuevo.</span>';
+            });
+        });
+    }
+    // --- End JavaScript for Nueva Línea de Negocio Modal (Consolidado) ---
+    
+    // --- Enhanced Header: Business Line Dropdown Functionality ---
+    const businessLineDropdown = document.getElementById('businessLineDropdown');
+    const businessLineDropdownMenu = document.getElementById('businessLineDropdownMenu');
+    
+    if (businessLineDropdown && businessLineDropdownMenu) {
+        // Toggle dropdown on click
+        businessLineDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isOpen = businessLineDropdownMenu.classList.contains('show');
+            
+            // Close all other dropdowns first (if any)
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.dropdown-toggle.active').forEach(toggle => {
+                toggle.classList.remove('active');
+            });
+            
+            // Toggle current dropdown
+            if (!isOpen) {
+                businessLineDropdownMenu.classList.add('show');
+                businessLineDropdown.classList.add('active');
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!businessLineDropdown.contains(e.target) && !businessLineDropdownMenu.contains(e.target)) {
+                businessLineDropdownMenu.classList.remove('show');
+                businessLineDropdown.classList.remove('active');
+            }
+        });
+        
+        // Close dropdown on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                businessLineDropdownMenu.classList.remove('show');
+                businessLineDropdown.classList.remove('active');
+            }
+        });
+        
+        // Handle keyboard navigation in dropdown
+        businessLineDropdown.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                businessLineDropdown.click();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!businessLineDropdownMenu.classList.contains('show')) {
+                    businessLineDropdown.click();
+                } else {
+                    const firstItem = businessLineDropdownMenu.querySelector('.dropdown-item');
+                    if (firstItem) firstItem.focus();
+                }
+            }
+        });
+        
+        // Handle keyboard navigation within dropdown items
+        businessLineDropdownMenu.addEventListener('keydown', function(e) {
+            const items = businessLineDropdownMenu.querySelectorAll('.dropdown-item');
+            const currentIndex = Array.from(items).findIndex(item => item === document.activeElement);
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = (currentIndex + 1) % items.length;
+                items[nextIndex].focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                items[prevIndex].focus();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (document.activeElement && document.activeElement.classList.contains('dropdown-item')) {
+                    document.activeElement.click();
+                }
+            }
+        });
+    }
+    
+    // --- End Enhanced Header Functionality ---
+    
+    const statusSelectors = document.querySelectorAll('.estado-selector-directo');
+
+    statusSelectors.forEach(selector => {
+        console.log('Estado selector script PART executing for each selector'); // TEST LINE
+        selector.addEventListener('change', function(event) {
+            const publicacionId = this.dataset.id;
+            const nuevoEstado = event.target.value;
+            const lineaId = this.dataset.lineaId; // Added this line
+
+            if (!publicacionId || !nuevoEstado || !lineaId) {
+                console.error('Faltan datos para actualizar estado: ID, Estado o Linea ID.', { publicacionId, nuevoEstado, lineaId });
+                return;
+            }
+
+            console.log(`Intentando actualizar publicación ID: ${publicacionId} a estado: ${nuevoEstado} para línea ID: ${lineaId}`);
+
+            const formData = new FormData();
+            formData.append('id', publicacionId);
+            formData.append('estado', nuevoEstado);
+            formData.append('linea', lineaId); // Changed from 'linea_id' to 'linea' to match publicacion_update_estado.php
+
+            fetch('publicacion_update_estado.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Try to get error message from server if it's JSON, otherwise use status text
+                    return response.json().catch(() => { throw new Error(response.statusText) }).then(errData => { throw errData; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log('Estado actualizado con éxito:', data);
+                    // Optionally, update the UI more dynamically here, e.g., a success message
+                    // For now, the page will need a reload to see the change fully reflected if it's not a SPA.
+                    // We could also update the row's data-estado attribute here.
+                    const row = this.closest('tr');
+                    if (row) {
+                        row.dataset.estado = nuevoEstado;
+                        // If using the toggle for published posts, re-apply filter visually
+                        if (typeof filterPublishedPosts === 'function') {
+                           // filterPublishedPosts(); // Uncomment if you want to re-apply visual filter immediately
+                        }
+                    }
+                     alert('Estado actualizado a: ' + data.estadoCapitalizado + '. Recarga la página para ver todos los cambios si es necesario.');
+
+                } else {
+                    console.error('Error al actualizar estado (respuesta servidor):', data.message);
+                    alert('Error al actualizar estado: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error en la petición fetch para actualizar estado:', error);
+                let errorMessage = 'Error de red o servidor.';
+                if (error && error.message) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'object' && error.hasOwnProperty('message')) { // Server error from response.json()
+                    errorMessage = error.message;
+                }
+                alert('Error en la petición para actualizar estado: ' + errorMessage);
+            });
+        });
+    });
 }); // Cierre del DOMContentLoaded principal 
+
+
+// --- Logic for Share Single Publication Modal ---
+document.addEventListener('DOMContentLoaded', function() { // New DOMContentLoaded for this specific logic, or could be merged
+    const sharePublicationModal = document.getElementById('sharePublicationModal');
+    const sharePublicationLinkInput = document.getElementById('sharePublicationLinkInput');
+    const copySharePublicationLinkBtn = document.getElementById('copySharePublicationLinkBtn');
+    const copyPublicationMessage = document.getElementById('copyPublicationMessage');
+    const sharePublicationError = document.getElementById('sharePublicationError');
+
+    document.body.addEventListener('click', function(event) {
+        const sharePubButton = event.target.closest('.share-publication');
+        if (sharePubButton) {
+            const publicacionId = sharePubButton.dataset.publicacionId;
+            if (!publicacionId) {
+                console.error('No publicacion_id found on share button.');
+                if(sharePublicationError) sharePublicationError.textContent = 'Error: No se encontró ID de publicación.';
+                if(sharePublicationModal) sharePublicationModal.classList.add('show'); // Show modal to display error
+                return;
+            }
+
+            if(sharePublicationLinkInput) sharePublicationLinkInput.value = 'Generando enlace...';
+            if(copyPublicationMessage) copyPublicationMessage.style.display = 'none';
+            if(sharePublicationError) sharePublicationError.style.display = 'none';
+            if(sharePublicationModal) sharePublicationModal.classList.add('show');
+
+            const formData = new FormData();
+            formData.append('publicacion_id', publicacionId);
+
+            fetch('generate_single_pub_link.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.share_url) {
+                    if(sharePublicationLinkInput) sharePublicationLinkInput.value = data.share_url;
+                } else {
+                    if(sharePublicationLinkInput) sharePublicationLinkInput.value = '';
+                    if(sharePublicationError) {
+                        sharePublicationError.textContent = data.message || 'Error al generar el enlace.';
+                        sharePublicationError.style.display = 'block';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching single publication share link:', error);
+                if(sharePublicationLinkInput) sharePublicationLinkInput.value = '';
+                if(sharePublicationError) {
+                    sharePublicationError.textContent = 'Error de conexión al generar el enlace.';
+                    sharePublicationError.style.display = 'block';
+                }
+            });
+        }
+    });
+
+    if (copySharePublicationLinkBtn && sharePublicationLinkInput) {
+        copySharePublicationLinkBtn.addEventListener('click', function() {
+            sharePublicationLinkInput.select();
+            sharePublicationLinkInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                document.execCommand('copy');
+                if(copyPublicationMessage) {
+                    copyPublicationMessage.textContent = '¡Enlace copiado!';
+                    copyPublicationMessage.style.display = 'block';
+                }
+                if(sharePublicationError) sharePublicationError.style.display = 'none';
+                
+                setTimeout(() => {
+                    if(copyPublicationMessage) copyPublicationMessage.style.display = 'none';
+                }, 2000);
+            } catch (err) {
+                console.error('Error al copiar el enlace:', err);
+                if(sharePublicationError) {
+                    sharePublicationError.textContent = 'No se pudo copiar el enlace. Inténtalo manualmente.';
+                    sharePublicationError.style.display = 'block';
+                }
+                if(copyPublicationMessage) copyPublicationMessage.style.display = 'none';
+            }
+        });
+    }
+
+    // Generic close for share modals (could be refactored if more modals are added)
+    // This assumes all share modals have a span with class 'close-share-modal' and data-modal-id
+    document.querySelectorAll('.close-share-modal').forEach(closeBtn => {
+        closeBtn.addEventListener('click', function() {
+            const modalId = this.dataset.modalId;
+            if (modalId) {
+                const modalToClose = document.getElementById(modalId);
+                if (modalToClose) {
+                    modalToClose.classList.remove('show');
+                }
+            } else if (this.closest('.modal-share')) { // Fallback for older modals without data-modal-id
+                 this.closest('.modal-share').classList.remove('show');
+            }
+        });
+    });
+
+    // Close modal on clicking outside of it
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal-share')) {
+            event.target.classList.remove('show');
+        }
+    });
+}); 
+
+// --- Blog Posts Functionality ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle Published Blog Posts Logic
+    const toggleSwitchBlog = document.getElementById('toggle-published-blog');
+    const blogTableBody = document.querySelector('.table-container table tbody');
+
+    function filterPublishedBlogPosts() {
+        if (!blogTableBody || !toggleSwitchBlog) return;
+
+        const showPublished = toggleSwitchBlog.checked;
+        const allBlogRows = blogTableBody.querySelectorAll('tr[data-estado]');
+
+        allBlogRows.forEach(row => {
+            const isPublished = row.dataset.estado === 'published';
+            let displayStyle = '';
+
+            if (isPublished && !showPublished) {
+                displayStyle = 'none';
+            }
+            
+            row.style.display = displayStyle;
+        });
+    }
+
+    if (toggleSwitchBlog && blogTableBody) {
+        toggleSwitchBlog.addEventListener('change', filterPublishedBlogPosts);
+        filterPublishedBlogPosts(); // Initial filter on page load
+    }
+
+    // Blog Post Status Update Logic
+    const blogStatusSelectors = document.querySelectorAll('.estado-selector-directo[data-type="blog"]');
+
+    blogStatusSelectors.forEach(selector => {
+        selector.addEventListener('change', function(event) {
+            const blogPostId = this.dataset.id;
+            const nuevoEstado = event.target.value;
+            const lineaId = this.dataset.lineaId;
+
+            if (!blogPostId || !nuevoEstado || !lineaId) {
+                console.error('Faltan datos para actualizar estado del blog post');
+                return;
+            }
+
+            console.log(`Actualizando blog post ID: ${blogPostId} a estado: ${nuevoEstado}`);
+
+            const formData = new FormData();
+            formData.append('id', blogPostId);
+            formData.append('estado', nuevoEstado);
+            formData.append('linea', lineaId);
+            formData.append('type', 'blog');
+
+            fetch('blog_update_estado.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Estado del blog post actualizado con éxito:', data);
+                    const row = this.closest('tr');
+                    if (row) {
+                        row.dataset.estado = nuevoEstado;
+                        // Re-apply filter if needed
+                        if (typeof filterPublishedBlogPosts === 'function') {
+                            filterPublishedBlogPosts();
+                        }
+                    }
+                    alert('Estado actualizado a: ' + data.estadoCapitalizado);
+                } else {
+                    console.error('Error al actualizar estado del blog post:', data.message);
+                    alert('Error al actualizar estado: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error en la petición fetch para actualizar estado del blog post:', error);
+                alert('Error en la petición para actualizar estado');
+            });
+        });
+    });
+});
+
+// Global function for blog post deletion
+function deleteBlogPost(blogPostId, lineaSlug) {
+    if (confirm('¿Estás seguro de que quieres eliminar este blog post? Esta acción no se puede deshacer.')) {
+        const formData = new FormData();
+        formData.append('id', blogPostId);
+        formData.append('slug_redirect', lineaSlug);
+
+        fetch('blog_delete.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Blog post eliminado exitosamente');
+                // Reload the page to reflect changes
+                window.location.reload();
+            } else {
+                alert('Error al eliminar el blog post: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error al eliminar blog post:', error);
+            alert('Error de conexión al eliminar el blog post');
+        });
+    }
+}
+
+// Global function for publishing blog posts to WordPress
+function publishToWordPressFromTable(blogPostId) {
+    if (!blogPostId) {
+        alert('Error: ID de blog post no válido');
+        return;
+    }
+    
+    if (!confirm('¿Publicar este blog post en WordPress?')) {
+        return;
+    }
+    
+    // Find the WordPress button for this specific blog post
+    const button = document.querySelector(`button[onclick="publishToWordPressFromTable(${blogPostId})"]`);
+    
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    
+    // Create FormData for the POST request
+    const formData = new FormData();
+    formData.append('blog_post_id', blogPostId);
+    
+    fetch('publish_to_wordpress.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message + '\n\nURL: ' + (data.wp_url || 'N/A'));
+            // Reload the page to show updated status
+            window.location.reload();
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error de conexión: ' + error.message);
+    })
+    .finally(() => {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fab fa-wordpress"></i>';
+        }
+    });
+}

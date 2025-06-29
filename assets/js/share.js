@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-share').forEach(button => {
         button.addEventListener('click', function() {
             const lineaId = this.dataset.lineaId;
-            shareModal.style.display = 'flex';
+            shareModal.classList.add('show');
             shareLinkInput.value = 'Generando enlace...'; // Placeholder
             copyMessage.style.display = 'none';
             shareError.style.display = 'none';
@@ -47,13 +47,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Cerrar modal
     closeBtn.addEventListener('click', function() {
-        shareModal.style.display = 'none';
+        shareModal.classList.remove('show');
     });
 
     // Cerrar modal al hacer clic fuera
     window.addEventListener('click', function(event) {
         if (event.target == shareModal) {
-            shareModal.style.display = 'none';
+            shareModal.classList.remove('show');
         }
     });
 

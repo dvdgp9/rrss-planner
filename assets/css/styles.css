@@ -442,7 +442,11 @@ textarea.form-control {
 .app-simple {
     max-width: 1400px;
     margin: 20px auto;
-    padding: 15px;
+    padding: 0;
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
 }
 .header-simple {
     display: flex;
@@ -517,10 +521,12 @@ textarea.form-control {
 }
 
 .modal.show {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    opacity: 1;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.3s ease, visibility 0s linear 0s;
 }
 
 .modal-content {
@@ -1265,6 +1271,374 @@ textarea.form-control {
 
 /* ----- Fin Estilos de Branding ----- */
 
+/* ----- Enhanced Header with Business Line Dropdown and Tabs ----- */
+.enhanced-header {
+    background-color: var(--white);
+    border-bottom: 2px solid var(--light-gray);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.app-simple .filter-sort-container,
+.app-simple .table-container {
+    margin: 20px;
+}
+
+.header-navigation {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.loop-logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.loop-logo {
+    height: 40px;
+    width: auto;
+    transition: opacity 0.2s ease;
+}
+
+.loop-logo:hover {
+    opacity: 0.8;
+}
+
+.dashboard-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--light-gray);
+    color: var(--secondary-color);
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.dashboard-back-btn:hover {
+    background-color: var(--dark-gray);
+    color: var(--white);
+}
+
+/* Business Line Dropdown */
+.business-line-selector {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background-color: var(--white);
+    border: 2px solid var(--light-gray);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 200px;
+}
+
+.dropdown-toggle:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(35, 170, 197, 0.15);
+}
+
+.dropdown-logo {
+    height: 24px;
+    width: auto;
+    max-width: 40px;
+    object-fit: contain;
+}
+
+.dropdown-text {
+    flex: 1;
+    text-align: left;
+}
+
+.dropdown-arrow {
+    font-size: 0.8rem;
+    color: var(--dark-gray);
+    transition: transform 0.2s ease;
+}
+
+.dropdown-toggle.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    color: var(--secondary-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: var(--primary-color);
+}
+
+.dropdown-item.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.dropdown-item-logo {
+    height: 20px;
+    width: auto;
+    max-width: 35px;
+    object-fit: contain;
+}
+
+/* Content Type Tabs Container */
+.content-type-tabs-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 0;
+}
+
+.content-type-tabs {
+    display: flex;
+    gap: 5px;
+}
+
+.tabs-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.tab-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    color: var(--dark-gray);
+    text-decoration: none;
+    border-radius: 8px 8px 0 0;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.tab-item:hover:not(.disabled) {
+    background-color: #f8f9fa;
+    color: var(--primary-color);
+}
+
+.tab-item.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-bottom: 3px solid var(--primary-dark);
+}
+
+.tab-item.disabled {
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.tab-item.disabled:hover {
+    background-color: transparent;
+    color: #adb5bd;
+}
+
+/* Header Actions - Legacy (now using tabs-actions) */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* Dynamic Theming for Enhanced Header */
+.linea-ebone .dropdown-toggle:hover,
+.linea-ebone .tab-item.active {
+    border-color: #23AAC5;
+    background-color: #23AAC5;
+}
+
+.linea-cubofit .dropdown-toggle:hover,
+.linea-cubofit .tab-item.active {
+    border-color: #E23633;
+    background-color: #E23633;
+}
+
+.linea-uniges .dropdown-toggle:hover,
+.linea-uniges .tab-item.active {
+    border-color: #9B6FCE;
+    background: linear-gradient(90deg, #9B6FCE 0%, #032551 100%);
+}
+
+.linea-teia .dropdown-toggle:hover,
+.linea-teia .tab-item.active {
+    border-color: #009970;
+    background-color: #009970;
+}
+
+/* Responsive Behavior */
+@media (max-width: 768px) {
+    .enhanced-header {
+        padding: 10px 15px;
+        gap: 10px;
+    }
+    
+    .header-navigation {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .loop-logo {
+        height: 32px;
+    }
+    
+    .dropdown-toggle {
+        min-width: 150px;
+        font-size: 0.9rem;
+    }
+    
+    .content-type-tabs-container {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .content-type-tabs {
+        overflow-x: auto;
+        padding-bottom: 5px;
+        justify-content: flex-start;
+    }
+    
+    .tab-item {
+        white-space: nowrap;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .tabs-actions {
+        justify-content: center;
+        margin-bottom: 0;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-navigation {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .loop-logo-link {
+        align-self: center;
+        margin-bottom: 10px;
+    }
+    
+    .loop-logo {
+        height: 28px;
+    }
+    
+    .dropdown-toggle {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .content-type-tabs-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .content-type-tabs {
+        justify-content: center;
+    }
+    
+    .tabs-actions {
+        justify-content: center;
+    }
+}
+
+/* ----- Fin Enhanced Header Styles ----- */
+
+/* ----- Coming Soon Message for Blog Posts ----- */
+.coming-soon-message {
+    padding: 60px 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.coming-soon-content h3 {
+    color: var(--secondary-color);
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.coming-soon-content p {
+    color: var(--dark-gray);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.coming-soon-content small {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* ----- Fin Coming Soon Styles ----- */
+
 /* ----- Estilos para Modal Compartir ----- */
 .btn-secondary {
     background-color: #6c757d;
@@ -1276,17 +1650,17 @@ textarea.form-control {
 }
 
 .modal-share {
-    display: none; 
+    /* display: none; --- REMOVED, .modal handles initial hiding */
     position: fixed; 
-    z-index: 1000; 
+    z-index: 1000; /* Consistent with .modal */
     left: 0;
     top: 0;
     width: 100%; 
     height: 100%; 
     overflow: auto; 
-    background-color: rgba(0,0,0,0.6); 
-    align-items: center;
-    justify-content: center;
+    background-color: rgba(0,0,0,0.6); /* Consistent with .modal */
+    align-items: center;     /* Reinforce flex behavior */
+    justify-content: center; /* Reinforce flex behavior */
 }
 
 .modal-share-content {
@@ -1751,3 +2125,578 @@ input:checked + .slider:before {
 .table-container tbody tr[style*="display: none"] {
     visibility: collapse; /* Helps ensure layout consistency */
 } 
+
+/* Estilos para el Botón Nueva Línea de Negocio (si se necesita más que el inline) */
+.header-simple #btnNuevaLinea {
+    position: absolute; top: 20px; right: 20px; 
+    z-index: 10;
+}
+
+/* Estilos para el Modal */
+.modal {
+    display: none; /* Oculto por defecto, controlado por JS */
+    position: fixed; /* Se queda en su sitio incluso si se hace scroll */
+    z-index: 1000; /* Por encima de todo lo demás */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Habilita scroll si el contenido es muy grande */
+    background-color: rgba(0,0,0,0.6); /* Fondo negro semi-transparente */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto; /* 10% desde arriba y centrado horizontalmente */
+    padding: 25px;
+    border: 1px solid #ddd;
+    width: 80%;
+    max-width: 600px; /* Ancho máximo */
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-body .form-group {
+    margin-bottom: 18px;
+}
+
+.modal-body label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #444;
+}
+
+.modal-body input[type="text"],
+.modal-body input[type="email"],
+.modal-body input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Para que padding no afecte el width total */
+}
+
+.modal-body input[type="text"]:focus,
+.modal-body input[type="email"]:focus,
+.modal-body input[type="password"]:focus {
+    border-color: #007bff; /* Un color de foco estándar */
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); /* Sombra de foco similar a Bootstrap */
+}
+
+.modal-body small {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.modal-body .btn { /* Para que el botón dentro del modal tome un estilo consistente */
+    padding: 10px 18px;
+    font-size: 1em;
+}
+
+/* Estilos para los mensajes en el modal */
+#modalNuevaLineaMessage {
+    /* margin-top ya está en el HTML, pero se podría poner aquí */
+    padding: 10px; /* Añadir padding por defecto */
+    border-radius: 4px;
+    font-weight: 500;
+    /* display: none;  Inicialmente vacío, no necesita display none */
+}
+
+#modalNuevaLineaMessage span[style*="color: green"] { /* Estilo para mensajes de éxito */
+    background-color: #e6ffed; /* Un verde claro */
+    border: 1px solid #5cb85c; /* Borde verde */
+    color: #3c763d !important; /* Color de texto verde oscuro, !important para asegurar */
+    display: block; /* Para que ocupe todo el ancho */
+    padding: 10px; /* Consistencia con el padding general de mensajes */
+}
+
+#modalNuevaLineaMessage span[style*="color: red"] { /* Estilo para mensajes de error */
+    background-color: #f8d7da; /* Un rojo claro */
+    border: 1px solid #d9534f; /* Borde rojo */
+    color: #721c24 !important; /* Color de texto rojo oscuro, !important para asegurar */
+    display: block; /* Para que ocupe todo el ancho */
+    padding: 10px; /* Consistencia con el padding general de mensajes */
+} 
+
+/* Blog Form Styles */
+.blog-form .form-control {
+    font-family: inherit;
+}
+
+.blog-form textarea#contenido {
+    min-height: 400px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.blog-form .form-group label {
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+.linea-badge {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+
+.alert-error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.alert li {
+    margin-bottom: 5px;
+}
+
+.alert li:last-child {
+    margin-bottom: 0;
+}
+
+/* Blog Posts Table Styles */
+.blog-post-title {
+    font-weight: 600;
+    color: var(--secondary-color);
+    line-height: 1.4;
+}
+
+.blog-post-excerpt {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.blog-post-excerpt em {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Toggle switch for blog posts */
+#toggle-published-blog {
+    /* Inherit styles from main toggle */
+}
+
+/* Blog Form - Categorías y Tags */
+.categorias-container,
+.tags-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    background-color: #fafafa;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.checkbox-item:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+}
+
+.checkbox-item label {
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    margin: 0;
+}
+
+.checkbox-item label:hover {
+    color: var(--primary-color, #007bff);
+}
+
+/* Slug field styling */
+#slug {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+#slug + small {
+    color: #666;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* TinyMCE adjustments */
+.tox-tinymce {
+    border-radius: 6px !important;
+}
+
+.form-group .tox-tinymce {
+    margin-top: 5px;
+}
+
+/* Blog form preview container */
+.blog-form .preview-container {
+    margin-top: 10px;
+}
+
+.blog-form .preview-container img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+/* Enhanced Blog Form Header */
+.blog-form-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 30px;
+    padding: 0;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.7);
+}
+
+.header-left .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.breadcrumb-link {
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-link:hover {
+    color: var(--primary-color, #007bff);
+}
+
+.breadcrumb-separator {
+    color: #adb5bd;
+    font-size: 12px;
+}
+
+.breadcrumb-current {
+    color: #495057;
+    font-weight: 500;
+}
+
+.business-line-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.9);
+    padding: 8px 16px;
+    border-radius: 25px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.business-line-logo .business-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.business-line-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.business-line-label {
+    font-size: 11px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.business-line-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    line-height: 1.2;
+}
+
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 25px 30px 30px;
+}
+
+.page-title-section {
+    flex: 1;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.title-icon {
+    color: var(--primary-color, #007bff);
+    font-size: 24px;
+}
+
+.post-title-preview {
+    font-size: 18px;
+    font-weight: 400;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.page-subtitle {
+    font-size: 15px;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.btn-header {
+    padding: 10px 20px;
+    font-weight: 500;
+}
+
+.post-status-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-label {
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-draft {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.status-scheduled {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-publish {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Responsive adjustments for blog form header */
+@media (max-width: 768px) {
+    .header-top {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 20px;
+    }
+    
+    .header-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .post-title-preview {
+        font-size: 16px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .business-line-info {
+        order: -1;
+    }
+}
+
+/* WordPress button styling */
+.btn-wordpress {
+    background: linear-gradient(135deg, #21759b 0%, #1e6ba8 100%);
+    color: white !important;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-wordpress:hover {
+    background: linear-gradient(135deg, #1e6ba8 0%, #1a5d96 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(33, 117, 155, 0.3);
+    color: white !important;
+}
+
+.btn-wordpress:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.btn-wordpress i {
+    margin-right: 8px;
+}
+
+/* WordPress publish status indicators */
+.wp-sync-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wp-sync-status.synced {
+    background: #d4edda;
+    color: #155724;
+}
+
+.wp-sync-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.wp-sync-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* WordPress taxonomies loading states */
+.loading-message {
+    text-align: center;
+    color: #666;
+    padding: 15px;
+    margin: 0;
+    font-style: italic;
+}
+
+.no-items {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 10px;
+    margin: 0;
+}
+
+.error-message {
+    text-align: center;
+    color: #e74c3c;
+    padding: 10px;
+    margin: 0;
+    background-color: #fdf2f2;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.count {
+    color: #666;
+    font-size: 12px;
+    margin-left: 4px;
+}

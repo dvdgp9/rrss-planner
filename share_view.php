@@ -168,13 +168,13 @@ if (!$token) {
             <div class="table-container">
                 <!-- Toggle Switch HTML -->
                 <div class="table-actions" style="padding: 10px 15px; border-bottom: 1px solid #eee; background-color: #f9f9f9;"> 
-                    <div class="toggle-switch-container">
-                        <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
-                        <label class="switch">
-                            <input type="checkbox" id="toggle-published" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
+                                            <div class="toggle-switch-container">
+                            <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-published">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
                 </div>
                 <table class="share-table"> 
                     <thead>

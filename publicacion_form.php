@@ -2,41 +2,76 @@
 require_once 'includes/functions.php';
 require_authentication();
 
-// Verificar que tengamos el parámetro de línea de negocio
-if (!isset($_GET['linea'])) {
+// Verificar que tengamos el parámetro de línea de negocio (ID o slug)
+$lineaId = null;
+$lineaSlug = null;
+
+if (isset($_GET['linea_id'])) {
+    $lineaId = intval($_GET['linea_id']);
+    if (isset($_GET['linea_slug'])) { // Prefer slug if both are somehow present for return path
+        $lineaSlug = trim($_GET['linea_slug']);
+    }
+} elseif (isset($_GET['linea_slug'])) { // Fallback if only slug is sent (e.g. direct access)
+    $lineaSlug = trim($_GET['linea_slug']);
+    // Need to fetch ID if only slug is present
+    // This part might be needed if we allow access to form only with slug in future
+} else {
+    // If neither is set, redirect to dashboard as before
+    $_SESSION['feedback_message'] = ['tipo' => 'error', 'mensaje' => 'Falta el identificador de la línea de negocio.'];
     header("Location: index.php");
     exit;
 }
 
-$lineaId = $_GET['linea'];
+$db = getDbConnection(); // Initialize DB connection early
+
+// If we have linea_slug, ensure we have lineaId. If we only have lineaId, fetch slug if needed for return path.
+if ($lineaId && !$lineaSlug) {
+    $stmt_slug = $db->prepare("SELECT slug FROM lineas_negocio WHERE id = ?");
+    $stmt_slug->execute([$lineaId]);
+    $linea_data_temp = $stmt_slug->fetch();
+    if ($linea_data_temp) {
+        $lineaSlug = $linea_data_temp['slug'];
+    } else {
+        $_SESSION['feedback_message'] = ['tipo' => 'error', 'mensaje' => 'Línea de negocio no válida (ID sin slug).'];
+        header("Location: index.php");
+        exit;
+    }
+} elseif ($lineaSlug && !$lineaId) {
+    $stmt_id = $db->prepare("SELECT id FROM lineas_negocio WHERE slug = ?");
+    $stmt_id->execute([$lineaSlug]);
+    $linea_data_temp = $stmt_id->fetch();
+    if ($linea_data_temp) {
+        $lineaId = $linea_data_temp['id'];
+    } else {
+        $_SESSION['feedback_message'] = ['tipo' => 'error', 'mensaje' => 'Línea de negocio no válida (slug inválido).'];
+        header("Location: index.php");
+        exit;
+    }
+}
+
+if (!$lineaId || !$lineaSlug) { // Final check after attempting to resolve
+    $_SESSION['feedback_message'] = ['tipo' => 'error', 'mensaje' => 'No se pudo determinar la línea de negocio.'];
+    header("Location: index.php");
+    exit;
+}
+
 
 // Determinar la línea de negocio y la página de retorno
 $lineaNombre = '';
-$paginaRetorno = '';
-switch($lineaId) {
-    case 1: 
-        $lineaNombre = 'Ebone Servicios'; 
-        $paginaRetorno = 'ebone.php'; 
-        break;
-    case 2: 
-        $lineaNombre = 'CUBOFIT'; 
-        $paginaRetorno = 'cubofit.php'; 
-        break;
-    case 3: 
-        $lineaNombre = 'Uniges-3'; 
-        $paginaRetorno = 'uniges.php'; 
-        break;
-    case 4: 
-        $lineaNombre = 'Teiá'; 
-        $paginaRetorno = 'teia.php'; 
-        break;
-    default: 
+$stmt_nombre = $db->prepare("SELECT nombre FROM lineas_negocio WHERE id = ?");
+$stmt_nombre->execute([$lineaId]);
+$linea_data_nombre = $stmt_nombre->fetch();
+if ($linea_data_nombre) {
+    $lineaNombre = $linea_data_nombre['nombre'];
+} else {
+    // Esto no debería pasar si los checks anteriores funcionaron
+    $_SESSION['feedback_message'] = ['tipo' => 'error', 'mensaje' => 'Error al obtener nombre de línea de negocio.'];
         header("Location: index.php");
         exit;
 }
 
-// Establecer conexión a BD
-$db = getDbConnection();
+// Página de retorno ahora es siempre planner.php con el slug
+$paginaRetorno = "planner.php?slug=" . urlencode($lineaSlug);
 
 // Obtener las redes sociales disponibles para esta línea
 $stmt = $db->prepare("
@@ -399,13 +434,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="logout.php" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
         
-        <div class="nav-simple">
-            <a href="index.php">Dashboard</a>
-            <a href="ebone.php" <?php if($lineaId == 1) echo 'class="active"'; ?>>Ebone Servicios</a>
-            <a href="cubofit.php" <?php if($lineaId == 2) echo 'class="active"'; ?>>CUBOFIT</a>
-            <a href="uniges.php" <?php if($lineaId == 3) echo 'class="active"'; ?>>Uniges-3</a>
-            <a href="teia.php" <?php if($lineaId == 4) echo 'class="active"'; ?>>Teiá</a>
-        </div>
+        <?php require 'includes/nav.php'; ?>
         
         <?php if (!empty($errores)): ?>
             <div style="background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px;">

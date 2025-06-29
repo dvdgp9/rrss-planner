@@ -1,0 +1,597 @@
+<?php
+require_once 'includes/functions.php';
+require_authentication();
+
+// Variables para la línea de negocio actual
+$current_linea_id = null;
+$current_linea_nombre = 'Línea de Negocio Desconocida';
+$current_linea_logo_filename = '';
+$current_linea_slug = '';
+$page_error = null;
+$publicaciones = [];
+$redesDisponiblesFiltro = [];
+
+// Obtener el slug de la URL
+$slug = trim($_GET['slug'] ?? '');
+
+if (empty($slug)) {
+    $page_error = "No se ha especificado una línea de negocio (slug faltante).";
+} else {
+    try {
+        $db = getDbConnection();
+        
+        // 1. Obtener datos de la línea de negocio por slug
+        $stmt_linea = $db->prepare("SELECT id, nombre, logo_filename, slug FROM lineas_negocio WHERE slug = ?");
+        $stmt_linea->execute([$slug]);
+        $linea_negocio_actual = $stmt_linea->fetch();
+
+        if ($linea_negocio_actual) {
+            $current_linea_id = $linea_negocio_actual['id'];
+            $current_linea_nombre = $linea_negocio_actual['nombre'];
+            $current_linea_logo_filename = $linea_negocio_actual['logo_filename'];
+            $current_linea_slug = $linea_negocio_actual['slug'];
+
+            // --- Gestión de Ordenación ---
+            $sort_options = ['fecha_programada', 'estado'];
+            $sort_by = isset($_GET['sort']) && in_array($_GET['sort'], $sort_options) ? $_GET['sort'] : 'fecha_programada';
+            $default_sort_dir = ($sort_by === 'fecha_programada') ? 'ASC' : 'DESC'; 
+            $sort_dir = isset($_GET['dir']) && in_array(strtoupper($_GET['dir']), ['ASC', 'DESC']) ? strtoupper($_GET['dir']) : $default_sort_dir;
+            $next_sort_dir = ($sort_dir === 'ASC') ? 'DESC' : 'ASC';
+
+            // --- Gestión de Filtrado por Redes ---
+            $redes_filtro_ids = isset($_GET['redes']) && is_array($_GET['redes']) ? $_GET['redes'] : [];
+            $redes_filtro_ids = array_map('intval', $redes_filtro_ids);
+            $redes_filtro_ids = array_filter($redes_filtro_ids, function($id) { return $id > 0; });
+
+            // --- Conexión y Obtención de Datos de Publicaciones ---
+            $sql_publicaciones = "
+                SELECT 
+                    p.*, 
+                    GROUP_CONCAT(DISTINCT rs.nombre SEPARATOR '|') as nombres_redes, 
+                    COUNT(DISTINCT pf.id) as feedback_count 
+                FROM publicaciones p
+                LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id
+                LEFT JOIN redes_sociales rs ON prs.red_social_id = rs.id
+                LEFT JOIN publication_feedback pf ON p.id = pf.publicacion_id
+                WHERE p.linea_negocio_id = ?
+            ";
+            
+            // Initialize parameters with the current line of business ID FIRST
+            $params_publicaciones = [$current_linea_id]; 
+
+            if (!empty($redes_filtro_ids)) {
+                $placeholders = implode(',', array_fill(0, count($redes_filtro_ids), '?'));
+                // Subconsulta para asegurar que la publicación esté en TODAS las redes seleccionadas (si se quisiera)
+                // O en CUALQUIERA de las redes seleccionadas (más común para filtros)
+                // Optamos por "cualquiera" (JOIN estándar)
+                $sql_publicaciones .= " AND p.id IN (SELECT DISTINCT prs_filter.publicacion_id FROM publicacion_red_social prs_filter WHERE prs_filter.red_social_id IN ($placeholders)) ";
+                // Append social network IDs to the parameters array
+                foreach($redes_filtro_ids as $id_red) {
+                    $params_publicaciones[] = $id_red; 
+                }
+            }
+            
+            $sql_publicaciones .= " GROUP BY p.id ";
+            $sql_publicaciones .= " ORDER BY p." . $sort_by . " " . $sort_dir . ", p.id DESC"; 
+            
+            $stmt_publicaciones = $db->prepare($sql_publicaciones);
+            $stmt_publicaciones->execute($params_publicaciones);
+            $publicaciones = $stmt_publicaciones->fetchAll();
+            
+            // 3. Obtener todas las redes sociales disponibles para esta línea (para el filtro)
+            $stmt_redes = $db->prepare("
+                SELECT r.* 
+                FROM redes_sociales r
+                JOIN linea_negocio_red_social lnrs ON r.id = lnrs.red_social_id
+                WHERE lnrs.linea_negocio_id = ?
+                ORDER BY r.nombre ASC
+            ");
+            $stmt_redes->execute([$current_linea_id]);
+            $redesDisponiblesFiltro = $stmt_redes->fetchAll();
+
+        } else {
+            $page_error = "La línea de negocio con el slug '{$slug}' no fue encontrada.";
+            // Considerar loguear este evento
+        }
+    } catch (PDOException $e) {
+        $page_error = "Error de base de datos: " . $e->getMessage();
+        // Considerar loguear $e->getMessage() y mostrar un error más genérico al usuario
+    }
+}
+
+// Obtener todas las líneas de negocio para el dropdown
+$all_lineas_negocio = [];
+if (!$page_error) {
+    try {
+        $stmt_all_lineas = $db->query("SELECT id, nombre, logo_filename, slug FROM lineas_negocio ORDER BY nombre ASC");
+        $all_lineas_negocio = $stmt_all_lineas->fetchAll();
+    } catch (PDOException $e) {
+        // Si no podemos obtener las líneas, no es crítico, solo no mostramos el dropdown
+        error_log("Error obteniendo líneas para dropdown: " . $e->getMessage());
+    }
+}
+
+// Detectar tipo de contenido desde URL
+$content_type = trim($_GET['type'] ?? 'social');
+if (!in_array($content_type, ['social', 'blog'])) {
+    $content_type = 'social'; // Default fallback
+}
+
+// Variables para blog posts
+$blog_posts = [];
+
+// Si el tipo de contenido es blog, obtener blog posts en lugar de publicaciones sociales
+if ($content_type === 'blog' && $current_linea_id && !$page_error) {
+    try {
+        // --- Gestión de Ordenación para Blog Posts ---
+        $blog_sort_options = ['fecha_publicacion', 'titulo', 'estado'];
+$blog_sort_by = isset($_GET['sort']) && in_array($_GET['sort'], $blog_sort_options) ? $_GET['sort'] : 'fecha_publicacion';
+$blog_default_sort_dir = ($blog_sort_by === 'fecha_publicacion') ? 'DESC' : 'ASC'; 
+        $blog_sort_dir = isset($_GET['dir']) && in_array(strtoupper($_GET['dir']), ['ASC', 'DESC']) ? strtoupper($_GET['dir']) : $blog_default_sort_dir;
+        
+        // Actualizar variables para usar en la función de ordenación
+        $sort_by = $blog_sort_by;
+        $sort_dir = $blog_sort_dir;
+        $next_sort_dir = ($sort_dir === 'ASC') ? 'DESC' : 'ASC';
+        
+        // --- Obtención de Blog Posts ---
+        $sql_blog_posts = "
+            SELECT 
+                bp.*,
+                ln.wordpress_enabled,
+                ln.wordpress_url,
+                CASE 
+                    WHEN bp.estado = 'draft' THEN 'Borrador'
+                    WHEN bp.estado = 'scheduled' THEN 'Programado'
+                    WHEN bp.estado = 'published' THEN 'Publicado'
+                    ELSE bp.estado
+                END as estado_display
+            FROM blog_posts bp
+            JOIN lineas_negocio ln ON bp.linea_negocio_id = ln.id
+            WHERE bp.linea_negocio_id = ?
+            ORDER BY bp." . $blog_sort_by . " " . $blog_sort_dir . ", bp.id DESC
+        ";
+        
+        $stmt_blog_posts = $db->prepare($sql_blog_posts);
+        $stmt_blog_posts->execute([$current_linea_id]);
+        $blog_posts = $stmt_blog_posts->fetchAll();
+        
+    } catch (PDOException $e) {
+        error_log("Error obteniendo blog posts: " . $e->getMessage());
+        // No establecer page_error para que la página siga funcionando
+    }
+}
+
+// Funciones para generar enlaces de ordenación (adaptadas)
+function getSortLinkPlanner($currentSlug, $currentSortBy, $currentSortDir, $nextSortDir, $columnName, $columnLabel, $currentRedesFiltro, $contentType = 'social') {
+    $link = "planner.php?slug=" . urlencode($currentSlug) . "&type=" . urlencode($contentType) . "&sort=" . urlencode($columnName);
+    $icon = "";
+    $class = "sort-header";
+    
+    if ($currentSortBy === $columnName) {
+        $link .= "&dir=" . urlencode($nextSortDir);
+        $iconClass = ($currentSortDir === 'ASC') ? 'fa-sort-up' : 'fa-sort-down';
+        $icon = "<i class=\"fas " . $iconClass . " sort-icon\"></i>";
+        $class .= " active";
+    } else {
+        // Para blog posts, el default para fecha es DESC, para título y estado es ASC
+        $defaultDir = ($columnName === 'fecha_publicacion' && $contentType === 'blog') ? 'DESC' : 'ASC';
+        $link .= "&dir=" . $defaultDir;
+        $icon = "<i class=\"fas fa-sort sort-icon\"></i>";
+    }
+    
+    // Solo añadir filtros de redes para contenido social
+    if ($contentType === 'social' && !empty($currentRedesFiltro)) {
+        foreach($currentRedesFiltro as $redId) {
+            $link .= "&redes[]=" . intval($redId);
+        }
+    }
+    return "<th class=\"" . htmlspecialchars($class) . "\" style=\"/* Ancho original si aplica */\"><a href=\"" . htmlspecialchars($link) . "\">" . htmlspecialchars($columnLabel) . " " . $icon . "</a></th>";
+}
+
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lööp - <?php echo htmlspecialchars($current_linea_nombre); ?></title>
+    <link rel="icon" type="image/png" href="assets/images/logos/Loop-favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<?php
+// Determinar clase de línea para theming dinámico
+$linea_body_class = 'linea-page-dinamica';
+if ($current_linea_id) {
+    switch($current_linea_id) {
+        case 1: $linea_body_class .= ' linea-ebone'; break;
+        case 2: $linea_body_class .= ' linea-cubofit'; break;
+        case 3: $linea_body_class .= ' linea-uniges'; break;
+        case 4: $linea_body_class .= ' linea-teia'; break;
+    }
+}
+?>
+<body class="<?php echo $linea_body_class; ?>">
+
+    <div class="app-simple">
+        <?php if ($page_error): ?>
+            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center;">
+                <h1>Error</h1>
+                <p><?php echo htmlspecialchars($page_error); ?></p>
+                <p><a href="index.php" class="btn btn-primary">Volver al Dashboard</a></p>
+            </div>
+        <?php else: ?>
+            <!-- New Enhanced Header with Business Line Dropdown and Content Type Tabs -->
+            <div class="enhanced-header">
+                <div class="header-navigation">
+                    <a href="index.php" class="loop-logo-link">
+                        <img src="assets/images/logos/loop-logo.png" alt="Lööp Logo" class="loop-logo">
+                    </a>
+                    
+                    <a href="index.php" class="dashboard-back-btn">
+                        <i class="fas fa-arrow-left"></i> Dashboard
+                    </a>
+                    
+                    <!-- Business Line Dropdown -->
+                    <div class="business-line-selector">
+                        <button class="dropdown-toggle" id="businessLineDropdown">
+                            <?php if (!empty($current_linea_logo_filename)): ?>
+                                <img src="assets/images/logos/<?php echo htmlspecialchars($current_linea_logo_filename); ?>" alt="Logo" class="dropdown-logo">
+                            <?php endif; ?>
+                            <span class="dropdown-text"><?php echo htmlspecialchars($current_linea_nombre); ?></span>
+                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                        </button>
+                        
+                        <div class="dropdown-menu" id="businessLineDropdownMenu">
+                            <?php foreach ($all_lineas_negocio as $linea): ?>
+                                <a href="planner.php?slug=<?php echo urlencode($linea['slug']); ?>&type=<?php echo urlencode($content_type); ?>" 
+                                   class="dropdown-item <?php echo ($linea['id'] == $current_linea_id) ? 'active' : ''; ?>">
+                                    <?php if (!empty($linea['logo_filename'])): ?>
+                                        <img src="assets/images/logos/<?php echo htmlspecialchars($linea['logo_filename']); ?>" alt="Logo" class="dropdown-item-logo">
+                                    <?php endif; ?>
+                                    <span><?php echo htmlspecialchars($linea['nombre']); ?></span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Type Tabs with Share Button -->
+                <div class="content-type-tabs-container">
+                    <div class="content-type-tabs">
+                        <a href="planner.php?slug=<?php echo urlencode($current_linea_slug); ?>&type=social" 
+                           class="tab-item <?php echo ($content_type === 'social') ? 'active' : ''; ?>">
+                            <i class="fas fa-share-alt"></i>
+                            <span>Posts Sociales</span>
+                        </a>
+                        <a href="planner.php?slug=<?php echo urlencode($current_linea_slug); ?>&type=blog" 
+                           class="tab-item <?php echo ($content_type === 'blog') ? 'active' : ''; ?>">
+                            <i class="fas fa-blog"></i>
+                            <span>Blog Posts</span>
+                        </a>
+                    </div>
+                    
+                    <div class="tabs-actions">
+                        <button class="btn btn-secondary btn-share" data-linea-id="<?php echo intval($current_linea_id); ?>" data-linea-nombre="<?php echo htmlspecialchars($current_linea_nombre); ?>">
+                            <i class="fas fa-share-alt"></i> Compartir Vista
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <?php if ($content_type === 'social'): ?>
+            <div class="filter-sort-container">
+                <form action="planner.php" method="GET" class="filter-form">
+                    <input type="hidden" name="slug" value="<?php echo htmlspecialchars($current_linea_slug); ?>">
+                    <input type="hidden" name="type" value="<?php echo htmlspecialchars($content_type); ?>">
+                     <?php if (isset($_GET['sort'])) { echo '<input type="hidden" name="sort" value="'.htmlspecialchars($_GET['sort']).'">'; } ?>
+                     <?php if (isset($_GET['dir'])) { echo '<input type="hidden" name="dir" value="'.htmlspecialchars($_GET['dir']).'">'; } ?>
+
+                    <div class="filter-group">
+                        <label>Filtrar por Redes Sociales:</label>
+                        <div class="redes-filter">
+                            <?php foreach ($redesDisponiblesFiltro as $red): 
+                                $checked = in_array($red['id'], $redes_filtro_ids) ? 'checked' : '';
+                            ?>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="filtro_red_<?php echo $red['id']; ?>" name="redes[]" value="<?php echo $red['id']; ?>" <?php echo $checked; ?>>
+                                <label for="filtro_red_<?php echo $red['id']; ?>">
+                                    <?php 
+                                    $iconClass = 'fas fa-share-alt'; // Icono por defecto
+                                    switch (strtolower($red['nombre'])) {
+                                        case 'instagram': $iconClass = 'fab fa-instagram'; break;
+                                        case 'facebook': $iconClass = 'fab fa-facebook-f'; break;
+                                        case 'twitter': case 'twitter (x)': $iconClass = 'fab fa-twitter'; break;
+                                        case 'linkedin': $iconClass = 'fab fa-linkedin-in'; break;
+                                        // Añadir más casos si es necesario
+                                    }
+                                    ?>
+                                    <i class="<?php echo $iconClass; ?>"></i>&nbsp;<?php echo htmlspecialchars($red['nombre']); ?>
+                                </label>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="planner.php?slug=<?php echo htmlspecialchars($current_linea_slug); ?>&type=<?php echo htmlspecialchars($content_type); ?>" class="btn btn-secondary">Limpiar Filtros</a>
+                </form>
+            </div>
+            <?php endif; ?>
+            
+            <div class="table-container">
+                <?php if ($content_type === 'social'): ?>
+                <div class="table-header">
+                    <h2 class="table-title">Posts de Redes Sociales</h2>
+                    <div class="table-actions">
+                        <div class="toggle-switch-container">
+                            <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-published">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <a href="publicacion_form.php?linea_id=<?php echo intval($current_linea_id); ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nuevo Post Social
+                        </a>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <?php echo getSortLinkPlanner($current_linea_slug, $sort_by, $sort_dir, $next_sort_dir, 'fecha_programada', 'Fecha', $redes_filtro_ids, $content_type); ?>
+                            <th style="width: 70px;">Imagen</th>
+                            <th>Contenido</th>
+                            <?php echo getSortLinkPlanner($current_linea_slug, $sort_by, $sort_dir, $next_sort_dir, 'estado', 'Estado', $redes_filtro_ids, $content_type); ?>
+                            <th style="width: 120px;">Redes</th>
+                            <th style="width: 140px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($publicaciones)): ?>
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px;">
+                                No hay publicaciones disponibles para <?php echo htmlspecialchars($current_linea_nombre); ?> con los filtros actuales.
+                            </td>
+                        </tr>
+                        <?php else: ?>
+                            <?php foreach ($publicaciones as $publicacion): ?>
+                            <tr data-estado="<?php echo htmlspecialchars($publicacion['estado']); ?>">
+                                <td data-label="Fecha"><?php echo date("d/m/Y", strtotime($publicacion['fecha_programada'])); ?></td>
+                                <td data-label="Imagen">
+                                    <?php if (!empty($publicacion['imagen_url'])): ?>
+                                        <img src="<?php echo htmlspecialchars($publicacion['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
+                                    <?php else: ?>
+                                        <span class="no-image"><i class="fas fa-image"></i></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="Contenido">
+                                    <div class="contenido-publicacion">
+                                        <?php echo nl2br(htmlspecialchars(truncateText($publicacion['contenido'], 200))); ?>
+                                    </div>
+                                </td>
+                                <td data-label="Estado">
+                                    <div class="status-feedback-wrapper">
+                                        <select class="estado-selector-directo" data-id="<?php echo $publicacion['id']; ?>" data-linea-id="<?php echo intval($current_linea_id); ?>">
+                                            <option value="borrador" <?php if ($publicacion['estado'] === 'borrador') echo 'selected'; ?>>Borrador</option>
+                                            <option value="programado" <?php if ($publicacion['estado'] === 'programado') echo 'selected'; ?>>Programado</option>
+                                            <option value="publicado" <?php if ($publicacion['estado'] === 'publicado') echo 'selected'; ?>>Publicado</option>
+                                        </select>
+                                        <?php if ($publicacion['feedback_count'] > 0): ?>
+                                        <a href="#" class="feedback-indicator" data-publicacion-id="<?php echo $publicacion['id']; ?>">
+                                            <i class="fas fa-comments"></i> (<?php echo $publicacion['feedback_count']; ?>)
+                                        </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td data-label="Redes">
+                                    <?php 
+                                    if (!empty($publicacion['nombres_redes'])) {
+                                        $redes_array = explode('|', $publicacion['nombres_redes']);
+                                        echo '<div class="redes-sociales-iconos">';
+                                        foreach ($redes_array as $nombre_red_raw) {
+                                            $nombre_red = strtolower(trim($nombre_red_raw));
+                                            $icon_clase_fa = 'fas fa-share-alt'; // Default icon
+                                            $span_clase_especifica = 'red-social-icon-generic';
+
+                                            if ($nombre_red === 'instagram') {
+                                                $icon_clase_fa = 'fab fa-instagram';
+                                                $span_clase_especifica = 'red-social-icon-instagram';
+                                            } elseif ($nombre_red === 'facebook') {
+                                                $icon_clase_fa = 'fab fa-facebook-f';
+                                                $span_clase_especifica = 'red-social-icon-facebook';
+                                            } elseif ($nombre_red === 'twitter' || $nombre_red === 'x' || $nombre_red === 'twitter (x)') {
+                                                $icon_clase_fa = 'fab fa-twitter'; // Consider using fa-x-twitter if available/desired
+                                                $span_clase_especifica = 'red-social-icon-twitter';
+                                            } elseif ($nombre_red === 'linkedin') {
+                                                $icon_clase_fa = 'fab fa-linkedin-in';
+                                                $span_clase_especifica = 'red-social-icon-linkedin';
+                                            }
+                                            echo '<span class="red-social-icon ' . $span_clase_especifica . '" title="' . htmlspecialchars(ucfirst($nombre_red_raw)) . '"><i class="' . $icon_clase_fa . '"></i></span> ';
+                                        }
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </td>
+                                <td data-label="Acciones" class="row-actions">
+                                    <a href="publicacion_form.php?id=<?php echo $publicacion['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                    <button class="action-btn share-publication" data-publicacion-id="<?php echo $publicacion['id']; ?>" title="Compartir Publicación"><i class="fas fa-share-square"></i></button>
+                                    <a href="publicacion_delete.php?id=<?php echo $publicacion['id']; ?>&linea_id=<?php echo intval($current_linea_id); ?>&slug_redirect=<?php echo htmlspecialchars($current_linea_slug); ?>" class="action-btn delete" title="Eliminar" ><i class="fas fa-trash-alt"></i></a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+                <?php elseif ($content_type === 'blog'): ?>
+                <!-- Blog Posts Section -->
+                <div class="table-header">
+                    <h2 class="table-title">Posts de Blog</h2>
+                    <div class="table-actions">
+                        <div class="toggle-switch-container">
+                            <label for="toggle-published-blog" class="toggle-switch-label">Mostrar Publicados</label>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-published-blog">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <a href="blog_form.php?linea_id=<?php echo intval($current_linea_id); ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nuevo Blog Post
+                        </a>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <?php echo getSortLinkPlanner($current_linea_slug, $sort_by, $sort_dir, $next_sort_dir, 'fecha_publicacion', 'Fecha', $redes_filtro_ids, $content_type); ?>
+                            <th style="width: 70px;">Imagen</th>
+                            <?php echo getSortLinkPlanner($current_linea_slug, $sort_by, $sort_dir, $next_sort_dir, 'titulo', 'Título', $redes_filtro_ids, $content_type); ?>
+                            <th>Excerpt</th>
+                            <?php echo getSortLinkPlanner($current_linea_slug, $sort_by, $sort_dir, $next_sort_dir, 'estado', 'Estado', $redes_filtro_ids, $content_type); ?>
+                            <th style="width: 90px;">WordPress</th>
+                            <th style="width: 180px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($blog_posts)): ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 30px;">
+                                No hay blog posts disponibles para <?php echo htmlspecialchars($current_linea_nombre); ?>.
+                                <br><br>
+                                <a href="blog_form.php?linea_id=<?php echo intval($current_linea_id); ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Crear tu primer Blog Post
+                                </a>
+                            </td>
+                        </tr>
+                        <?php else: ?>
+                            <?php foreach ($blog_posts as $blog_post): ?>
+                            <tr data-estado="<?php echo htmlspecialchars($blog_post['estado']); ?>">
+                                <td data-label="Fecha"><?php echo date("d/m/Y", strtotime($blog_post['fecha_publicacion'])); ?></td>
+                                <td data-label="Imagen">
+                                    <?php if (!empty($blog_post['imagen_destacada'])): ?>
+                                        <img src="<?php echo htmlspecialchars($blog_post['imagen_destacada']); ?>" alt="Imagen destacada" class="thumbnail">
+                                    <?php else: ?>
+                                        <span class="no-image"><i class="fas fa-image"></i></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="Título">
+                                    <div class="blog-post-title">
+                                        <strong><?php echo htmlspecialchars($blog_post['titulo']); ?></strong>
+                                    </div>
+                                </td>
+                                <td data-label="Excerpt">
+                                    <div class="blog-post-excerpt">
+                                        <?php 
+                                        if (!empty($blog_post['excerpt'])) {
+                                            echo htmlspecialchars(truncateText($blog_post['excerpt'], 150));
+                                        } else {
+                                            echo '<em style="color: #999;">Sin excerpt</em>';
+                                        }
+                                        ?>
+                                    </div>
+                                </td>
+                                <td data-label="Estado">
+                                    <select class="estado-selector-directo" data-id="<?php echo $blog_post['id']; ?>" data-linea-id="<?php echo intval($current_linea_id); ?>" data-type="blog">
+                                        <option value="draft" <?php if ($blog_post['estado'] === 'draft') echo 'selected'; ?>>Borrador</option>
+                                        <option value="scheduled" <?php if ($blog_post['estado'] === 'scheduled') echo 'selected'; ?>>Programado</option>
+                                        <option value="publish" <?php if ($blog_post['estado'] === 'publish') echo 'selected'; ?>>Publicado</option>
+                                    </select>
+                                </td>
+                                <td data-label="WordPress">
+                                    <?php if ($blog_post['wordpress_enabled']): ?>
+                                        <?php if (!empty($blog_post['wp_post_id'])): ?>
+                                            <span class="wp-sync-status <?php echo $blog_post['wp_sync_status'] ?? 'synced'; ?>" title="WordPress Post ID: <?php echo $blog_post['wp_post_id']; ?>">
+                                                <?php 
+                                                switch($blog_post['wp_sync_status'] ?? 'synced') {
+                                                    case 'synced': echo '✅ Sync'; break;
+                                                    case 'pending': echo '⏳ Pend'; break;
+                                                    case 'error': echo '❌ Error'; break;
+                                                    default: echo '✅ Sync'; break;
+                                                }
+                                                ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="wp-sync-status pending">⏳ No sync</span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span style="color: #999; font-size: 12px;">Deshabilitado</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="Acciones" class="row-actions">
+                                    <a href="blog_form.php?id=<?php echo $blog_post['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                    
+                                    <?php if ($blog_post['wordpress_enabled']): ?>
+                                        <button class="action-btn" style="background: #21759b; color: white;" title="Publicar en WordPress" onclick="publishToWordPressFromTable(<?php echo $blog_post['id']; ?>)">
+                                            <i class="fab fa-wordpress"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    
+                                    <button class="action-btn delete" title="Eliminar" onclick="deleteBlogPost(<?php echo $blog_post['id']; ?>, '<?php echo htmlspecialchars($current_linea_slug); ?>')"><i class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+                <?php endif; ?>
+            </div> <!-- Fin table-container -->
+
+            <!-- Modal para previsualización de imagen -->
+            <div id="imageModal" class="modal-image">
+                <span class="close-image-modal">&times;</span>
+                <img class="modal-image-content" id="modalImageSrc">
+            </div>
+             <!-- Modal para mostrar feedback -->
+            <div id="feedbackDisplayModal" class="modal-feedback-display">
+                <div class="modal-feedback-content">
+                    <span class="close-feedback-modal">&times;</span>
+                    <h2>Feedback Recibido</h2>
+                    <div class="feedback-display-list">
+                        <!-- Contenido cargado por JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para Compartir Vista (ADDED) -->
+            <div id="shareModal" class="modal modal-share" style="display: none;">
+                <div class="modal-share-content">
+                    <span class="close-share-modal" data-modal-id="shareModal">&times;</span>
+                    <h2>Compartir Vista de Línea de Negocio</h2>
+                    <p>Copia este enlace para compartir una vista de solo lectura de esta línea de negocio:</p>
+                    <div class="share-link-container">
+                        <input type="text" id="shareLinkInput" readonly>
+                        <button id="copyShareLinkBtn" class="btn btn-primary"><i class="fas fa-copy"></i> Copiar</button>
+                    </div>
+                    <div id="copyMessage" style="display: none; margin-top: 10px; color: green;">¡Enlace copiado!</div>
+                    <div id="shareError" style="display: none; margin-top: 10px; color: red;"></div>
+                </div>
+            </div>
+
+            <!-- Modal para Compartir Publicación Individual -->
+            <div id="sharePublicationModal" class="modal modal-share" style="display: none;">
+                <div class="modal-share-content">
+                    <span class="close-share-modal" data-modal-id="sharePublicationModal">&times;</span>
+                    <h2>Compartir Publicación Individual</h2>
+                    <p>Copia este enlace para compartir una vista de solo lectura de esta publicación:</p>
+                    <div class="share-link-container">
+                        <input type="text" id="sharePublicationLinkInput" readonly>
+                        <button id="copySharePublicationLinkBtn" class="btn btn-primary"><i class="fas fa-copy"></i> Copiar</button>
+                    </div>
+                    <div id="copyPublicationMessage" style="display: none; margin-top: 10px; color: green;">¡Enlace copiado!</div>
+                    <div id="sharePublicationError" style="display: none; margin-top: 10px; color: red;"></div>
+                </div>
+            </div>
+
+        <?php endif; // Fin del if(!$page_error) ?>
+    </div> <!-- Fin app-simple -->
+    
+    <!-- Scripts JS -->
+    <script src="assets/js/main.js" defer></script>
+    <script src="assets/js/share.js" defer></script> <!-- ADDED share.js -->
+</body>
+</html> 
