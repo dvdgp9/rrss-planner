@@ -376,11 +376,30 @@ if ($current_linea_id) {
                                 </td>
                                 <td data-label="Estado">
                                     <div class="status-feedback-wrapper">
-                                        <select class="estado-selector-directo" data-id="<?php echo $publicacion['id']; ?>" data-linea-id="<?php echo intval($current_linea_id); ?>">
-                                            <option value="borrador" <?php if ($publicacion['estado'] === 'borrador') echo 'selected'; ?>>Borrador</option>
-                                            <option value="programado" <?php if ($publicacion['estado'] === 'programado') echo 'selected'; ?>>Programado</option>
-                                            <option value="publicado" <?php if ($publicacion['estado'] === 'publicado') echo 'selected'; ?>>Publicado</option>
-                                        </select>
+                                        <?php
+                                        // Modern status selector component
+                                        $status_config = [
+                                            'borrador' => ['label' => 'Borrador', 'icon' => '📝'],
+                                            'programado' => ['label' => 'Programado', 'icon' => '📅'],
+                                            'publicado' => ['label' => 'Publicado', 'icon' => '✅']
+                                        ];
+                                        $current_status = $publicacion['estado'];
+                                        $current_config = $status_config[$current_status];
+                                        ?>
+                                        <div class="status-selector" data-id="<?php echo $publicacion['id']; ?>" data-linea-id="<?php echo intval($current_linea_id); ?>">
+                                            <button class="status-selector-trigger <?php echo $current_status; ?>">
+                                                <span class="status-text"><?php echo $current_config['label']; ?></span>
+                                                <span class="status-selector-arrow">▼</span>
+                                            </button>
+                                            <div class="status-selector-dropdown">
+                                                <?php foreach ($status_config as $status => $config): ?>
+                                                    <button class="status-selector-option <?php echo ($status === $current_status) ? 'active' : ''; ?>" data-status="<?php echo $status; ?>">
+                                                        <span class="status-icon <?php echo $status; ?>"><?php echo $config['icon']; ?></span>
+                                                        <span><?php echo $config['label']; ?></span>
+                                                    </button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
                                         <?php if ($publicacion['feedback_count'] > 0): ?>
                                         <a href="#" class="feedback-indicator" data-publicacion-id="<?php echo $publicacion['id']; ?>">
                                             <i class="fas fa-comments"></i> (<?php echo $publicacion['feedback_count']; ?>)
@@ -496,11 +515,30 @@ if ($current_linea_id) {
                                     </div>
                                 </td>
                                 <td data-label="Estado">
-                                    <select class="estado-selector-directo" data-id="<?php echo $blog_post['id']; ?>" data-linea-id="<?php echo intval($current_linea_id); ?>" data-type="blog">
-                                        <option value="draft" <?php if ($blog_post['estado'] === 'draft') echo 'selected'; ?>>Borrador</option>
-                                        <option value="scheduled" <?php if ($blog_post['estado'] === 'scheduled') echo 'selected'; ?>>Programado</option>
-                                        <option value="publish" <?php if ($blog_post['estado'] === 'publish') echo 'selected'; ?>>Publicado</option>
-                                    </select>
+                                    <?php
+                                    // Modern status selector component for blog posts
+                                    $blog_status_config = [
+                                        'draft' => ['label' => 'Borrador', 'icon' => '📝'],
+                                        'scheduled' => ['label' => 'Programado', 'icon' => '📅'],
+                                        'publish' => ['label' => 'Publicado', 'icon' => '✅']
+                                    ];
+                                    $current_blog_status = $blog_post['estado'];
+                                    $current_blog_config = $blog_status_config[$current_blog_status];
+                                    ?>
+                                    <div class="status-selector" data-id="<?php echo $blog_post['id']; ?>" data-linea-id="<?php echo intval($current_linea_id); ?>" data-type="blog">
+                                        <button class="status-selector-trigger <?php echo $current_blog_status; ?>">
+                                            <span class="status-text"><?php echo $current_blog_config['label']; ?></span>
+                                            <span class="status-selector-arrow">▼</span>
+                                        </button>
+                                        <div class="status-selector-dropdown">
+                                            <?php foreach ($blog_status_config as $status => $config): ?>
+                                                <button class="status-selector-option <?php echo ($status === $current_blog_status) ? 'active' : ''; ?>" data-status="<?php echo $status; ?>">
+                                                    <span class="status-icon <?php echo $status; ?>"><?php echo $config['icon']; ?></span>
+                                                    <span><?php echo $config['label']; ?></span>
+                                                </button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td data-label="WordPress">
                                     <?php if ($blog_post['wordpress_enabled']): ?>
@@ -591,7 +629,33 @@ if ($current_linea_id) {
     </div> <!-- Fin app-simple -->
     
     <!-- Scripts JS -->
-    <script src="assets/js/main.js" defer></script>
+    <script src="assets/js/main.js"></script>
     <script src="assets/js/share.js" defer></script> <!-- ADDED share.js -->
+    
+    <script>
+        // Handle PHP session messages with toast notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php if (isset($_SESSION['feedback_message'])): ?>
+                const feedbackType = '<?php echo $_SESSION['feedback_message']['tipo']; ?>';
+                const feedbackMessage = <?php echo json_encode($_SESSION['feedback_message']['mensaje']); ?>;
+                
+                console.log('Session message detected:', feedbackType, feedbackMessage);
+                
+                // Ensure main.js is loaded and functions are available
+                setTimeout(() => {
+                    if (typeof handleSessionMessage === 'function') {
+                        console.log('Showing toast:', feedbackType, feedbackMessage);
+                        handleSessionMessage(feedbackType, feedbackMessage);
+                    } else {
+                        console.error('handleSessionMessage function not found');
+                    }
+                }, 300);
+                
+                <?php unset($_SESSION['feedback_message']); ?>
+            <?php else: ?>
+                console.log('No session feedback message found');
+            <?php endif; ?>
+        });
+    </script>
 </body>
 </html> 

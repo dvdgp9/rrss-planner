@@ -1,3 +1,143 @@
+// =================== TOAST NOTIFICATIONS SYSTEM ===================
+
+// Create toast container if it doesn't exist
+function createToastContainer() {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+// Show toast notification
+function showToast(message, type = 'info', duration = 5000, title = null) {
+    const container = createToastContainer();
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    // Define icons for different types
+    const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+    
+    // Define default titles
+    const defaultTitles = {
+        success: 'Correcto',
+        error: 'Error',
+        warning: 'Advertencia',
+        info: 'Información'
+    };
+    
+    const toastTitle = title || defaultTitles[type];
+    
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type]}</div>
+        <div class="toast-content">
+            <div class="toast-title">${toastTitle}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="closeToast(this.parentElement)">×</button>
+        <div class="toast-progress" style="width: 100%"></div>
+    `;
+    
+    // Add to container
+    container.appendChild(toast);
+    
+    // Trigger show animation
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Auto-close functionality
+    if (duration > 0) {
+        const progressBar = toast.querySelector('.toast-progress');
+        if (progressBar) {
+            progressBar.style.transition = `width ${duration}ms linear`;
+            setTimeout(() => {
+                progressBar.style.width = '0%';
+            }, 100);
+        }
+        
+        setTimeout(() => {
+            closeToast(toast);
+        }, duration);
+    }
+    
+    return toast;
+}
+
+// Close toast
+function closeToast(toast) {
+    toast.classList.add('hide');
+    toast.classList.remove('show');
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.parentElement.removeChild(toast);
+        }
+    }, 400);
+}
+
+// Helper functions for specific toast types
+window.showSuccessToast = function(message, duration = 4000) {
+    return showToast(message, 'success', duration);
+};
+
+window.showErrorToast = function(message, duration = 6000) {
+    return showToast(message, 'error', duration);
+};
+
+window.showWarningToast = function(message, duration = 5000) {
+    return showToast(message, 'warning', duration);
+};
+
+window.showInfoToast = function(message, duration = 4000) {
+    return showToast(message, 'info', duration);
+};
+
+// Handle JSON responses from AJAX calls
+window.handleAjaxResponse = function(response) {
+    if (typeof response === 'string') {
+        try {
+            response = JSON.parse(response);
+        } catch (e) {
+            console.error('Error parsing JSON response:', e);
+            return;
+        }
+    }
+    
+    if (response.success) {
+        showSuccessToast(response.message || 'Operación completada correctamente');
+    } else {
+        showErrorToast(response.message || 'Ha ocurrido un error');
+    }
+};
+
+// Handle PHP session messages (for pages that reload)
+window.handleSessionMessage = function(type, message) {
+    if (!message) return;
+    
+    const typeMap = {
+        'success': 'success',
+        'error': 'error',
+        'warning': 'warning',
+        'info': 'info'
+    };
+    
+    const toastType = typeMap[type] || 'info';
+    showToast(message, toastType);
+};
+
+// =================== END TOAST NOTIFICATIONS SYSTEM ===================
+
 // Funcionalidad para los filtros de publicaciones
 document.addEventListener('DOMContentLoaded', function() {
     // Gestión de filtros
@@ -161,6 +301,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     } // Fin Feedback Display Modal Logic
+
+    // Initialize modern status selectors
+    initStatusSelectors();
 
     // Función auxiliar para mostrar feedback (usada por el modal interno)
     function displayInternalFeedback(container, feedbackItems) {
@@ -377,71 +520,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- End Enhanced Header Functionality ---
     
-    const statusSelectors = document.querySelectorAll('.estado-selector-directo');
-
-    statusSelectors.forEach(selector => {
-        console.log('Estado selector script PART executing for each selector'); // TEST LINE
-        selector.addEventListener('change', function(event) {
-            const publicacionId = this.dataset.id;
-            const nuevoEstado = event.target.value;
-            const lineaId = this.dataset.lineaId; // Added this line
-
-            if (!publicacionId || !nuevoEstado || !lineaId) {
-                console.error('Faltan datos para actualizar estado: ID, Estado o Linea ID.', { publicacionId, nuevoEstado, lineaId });
-                return;
-            }
-
-            console.log(`Intentando actualizar publicación ID: ${publicacionId} a estado: ${nuevoEstado} para línea ID: ${lineaId}`);
-
-            const formData = new FormData();
-            formData.append('id', publicacionId);
-            formData.append('estado', nuevoEstado);
-            formData.append('linea', lineaId); // Changed from 'linea_id' to 'linea' to match publicacion_update_estado.php
-
-            fetch('publicacion_update_estado.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    // Try to get error message from server if it's JSON, otherwise use status text
-                    return response.json().catch(() => { throw new Error(response.statusText) }).then(errData => { throw errData; });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    console.log('Estado actualizado con éxito:', data);
-                    // Optionally, update the UI more dynamically here, e.g., a success message
-                    // For now, the page will need a reload to see the change fully reflected if it's not a SPA.
-                    // We could also update the row's data-estado attribute here.
-                    const row = this.closest('tr');
-                    if (row) {
-                        row.dataset.estado = nuevoEstado;
-                        // If using the toggle for published posts, re-apply filter visually
-                        if (typeof filterPublishedPosts === 'function') {
-                           // filterPublishedPosts(); // Uncomment if you want to re-apply visual filter immediately
-                        }
-                    }
-                     alert('Estado actualizado a: ' + data.estadoCapitalizado + '. Recarga la página para ver todos los cambios si es necesario.');
-
-                } else {
-                    console.error('Error al actualizar estado (respuesta servidor):', data.message);
-                    alert('Error al actualizar estado: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error en la petición fetch para actualizar estado:', error);
-                let errorMessage = 'Error de red o servidor.';
-                if (error && error.message) {
-                    errorMessage = error.message;
-                } else if (typeof error === 'object' && error.hasOwnProperty('message')) { // Server error from response.json()
-                    errorMessage = error.message;
-                }
-                alert('Error en la petición para actualizar estado: ' + errorMessage);
-            });
-        });
-    });
+    // OLD STATUS SELECTOR CODE REMOVED - Now using modern status selector component
+    // The estado-selector-directo elements are now handled by initStatusSelectors() function
 }); // Cierre del DOMContentLoaded principal 
 
 
@@ -579,61 +659,16 @@ document.addEventListener('DOMContentLoaded', function() {
         filterPublishedBlogPosts(); // Initial filter on page load
     }
 
-    // Blog Post Status Update Logic
-    const blogStatusSelectors = document.querySelectorAll('.estado-selector-directo[data-type="blog"]');
-
-    blogStatusSelectors.forEach(selector => {
-        selector.addEventListener('change', function(event) {
-            const blogPostId = this.dataset.id;
-            const nuevoEstado = event.target.value;
-            const lineaId = this.dataset.lineaId;
-
-            if (!blogPostId || !nuevoEstado || !lineaId) {
-                console.error('Faltan datos para actualizar estado del blog post');
-                return;
-            }
-
-            console.log(`Actualizando blog post ID: ${blogPostId} a estado: ${nuevoEstado}`);
-
-            const formData = new FormData();
-            formData.append('id', blogPostId);
-            formData.append('estado', nuevoEstado);
-            formData.append('linea', lineaId);
-            formData.append('type', 'blog');
-
-            fetch('blog_update_estado.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Estado del blog post actualizado con éxito:', data);
-                    const row = this.closest('tr');
-                    if (row) {
-                        row.dataset.estado = nuevoEstado;
-                        // Re-apply filter if needed
-                        if (typeof filterPublishedBlogPosts === 'function') {
-                            filterPublishedBlogPosts();
-                        }
-                    }
-                    alert('Estado actualizado a: ' + data.estadoCapitalizado);
-                } else {
-                    console.error('Error al actualizar estado del blog post:', data.message);
-                    alert('Error al actualizar estado: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error en la petición fetch para actualizar estado del blog post:', error);
-                alert('Error en la petición para actualizar estado');
-            });
-        });
-    });
+    // OLD BLOG STATUS SELECTOR CODE REMOVED - Now using modern status selector component
+    // Blog post status updates are now handled by initStatusSelectors() function
 });
 
 // Global function for blog post deletion
 function deleteBlogPost(blogPostId, lineaSlug) {
     if (confirm('¿Estás seguro de que quieres eliminar este blog post? Esta acción no se puede deshacer.')) {
+        // Show loading toast
+        showInfoToast('Eliminando blog post...', 0);
+        
         const formData = new FormData();
         formData.append('id', blogPostId);
         formData.append('slug_redirect', lineaSlug);
@@ -645,16 +680,18 @@ function deleteBlogPost(blogPostId, lineaSlug) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Blog post eliminado exitosamente');
+                showSuccessToast('Blog post eliminado exitosamente');
                 // Reload the page to reflect changes
-                window.location.reload();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
             } else {
-                alert('Error al eliminar el blog post: ' + data.message);
+                showErrorToast('Error al eliminar el blog post: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error al eliminar blog post:', error);
-            alert('Error de conexión al eliminar el blog post');
+            showErrorToast('Error de conexión al eliminar el blog post');
         });
     }
 }
@@ -662,13 +699,16 @@ function deleteBlogPost(blogPostId, lineaSlug) {
 // Global function for publishing blog posts to WordPress
 function publishToWordPressFromTable(blogPostId) {
     if (!blogPostId) {
-        alert('Error: ID de blog post no válido');
+        showErrorToast('ID de blog post no válido');
         return;
     }
     
     if (!confirm('¿Publicar este blog post en WordPress?')) {
         return;
     }
+    
+    // Show loading toast
+    showInfoToast('Publicando en WordPress...', 0);
     
     // Find the WordPress button for this specific blog post
     const button = document.querySelector(`button[onclick="publishToWordPressFromTable(${blogPostId})"]`);
@@ -689,16 +729,18 @@ function publishToWordPressFromTable(blogPostId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ ' + data.message + '\n\nURL: ' + (data.wp_url || 'N/A'));
+            showSuccessToast(data.message + (data.wp_url ? `\nURL: ${data.wp_url}` : ''), 8000);
             // Reload the page to show updated status
-            window.location.reload();
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         } else {
-            alert('❌ Error: ' + data.message);
+            showErrorToast(data.message || 'Error al publicar en WordPress');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('❌ Error de conexión: ' + error.message);
+        showErrorToast('Error de conexión: ' + error.message);
     })
     .finally(() => {
         if (button) {
@@ -707,3 +749,244 @@ function publishToWordPressFromTable(blogPostId) {
         }
     });
 }
+
+// =============== MODERN STATUS SELECTOR FUNCTIONALITY ===============
+
+// Initialize modern status selectors
+function initStatusSelectors() {
+    const selectors = document.querySelectorAll('.status-selector');
+    
+    selectors.forEach(selector => {
+        const trigger = selector.querySelector('.status-selector-trigger');
+        const dropdown = selector.querySelector('.status-selector-dropdown');
+        const options = selector.querySelectorAll('.status-selector-option');
+        
+        if (!trigger || !dropdown) return;
+        
+        // Toggle dropdown
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Close other open selectors FIRST
+            document.querySelectorAll('.status-selector.open').forEach(otherSelector => {
+                if (otherSelector !== selector) {
+                    otherSelector.classList.remove('open');
+                    // Reset any z-index issues
+                    const parentRow = otherSelector.closest('tr');
+                    if (parentRow) {
+                        parentRow.style.zIndex = '';
+                        parentRow.style.position = '';
+                    }
+                }
+            });
+            
+            // Toggle current selector
+            const isOpening = !selector.classList.contains('open');
+            
+            if (isOpening) {
+                selector.classList.add('open');
+                // Ensure parent row has proper z-index
+                const parentRow = selector.closest('tr');
+                if (parentRow) {
+                    parentRow.style.zIndex = '9998';
+                    parentRow.style.position = 'relative';
+                }
+            } else {
+                selector.classList.remove('open');
+                // Reset parent row z-index
+                const parentRow = selector.closest('tr');
+                if (parentRow) {
+                    parentRow.style.zIndex = '';
+                    parentRow.style.position = '';
+                }
+            }
+        });
+        
+        // Handle option selection
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                const newStatus = option.dataset.status;
+                const publicationId = selector.dataset.id;
+                const lineaId = selector.dataset.lineaId;
+                const isBlogs = selector.dataset.type === 'blog';
+                
+                // Close dropdown and reset z-index
+                selector.classList.remove('open');
+                const parentRow = selector.closest('tr');
+                if (parentRow) {
+                    parentRow.style.zIndex = '';
+                    parentRow.style.position = '';
+                }
+                
+                // Update status
+                updateStatusModern(selector, publicationId, newStatus, lineaId, isBlogs);
+            });
+        });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.status-selector.open').forEach(selector => {
+            selector.classList.remove('open');
+            // Reset parent row z-index
+            const parentRow = selector.closest('tr');
+            if (parentRow) {
+                parentRow.style.zIndex = '';
+                parentRow.style.position = '';
+            }
+        });
+    });
+    
+    // Close dropdowns on scroll to prevent positioning issues
+    document.addEventListener('scroll', () => {
+        document.querySelectorAll('.status-selector.open').forEach(selector => {
+            selector.classList.remove('open');
+            const parentRow = selector.closest('tr');
+            if (parentRow) {
+                parentRow.style.zIndex = '';
+                parentRow.style.position = '';
+            }
+        });
+    });
+}
+
+// Update status with modern component
+function updateStatusModern(selector, publicationId, newStatus, lineaId, isBlogs = false) {
+    const trigger = selector.querySelector('.status-selector-trigger');
+    const options = selector.querySelectorAll('.status-selector-option');
+    
+    if (!trigger) return;
+    
+    // Add loading state
+    trigger.classList.add('loading');
+    showInfoToast('Actualizando estado...', 2000);
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('id', publicationId);
+    formData.append('estado', newStatus);
+    formData.append('linea', lineaId);
+    
+    const endpoint = isBlogs ? 'blog_update_estado.php' : 'publicacion_update_estado.php';
+    
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().catch(() => { 
+                throw new Error(response.statusText) 
+            }).then(errData => { 
+                throw errData; 
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            updateStatusSelectorUI(selector, newStatus, data.estadoCapitalizado);
+            
+            // Update row data attribute
+            const row = selector.closest('tr');
+            if (row) {
+                row.dataset.estado = newStatus;
+            }
+            
+            // Success animation
+            trigger.classList.add('success-flash');
+            setTimeout(() => {
+                trigger.classList.remove('success-flash');
+            }, 400);
+            
+            showSuccessToast(`Estado actualizado a: ${data.estadoCapitalizado}`);
+        } else {
+            showErrorToast('Error al actualizar estado: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating status:', error);
+        showErrorToast('Error al actualizar estado: ' + (error.message || 'Error desconocido'));
+    })
+    .finally(() => {
+        // Remove loading state
+        trigger.classList.remove('loading');
+    });
+}
+
+// Update status selector UI
+function updateStatusSelectorUI(selector, newStatus, displayText) {
+    const trigger = selector.querySelector('.status-selector-trigger');
+    const options = selector.querySelectorAll('.status-selector-option');
+    
+    if (!trigger) return;
+    
+    // Update trigger appearance
+    trigger.className = `status-selector-trigger ${newStatus}`;
+    trigger.querySelector('.status-text').textContent = displayText;
+    
+    // Update active option
+    options.forEach(option => {
+        if (option.dataset.status === newStatus) {
+            option.classList.add('active');
+        } else {
+            option.classList.remove('active');
+        }
+    });
+}
+
+// Generate modern status selector HTML
+function createStatusSelectorHTML(publicationId, currentStatus, lineaId, isBlogs = false) {
+    const statusConfig = {
+        // For RRSS publications
+        'borrador': { label: 'Borrador', icon: '📝' },
+        'programado': { label: 'Programado', icon: '📅' },
+        'publicado': { label: 'Publicado', icon: '✅' },
+        // For blog posts
+        'draft': { label: 'Borrador', icon: '📝' },
+        'scheduled': { label: 'Programado', icon: '📅' },
+        'publish': { label: 'Publicado', icon: '✅' }
+    };
+    
+    const currentConfig = statusConfig[currentStatus];
+    if (!currentConfig) return '';
+    
+    const allStatuses = isBlogs 
+        ? ['draft', 'scheduled', 'publish']  
+        : ['borrador', 'programado', 'publicado'];
+    
+    const typeAttr = isBlogs ? 'data-type="blog"' : '';
+    
+    let html = `
+        <div class="status-selector" data-id="${publicationId}" data-linea-id="${lineaId}" ${typeAttr}>
+            <button class="status-selector-trigger ${currentStatus}">
+                <span class="status-text">${currentConfig.label}</span>
+                <span class="status-selector-arrow">▼</span>
+            </button>
+            <div class="status-selector-dropdown">
+    `;
+    
+    allStatuses.forEach(status => {
+        const config = statusConfig[status];
+        const isActive = status === currentStatus ? 'active' : '';
+        
+        html += `
+            <button class="status-selector-option ${isActive}" data-status="${status}">
+                <span class="status-icon ${status}">${config.icon}</span>
+                <span>${config.label}</span>
+            </button>
+        `;
+    });
+    
+    html += `
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+// =============== END MODERN STATUS SELECTOR FUNCTIONALITY ===============

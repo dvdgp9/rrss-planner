@@ -263,6 +263,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $db->commit();
             
+            // Establecer mensaje de éxito
+            if ($modo === 'crear') {
+                $_SESSION['feedback_message'] = ['tipo' => 'success', 'mensaje' => 'Blog post creado correctamente'];
+            } else {
+                $_SESSION['feedback_message'] = ['tipo' => 'success', 'mensaje' => 'Blog post actualizado correctamente'];
+            }
+            
             // Redirigir a la página de blog posts
             header("Location: " . $paginaRetorno);
             exit;
@@ -394,15 +401,7 @@ function generateSlug($text) {
             </div>
         </div>
 
-        <?php if (!empty($errores)): ?>
-            <div class="alert alert-error">
-                <ul>
-                    <?php foreach ($errores as $error): ?>
-                        <li><?php echo htmlspecialchars($error); ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+        <!-- All errors are now displayed via toast notifications -->
 
         <form method="POST" enctype="multipart/form-data" class="form-section blog-form">
             <!-- Título y Slug -->
@@ -792,6 +791,96 @@ function generateSlug($text) {
             .catch(error => {
                 console.error('Error:', error);
                 alert('❌ Error de conexión: ' + error.message);
+            })
+            .finally(() => {
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fab fa-wordpress"></i> Publicar en WordPress';
+                }
+            });
+        }
+    </script>
+    
+    <!-- Include main JavaScript file with toast notifications -->
+    <script src="assets/js/main.js"></script>
+    
+    <script>
+        // Handle PHP session messages and form errors with toast notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php if (isset($_SESSION['feedback_message'])): ?>
+                const feedbackType = '<?php echo $_SESSION['feedback_message']['tipo']; ?>';
+                const feedbackMessage = <?php echo json_encode($_SESSION['feedback_message']['mensaje']); ?>;
+                handleSessionMessage(feedbackType, feedbackMessage);
+                <?php unset($_SESSION['feedback_message']); ?>
+            <?php endif; ?>
+            
+            <?php if (!empty($errores)): ?>
+                // Show form validation errors as toasts
+                <?php foreach ($errores as $error): ?>
+                    showErrorToast(<?php echo json_encode($error); ?>);
+                <?php endforeach; ?>
+            <?php endif; ?>
+        });
+        
+        // Override the WordPress publish function to use toasts instead of alerts
+        function publishToWordPress(blogPostId) {
+            if (!blogPostId) {
+                showErrorToast('ID de blog post no válido');
+                return;
+            }
+            
+            const button = document.querySelector('.btn-wordpress');
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
+            }
+            
+            // Show loading toast
+            showInfoToast('Publicando en WordPress...', 0); // Permanent toast
+            
+            // Crear FormData para enviar el POST
+            const formData = new FormData();
+            formData.append('blog_post_id', blogPostId);
+            
+            // Recoger categorías de WordPress seleccionadas
+            const wpCategories = [];
+            document.querySelectorAll('.wp-category-checkbox:checked').forEach(checkbox => {
+                wpCategories.push(checkbox.value);
+            });
+            
+            // Recoger etiquetas de WordPress seleccionadas
+            const wpTags = [];
+            document.querySelectorAll('.wp-tag-checkbox:checked').forEach(checkbox => {
+                wpTags.push(checkbox.value);
+            });
+            
+            // Añadir taxonomías al FormData
+            wpCategories.forEach(catId => {
+                formData.append('wp_categories[]', catId);
+            });
+            wpTags.forEach(tagId => {
+                formData.append('wp_tags[]', tagId);
+            });
+            
+            fetch('publish_to_wordpress.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessToast(data.message + (data.wp_url ? `\nURL: ${data.wp_url}` : ''), 8000);
+                    // Recargar la página para mostrar el estado actualizado
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showErrorToast(data.message || 'Error al publicar en WordPress');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorToast('Error de conexión: ' + error.message);
             })
             .finally(() => {
                 if (button) {

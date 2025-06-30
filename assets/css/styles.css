@@ -2700,3 +2700,932 @@ input:checked + .slider:before {
     font-size: 12px;
     margin-left: 4px;
 }
+
+/* Toast Notifications System */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    color: white;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transform: translateX(450px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    pointer-events: auto;
+    border-left: 4px solid rgba(255,255,255,0.3);
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateX(450px);
+    opacity: 0;
+}
+
+/* Toast Types */
+.toast.success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-left-color: rgba(255,255,255,0.5);
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    border-left-color: rgba(255,255,255,0.5);
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #ffc107 0%, #f39c12 100%);
+    color: #212529;
+    border-left-color: rgba(0,0,0,0.2);
+}
+
+.toast.info {
+    background: linear-gradient(135deg, #17a2b8 0%, #3498db 100%);
+    border-left-color: rgba(255,255,255,0.5);
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-content {
+    flex: 1;
+    padding-right: 10px;
+}
+
+.toast-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+.toast-message {
+    font-size: 0.85rem;
+    opacity: 0.95;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.toast-close:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.toast.warning .toast-close:hover {
+    background-color: rgba(0,0,0,0.1);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: rgba(255,255,255,0.3);
+    transition: width linear;
+    border-radius: 0 0 8px 8px;
+}
+
+.toast.warning .toast-progress {
+    background-color: rgba(0,0,0,0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: none;
+        transform: translateY(-100px);
+    }
+    
+    .toast.show {
+        transform: translateY(0);
+    }
+    
+    .toast.hide {
+        transform: translateY(-100px);
+    }
+}
+
+/* =================== ENHANCED HOVER STATES & MICRO-INTERACTIONS =================== */
+
+/* Enhanced Form Elements Hover States */
+.form-control:hover {
+    border-color: #b0b6bb;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Enhanced Checkbox & Radio Button Interactions */
+.checkbox-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: 6px;
+    position: relative;
+}
+
+.checkbox-item:hover {
+    background-color: rgba(35, 170, 197, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.checkbox-item input[type="checkbox"]:hover + label,
+.checkbox-item input[type="radio"]:hover + label {
+    color: #23AAC5;
+    font-weight: 500;
+}
+
+.checkbox-item input:checked + label {
+    color: #23AAC5;
+    font-weight: 600;
+}
+
+/* Enhanced Link Hover States */
+a:not(.btn):not(.action-btn):not(.nav-simple a):hover {
+    color: #23AAC5;
+    text-decoration: underline;
+    text-decoration-color: rgba(35, 170, 197, 0.4);
+    transition: all 0.2s ease;
+}
+
+/* Enhanced Table Interactions */
+tbody tr {
+    transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+    background-color: rgba(35, 170, 197, 0.02);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+th {
+    transition: background-color 0.2s ease;
+}
+
+th:hover {
+    background-color: rgba(35, 170, 197, 0.05);
+}
+
+/* Enhanced Button Micro-interactions */
+.btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Enhanced Action Button States */
+.action-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background-color: var(--dark-gray);
+    color: var(--white);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.action-btn:active {
+    transform: translateY(0) scale(1);
+}
+
+/* Enhanced Navigation Hover States */
+.sidebar-nav a {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.sidebar-nav a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #23AAC5;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.sidebar-nav a:hover::before,
+.sidebar-nav a.active::before {
+    transform: scaleY(1);
+}
+
+.sidebar-nav a:hover {
+    padding-left: 20px;
+    background-color: rgba(35, 170, 197, 0.1);
+}
+
+/* Enhanced Dashboard Card Interactions */
+.dashboard-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.dashboard-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(35, 170, 197, 0.05) 0%, rgba(35, 170, 197, 0.02) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: 10px;
+}
+
+.dashboard-card:hover::after {
+    opacity: 1;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+}
+
+/* Enhanced Filter & Sort Interactions */
+.filter-btn {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.filter-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #23AAC5;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.filter-btn:hover::after,
+.filter-btn.active::after {
+    width: 100%;
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+    color: #23AAC5;
+}
+
+/* Enhanced Sort Headers */
+.sort-header a {
+    position: relative;
+    transition: all 0.2s ease;
+    padding: 8px 4px;
+    border-radius: 4px;
+}
+
+.sort-header a:hover {
+    background-color: rgba(35, 170, 197, 0.08);
+    color: #23AAC5;
+    transform: translateY(-1px);
+}
+
+.sort-icon {
+    transition: all 0.2s ease;
+}
+
+.sort-header:hover .sort-icon {
+    transform: scale(1.2);
+    color: #23AAC5;
+}
+
+/* Enhanced Form Section Interactions */
+.form-section {
+    transition: box-shadow 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+}
+
+.form-group label {
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.form-group:hover label {
+    color: #23AAC5;
+}
+
+/* Enhanced Dropdown Interactions */
+.dropdown-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.dropdown-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #23AAC5, rgba(35, 170, 197, 0.1));
+    transition: width 0.3s ease;
+}
+
+.dropdown-item:hover::before {
+    width: 4px;
+}
+
+.dropdown-item:hover {
+    padding-left: 18px;
+    background-color: rgba(35, 170, 197, 0.05);
+    color: #23AAC5;
+}
+
+/* Enhanced Modal Interactions */
+.modal-content {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal.show .modal-content {
+    transform: scale(1) rotateX(0deg);
+    opacity: 1;
+}
+
+.close-modal,
+.close-share-modal,
+.close-image-modal,
+.close-feedback-modal {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.close-modal:hover,
+.close-share-modal:hover,
+.close-image-modal:hover,
+.close-feedback-modal:hover {
+    transform: scale(1.1) rotate(90deg);
+    background-color: rgba(255,255,255,0.2);
+}
+
+/* Enhanced Badge Interactions */
+.badge,
+.estado-badge,
+.status-badge {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.badge:hover,
+.estado-badge:hover,
+.status-badge:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Enhanced Thumbnail Interactions */
+.thumbnail {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.thumbnail::after {
+    content: '🔍';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.thumbnail:hover::after {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.thumbnail:hover {
+    transform: scale(1.15);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    border-color: #23AAC5;
+}
+
+/* Enhanced Toggle Switch Interactions */
+.switch {
+    transition: transform 0.2s ease;
+}
+
+.switch:hover {
+    transform: scale(1.05);
+}
+
+.slider {
+    transition: all 0.4s ease;
+}
+
+.slider:hover {
+    box-shadow: 0 0 10px rgba(35, 170, 197, 0.3);
+}
+
+/* Enhanced Content Type Tabs */
+.tab-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-item::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #23AAC5, #1d8fa6);
+    transition: width 0.3s ease;
+}
+
+.tab-item:hover:not(.disabled)::before {
+    width: 100%;
+}
+
+.tab-item:hover:not(.disabled) {
+    transform: translateY(-2px);
+    background-color: rgba(35, 170, 197, 0.05);
+}
+
+/* Enhanced Stat Cards */
+.stat-card {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) rotateX(5deg);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* Enhanced WordPress Button */
+.btn-wordpress {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-wordpress::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-wordpress:hover::before {
+    left: 100%;
+}
+
+.btn-wordpress:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* Enhanced Focus States for Accessibility */
+.btn:focus,
+.action-btn:focus,
+.form-control:focus,
+.checkbox-item input:focus + label,
+.dropdown-item:focus {
+    outline: 2px solid #23AAC5;
+    outline-offset: 2px;
+}
+
+/* Enhanced Loading States */
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn:disabled:hover,
+.btn[disabled]:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Pulse Animation for Loading States */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Enhanced Feedback Indicator */
+.feedback-indicator {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feedback-indicator:hover {
+    transform: translateY(-2px) scale(1.1);
+    background-color: #23AAC5;
+    color: white;
+    box-shadow: 0 4px 12px rgba(35, 170, 197, 0.3);
+}
+
+/* Enhanced Business Line Logos */
+.header-logo,
+.dropdown-logo,
+.business-logo {
+    transition: all 0.3s ease;
+}
+
+.header-logo:hover,
+.dropdown-logo:hover,
+.business-logo:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced Selection States */
+::selection {
+    background-color: rgba(35, 170, 197, 0.3);
+    color: #333;
+}
+
+::-moz-selection {
+    background-color: rgba(35, 170, 197, 0.3);
+    color: #333;
+}
+
+/* =================== END ENHANCED HOVER STATES & MICRO-INTERACTIONS ===================*/
+
+/* =================== MODERN STATUS SELECTOR =================== */
+
+/* Replace the old status-selector with this modern version */
+.status-selector {
+    position: relative;
+    display: inline-block;
+    /* Ensure this gets a higher z-index when open */
+}
+
+.status-selector.open {
+    z-index: 9999; /* Higher than any hover effects */
+    position: relative; /* Create new stacking context */
+}
+
+.status-selector-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: none;
+    min-width: 100px;
+    justify-content: center;
+    /* Prevent transform issues when parent is open */
+}
+
+.status-selector.open .status-selector-trigger {
+    transform: translateY(-2px) scale(1.05) !important; /* Force the hover state when open */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.status-selector-trigger:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.status-selector-trigger:active {
+    transform: translateY(0) scale(1.02);
+}
+
+/* Status Colors */
+.status-selector-trigger.borrador,
+.status-selector-trigger.draft {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+    color: #495057;
+    border: 2px solid #dee2e6;
+}
+
+.status-selector-trigger.borrador:hover,
+.status-selector-trigger.draft:hover {
+    background: linear-gradient(135deg, #dee2e6 0%, #e9ecef 100%);
+    border-color: #adb5bd;
+}
+
+.status-selector-trigger.programado,
+.status-selector-trigger.scheduled {
+    background: linear-gradient(135deg, #ffc107 0%, #f39c12 100%);
+    color: #212529;
+    border: 2px solid #ffca2c;
+}
+
+.status-selector-trigger.programado:hover,
+.status-selector-trigger.scheduled:hover {
+    background: linear-gradient(135deg, #e0a800 0%, #d68910 100%);
+    border-color: #d39e00;
+}
+
+.status-selector-trigger.publicado,
+.status-selector-trigger.publish {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: 2px solid #34ce57;
+}
+
+.status-selector-trigger.publicado:hover,
+.status-selector-trigger.publish:hover {
+    background: linear-gradient(135deg, #218838 0%, #1da784  100%);
+    border-color: #1e7e34;
+}
+
+/* Arrow Icon */
+.status-selector-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+    margin-left: 4px;
+}
+
+.status-selector.open .status-selector-arrow {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu - FIXED Z-INDEX ISSUES */
+.status-selector-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.25); /* Enhanced shadow for better visibility */
+    border: 1px solid #e9ecef;
+    z-index: 99999; /* Very high z-index */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(-10px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-width: 120px;
+    overflow: hidden;
+    /* Create a new stacking context */
+    isolation: isolate;
+}
+
+.status-selector.open .status-selector-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* Dropdown Items */
+.status-selector-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    position: relative; /* Ensure proper stacking */
+    z-index: 1; /* Local z-index within dropdown */
+}
+
+.status-selector-option:hover:not(.active) {
+    background: linear-gradient(90deg, rgba(35, 170, 197, 0.08) 0%, rgba(35, 170, 197, 0.02) 100%);
+    color: #23AAC5;
+}
+
+.status-selector-option.active {
+    background: linear-gradient(90deg, #23AAC5 0%, #1d8fa6 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.status-selector-option:first-child {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.status-selector-option:last-child {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* Status Icons */
+.status-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.status-icon.borrador,
+.status-icon.draft {
+    background: #6c757d;
+    color: white;
+}
+
+.status-icon.programado,
+.status-icon.scheduled {
+    background: #ffc107;
+    color: #212529;
+}
+
+.status-icon.publicado,
+.status-icon.publish {
+    background: #28a745;
+    color: white;
+}
+
+/* Loading State */
+.status-selector-trigger.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.status-selector-trigger.loading:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Success Animation */
+@keyframes statusUpdateSuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.status-selector-trigger.success-flash {
+    animation: statusUpdateSuccess 0.4s ease;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .status-selector-trigger {
+        min-width: 85px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .status-selector-dropdown {
+        min-width: 100px;
+    }
+    
+    .status-selector-option {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+/* IMPORTANT: Override any table row hover transforms that might interfere */
+tbody tr:hover .status-selector-dropdown {
+    z-index: 99999 !important;
+}
+
+/* Ensure table rows don't interfere with open selectors */
+tbody tr:has(.status-selector.open) {
+    z-index: 9998 !important;
+    position: relative;
+}
+
+/* Override any conflicting hover effects on parent elements when selector is open */
+.status-selector.open {
+    /* Ensure the open selector always stays on top */
+    z-index: 99998 !important;
+}
+
+.status-selector.open ~ * {
+    /* Elements after an open selector should have lower z-index */
+    position: relative;
+    z-index: 1;
+}
+
+/* Hide the old basic selects when the new component is available */
+.estado-selector-directo {
+    display: none !important;
+}
+
+/* =================== END MODERN STATUS SELECTOR =================== */

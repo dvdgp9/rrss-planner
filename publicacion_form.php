@@ -219,6 +219,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $db->commit();
             
+            // Establecer mensaje de éxito
+            if ($modo === 'crear') {
+                $_SESSION['feedback_message'] = ['tipo' => 'success', 'mensaje' => 'Publicación creada correctamente'];
+            } else {
+                $_SESSION['feedback_message'] = ['tipo' => 'success', 'mensaje' => 'Publicación actualizada correctamente'];
+            }
+            
             // Redirigir a la página de la línea
             header("Location: " . $paginaRetorno);
             exit;
@@ -436,16 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <?php require 'includes/nav.php'; ?>
         
-        <?php if (!empty($errores)): ?>
-            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                <strong>Por favor corrija los siguientes errores:</strong>
-                <ul>
-                    <?php foreach ($errores as $error): ?>
-                        <li><?php echo $error; ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+        <!-- All errors are now displayed via toast notifications -->
         
         <div class="form-section">
             <form action="" method="post" enctype="multipart/form-data">
@@ -533,6 +531,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     
+    <!-- Include main JavaScript file with toast notifications -->
+    <script src="assets/js/main.js"></script>
+    
     <script>
         // Script para vista previa de imagen
         document.getElementById('imagen').addEventListener('change', function(e) {
@@ -547,6 +548,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 reader.readAsDataURL(file);
             }
+        });
+        
+        // Handle PHP session messages and form errors with toast notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php if (isset($_SESSION['feedback_message'])): ?>
+                const feedbackType = '<?php echo $_SESSION['feedback_message']['tipo']; ?>';
+                const feedbackMessage = <?php echo json_encode($_SESSION['feedback_message']['mensaje']); ?>;
+                handleSessionMessage(feedbackType, feedbackMessage);
+                <?php unset($_SESSION['feedback_message']); ?>
+            <?php endif; ?>
+            
+            <?php if (!empty($errores)): ?>
+                // Show form validation errors as toasts
+                <?php foreach ($errores as $error): ?>
+                    showErrorToast(<?php echo json_encode($error); ?>);
+                <?php endforeach; ?>
+            <?php endif; ?>
         });
     </script>
 </body>
