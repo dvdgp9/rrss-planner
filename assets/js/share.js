@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-share').forEach(button => {
         button.addEventListener('click', function() {
             const lineaId = this.dataset.lineaId;
+            const contentType = this.dataset.contentType || 'social'; // Fallback to social
             shareModal.classList.add('show');
             shareLinkInput.value = 'Generando enlace...'; // Placeholder
             copyMessage.style.display = 'none';
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-Requested-With': 'XMLHttpRequest' // Identificar como AJAX
                 },
-                body: 'linea_id=' + encodeURIComponent(lineaId)
+                body: 'linea_id=' + encodeURIComponent(lineaId) + '&content_type=' + encodeURIComponent(contentType)
             })
             .then(response => response.json())
             .then(data => {
