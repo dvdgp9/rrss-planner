@@ -11,6 +11,11 @@ if (!isset($_POST['linea_id']) || !filter_var($_POST['linea_id'], FILTER_VALIDAT
 }
 
 $lineaId = (int)$_POST['linea_id'];
+$contentType = $_POST['content_type'] ?? 'social';
+// Validar tipo de contenido
+if (!in_array($contentType, ['social', 'blog'])) {
+    $contentType = 'social'; // Fallback seguro
+}
 $token = generate_share_token();
 
 // Guardar el token en la base de datos
@@ -25,7 +30,7 @@ try {
     $baseUrl = $protocol . "://" . $host;
     // Obtener la ruta base del script actual para construir la URL correctamente
     $path = rtrim(dirname($_SERVER['PHP_SELF']), '/'); 
-    $shareUrl = $baseUrl . $path . "/share_view.php?token=" . $token;
+    $shareUrl = $baseUrl . $path . "/share_view.php?token=" . $token . "&type=" . urlencode($contentType);
 
     echo json_encode(['success' => true, 'share_url' => $shareUrl]);
 

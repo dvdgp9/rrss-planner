@@ -8,12 +8,18 @@ require_once 'includes/functions.php';
 // NO incluir require_authentication() aquí, es una página pública
 
 $token = $_GET['token'] ?? null;
+$contentType = $_GET['type'] ?? 'social';
+// Validar tipo de contenido
+if (!in_array($contentType, ['social', 'blog'])) {
+    $contentType = 'social'; // Fallback seguro
+}
 $lineaId = null;
 $lineaNombre = 'Vista Compartida';
 $lineaLogo = 'assets/images/logos/isotipo-ebone.png'; // Logo por defecto
 $lineaColor = '#6c757d'; // Color gris por defecto
 $lineaBodyClass = 'linea-shared'; // Clase genérica
 $publicaciones = [];
+$contentItems = []; // Nueva variable más genérica para contenido
 $error = '';
 
 if (!$token) {
@@ -72,11 +78,43 @@ if (!$token) {
                 }
             }
             
-            // Obtener publicaciones y contar feedback
-            $stmt = $db->prepare("\n                SELECT \n                    p.*, \n                    GROUP_CONCAT(rs.nombre SEPARATOR '|') as nombres_redes, \n                    COUNT(DISTINCT pf.id) as feedback_count \n                FROM publicaciones p\n                LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id\n                LEFT JOIN redes_sociales rs ON prs.red_social_id = rs.id\n                LEFT JOIN publication_feedback pf ON p.id = pf.publicacion_id -- Unir para contar feedback
-                WHERE p.linea_negocio_id = ?\n                GROUP BY p.id\n                ORDER BY p.fecha_programada ASC, p.id ASC\n            ");
-            $stmt->execute([$lineaId]);
-            $publicaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Obtener contenido según tipo
+            if ($contentType === 'blog') {
+                // Consulta para blog posts
+                $stmt = $db->prepare("
+                    SELECT 
+                        bp.*,
+                        'blog' as content_type,
+                        0 as feedback_count,
+                        '' as nombres_redes
+                    FROM blog_posts bp
+                    WHERE bp.linea_negocio_id = ?
+                    ORDER BY bp.fecha_publicacion DESC, bp.id DESC
+                ");
+                $stmt->execute([$lineaId]);
+                $contentItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                // Consulta para publicaciones sociales (original)
+                $stmt = $db->prepare("
+                    SELECT 
+                        p.*, 
+                        'social' as content_type,
+                        GROUP_CONCAT(rs.nombre SEPARATOR '|') as nombres_redes, 
+                        COUNT(DISTINCT pf.id) as feedback_count 
+                    FROM publicaciones p
+                    LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id
+                    LEFT JOIN redes_sociales rs ON prs.red_social_id = rs.id
+                    LEFT JOIN publication_feedback pf ON p.id = pf.publicacion_id
+                    WHERE p.linea_negocio_id = ?
+                    GROUP BY p.id
+                    ORDER BY p.fecha_programada ASC, p.id ASC
+                ");
+                $stmt->execute([$lineaId]);
+                $contentItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+            
+            // Mantener $publicaciones por compatibilidad temporal
+            $publicaciones = $contentItems;
 
         } catch (PDOException $e) {
             $error = 'Error al cargar los datos.';
@@ -154,7 +192,7 @@ if (!$token) {
         <?php if($lineaLogo): ?>
             <img src="<?php echo htmlspecialchars($lineaLogo); ?>" alt="Logo <?php echo htmlspecialchars($lineaNombre); ?>">
         <?php endif; ?>
-        <h1><?php echo htmlspecialchars($lineaNombre); ?> - Planificación Redes Sociales</h1>
+        <h1><?php echo htmlspecialchars($lineaNombre); ?> - <?php echo $contentType === 'blog' ? 'Blog Posts' : 'Redes Sociales'; ?></h1>
     </div>
 
     <div class="share-container">
@@ -168,14 +206,87 @@ if (!$token) {
             <div class="table-container">
                 <!-- Toggle Switch HTML -->
                 <div class="table-actions" style="padding: 10px 15px; border-bottom: 1px solid #eee; background-color: #f9f9f9;"> 
-                                            <div class="toggle-switch-container">
-                            <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
-                            <label class="switch">
-                                <input type="checkbox" id="toggle-published">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
+                    <div class="toggle-switch-container">
+                        <label for="toggle-published" class="toggle-switch-label">Mostrar Publicados</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-published">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                 </div>
+
+                <?php if ($contentType === 'blog'): ?>
+                <!-- Tabla específica para Blog Posts -->
+                <table class="share-table"> 
+                    <thead>
+                        <tr>
+                            <th>Fecha Publicación</th>
+                            <th>Imagen</th>
+                            <th>Título</th>
+                            <th>Excerpt</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($contentItems)): ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 30px;">No hay blog posts para mostrar.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($contentItems as $post): ?>
+                                <tr data-estado="<?php echo htmlspecialchars($post['estado']); ?>">
+                                    <td><?php echo date("d/m/Y", strtotime($post['fecha_publicacion'])); ?></td>
+                                    <td>
+                                        <?php if (!empty($post['imagen_destacada'])): ?>
+                                            <img src="<?php echo htmlspecialchars($post['imagen_destacada']); ?>" alt="Imagen destacada" class="thumbnail">
+                                        <?php elseif ($post['estado'] === 'publish'): ?>
+                                            <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
+                                                <i class="fas fa-archive"></i>
+                                                <span>Archivada</span>
+                                                <small>Para optimizar<br>almacenamiento</small>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="no-image"><i class="fas fa-image"></i></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div class="blog-post-title">
+                                            <strong><?php echo htmlspecialchars($post['titulo']); ?></strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="blog-post-excerpt">
+                                            <?php 
+                                            if (!empty($post['excerpt'])) {
+                                                echo nl2br(htmlspecialchars(truncateText($post['excerpt'], 150)));
+                                            } else {
+                                                echo '<em style="color: #999;">Sin excerpt</em>';
+                                            }
+                                            ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge <?php 
+                                            echo $post['estado'] === 'draft' ? 'badge-draft' : 
+                                                 ($post['estado'] === 'scheduled' ? 'badge-scheduled' : 'badge-published'); 
+                                        ?>">
+                                            <?php 
+                                            $estadoDisplay = $post['estado'];
+                                            if ($estadoDisplay === 'draft') $estadoDisplay = 'Borrador';
+                                            elseif ($estadoDisplay === 'scheduled') $estadoDisplay = 'Programado';
+                                            elseif ($estadoDisplay === 'publish') $estadoDisplay = 'Publicado';
+                                            echo ucfirst(htmlspecialchars($estadoDisplay)); 
+                                            ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+
+                <?php else: ?>
+                <!-- Tabla para Redes Sociales (mejorada) -->
                 <table class="share-table"> 
                     <thead>
                         <tr>
@@ -184,19 +295,19 @@ if (!$token) {
                             <th>Imagen</th>
                             <th>Estado</th>
                             <th>Redes</th>
-                            <th class="col-actions" style="display: none;">Acciones</th> <!-- Ocultamos acciones -->
+                            <th>Feedback</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($publicaciones)): ?>
+                        <?php if (empty($contentItems)): ?>
                             <tr>
                                 <td colspan="6" style="text-align: center; padding: 30px;">No hay publicaciones para mostrar.</td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($publicaciones as $pub): ?>
+                            <?php foreach ($contentItems as $pub): ?>
                                 <tr data-estado="<?php echo htmlspecialchars($pub['estado']); ?>">
                                     <td><?php echo formatFecha($pub['fecha_programada']); ?></td>
-                                    <td><?php echo nl2br(htmlspecialchars($pub['contenido'])); ?></td>
+                                    <td><?php echo nl2br(htmlspecialchars(truncateText($pub['contenido'], 200))); ?></td>
                                     <td>
                                         <?php if (!empty($pub['imagen_url'])): ?>
                                             <img src="<?php echo htmlspecialchars($pub['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
@@ -222,10 +333,10 @@ if (!$token) {
                                         <div class="redes-iconos">
                                             <?php 
                                             $nombres_redes = !empty($pub['nombres_redes']) ? explode('|', $pub['nombres_redes']) : [];
-                                            foreach (array_unique($nombres_redes) as $nombre_red): // Usar nombre en lugar de icono
+                                            foreach (array_unique($nombres_redes) as $nombre_red):
                                                 if (!empty($nombre_red)): 
                                                     $iconClass = '';
-                                                    $iconTag = 'fas'; // Default tag
+                                                    $iconTag = 'fas';
                                                     switch (strtolower($nombre_red)) {
                                                         case 'instagram': $iconClass = 'fa-instagram'; $iconTag='fab'; break;
                                                         case 'facebook': $iconClass = 'fa-facebook-f'; $iconTag='fab'; break;
@@ -241,29 +352,22 @@ if (!$token) {
                                             ?>
                                         </div>
                                     </td>
-                                    <td class="col-actions" style="display: none;"></td> <!-- Ocultamos acciones -->
-                                </tr>
-                                <!-- Nueva fila para Feedback -->
-                                <tr class="feedback-row">
-                                    <td colspan="6"> <!-- Ocupa todas las columnas visibles -->
-                                        <button class="btn btn-sm btn-outline-secondary btn-toggle-feedback" data-publicacion-id="<?php echo $pub['id']; ?>">
-                                            <i class="fas fa-comments"></i> Ver/Añadir Feedback 
-                                            <span class="feedback-count">(<?php echo $pub['feedback_count']; ?>)</span> <!-- Mostrar conteo inicial -->
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary btn-feedback-modal" 
+                                                data-publicacion-id="<?php echo $pub['id']; ?>"
+                                                title="Ver/Añadir Feedback">
+                                            <i class="fas fa-comments"></i>
+                                            <?php if ($pub['feedback_count'] > 0): ?>
+                                                <span class="badge badge-secondary"><?php echo $pub['feedback_count']; ?></span>
+                                            <?php endif; ?>
                                         </button>
-                                        <div class="feedback-area" id="feedback-area-<?php echo $pub['id']; ?>" style="display: none;">
-                                            <div class="feedback-list">Cargando feedback...</div>
-                                            <div class="feedback-form">
-                                                <textarea placeholder="Escribe tu feedback aquí..." rows="3"></textarea>
-                                                <button class="btn btn-sm btn-primary btn-submit-feedback">Enviar Feedback</button>
-                                                <p class="feedback-message" style="display: none;"></p>
-                                            </div>
-                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
@@ -272,6 +376,26 @@ if (!$token) {
     <div id="imageModal" class="modal-image">
         <span class="close-image-modal">&times;</span>
         <img class="modal-image-content" id="modalImageSrc">
+    </div>
+
+    <!-- Modal para Feedback -->
+    <div id="feedbackModal" class="modal modal-share" style="display: none;">
+        <div class="modal-share-content">
+            <span class="close-share-modal" data-modal-id="feedbackModal">&times;</span>
+            <h2>Feedback de Publicación</h2>
+            <div id="feedbackContent">
+                <div class="feedback-list">
+                    <div class="feedback-display-list">Cargando feedback...</div>
+                </div>
+                <div class="feedback-form">
+                    <textarea id="feedbackTextarea" placeholder="Escribe tu feedback aquí..." rows="4"></textarea>
+                    <button id="submitFeedbackBtn" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Enviar Feedback
+                    </button>
+                    <div id="feedbackMessage" style="display: none; margin-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="assets/js/main.js"></script>

@@ -3877,3 +3877,170 @@ td .image-placeholder small {
 }
 
 /* ---- Fin de Placeholders de Imágenes Archivadas ---- */
+
+/* ----- Estilos para Modal de Feedback en Share View ----- */
+.btn-feedback-modal {
+    position: relative;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-feedback-modal:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    color: #212529;
+    transform: translateY(-1px);
+}
+
+.btn-feedback-modal .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: var(--primary-color, #23AAC5);
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Modal de Feedback reutiliza estilos de modal-share */
+#feedbackModal .modal-share-content {
+    max-width: 700px;
+    min-height: 300px;
+}
+
+#feedbackModal .feedback-list {
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+#feedbackModal .feedback-display-list {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#feedbackModal .feedback-form {
+    padding: 15px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+#feedbackModal .feedback-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+#feedbackModal .feedback-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #23AAC5);
+    box-shadow: 0 0 0 0.2rem rgba(35, 170, 197, 0.25);
+}
+
+#feedbackModal .feedback-form #submitFeedbackBtn {
+    margin-top: 10px;
+    background-color: var(--primary-color, #23AAC5);
+    border-color: var(--primary-color, #23AAC5);
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+#feedbackModal .feedback-form #submitFeedbackBtn:hover {
+    background-color: var(--primary-dark, #1a8da5);
+    border-color: var(--primary-dark, #1a8da5);
+}
+
+#feedbackModal .feedback-form #feedbackMessage {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+#feedbackModal .feedback-form #feedbackMessage.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#feedbackModal .feedback-form #feedbackMessage.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Reutilizar estilos de feedback-items-list para el modal */
+#feedbackModal .feedback-items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#feedbackModal .feedback-items-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+#feedbackModal .feedback-items-list li:last-child {
+    border-bottom: none;
+}
+
+#feedbackModal .feedback-items-list li strong {
+    color: #6c757d;
+    margin-right: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-feedback-modal {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-feedback-modal .badge {
+        top: -6px;
+        right: -6px;
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        min-width: 16px;
+    }
+    
+    #feedbackModal .modal-share-content {
+        margin: 5% auto;
+        max-width: 95%;
+    }
+    
+    #feedbackModal .feedback-list {
+        max-height: 200px;
+        padding: 10px;
+    }
+}
+/* ----- Fin Estilos Modal de Feedback ----- */

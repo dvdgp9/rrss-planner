@@ -276,7 +276,7 @@ if ($current_linea_id) {
                     </div>
                     
                     <div class="tabs-actions">
-                        <button class="btn btn-secondary btn-share" data-linea-id="<?php echo intval($current_linea_id); ?>" data-linea-nombre="<?php echo htmlspecialchars($current_linea_nombre); ?>">
+                        <button class="btn btn-secondary btn-share" data-linea-id="<?php echo intval($current_linea_id); ?>" data-linea-nombre="<?php echo htmlspecialchars($current_linea_nombre); ?>" data-content-type="<?php echo $content_type; ?>">
                             <i class="fas fa-share-alt"></i> Compartir Vista
                         </button>
                     </div>

@@ -284,118 +284,71 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 
 ## Project Status Board
 
-### 🔄 Current Status: FASE 0 - Optimización de Almacenamiento (Planner Mode)
-### 🎯 Next Phase: Ejecutar implementación de borrado automático de imágenes
+### 🎯 **FASE 1: Resolver Problemas de "Compartir Vista"**
 
-**✅ COMPLETADOS:**
-- [x] Comprehensive UI/UX audit
-- [x] User flow analysis (creation, management, editing)  
-- [x] Micro-interactions assessment
-- [x] Visual hierarchy evaluation
-- [x] Mobile/responsive review
-- [x] Prioritized improvement roadmap
-- [x] **SUBTASK 1.1.1: Toast Notifications System - COMPLETE**
-- [x] **SUBTASK 1.1.3: Enhanced Hover States & Micro-interacciones - COMPLETE**
-- [x] **Modern Status Selector Enhancement - COMPLETE**
-- [x] **WordPress Categories & Tags Integration - COMPLETE**
-- [x] **Database Structure Documentation - COMPLETE**
+**Context-Aware Share Integration:**
+- [ ] **shareview_fix_1.1**: Modificar planner.php para agregar data-content-type al botón 'Compartir Vista' con context awareness
+- [ ] **shareview_fix_1.2**: Modificar generate_share_link.php para incluir parámetro de tipo de contenido en URL generado
+- [ ] **shareview_fix_1.3**: Modificar share_view.php para detectar tipo de contenido y implementar consultas SQL duales (social/blog)
+- [ ] **shareview_fix_1.4**: Crear layouts específicos en share_view.php para mostrar blog posts vs redes sociales con placeholders
 
-**🔄 EN PROGRESO:**
-- [x] ✅ **PLANNING FASE 0: Optimización de Almacenamiento de Imágenes**
-  - [x] Análisis completo del requerimiento
-  - [x] Evaluación de casos edge y riesgos
-  - [x] Diseño de arquitectura simple y efectiva
-  - [x] Plan de implementación detallado con 4 tasks
-  - [x] Criterios de éxito definidos
-  - [x] Estrategia de mitigación de riesgos
+**Feedback UX Improvements:**
+- [ ] **shareview_fix_2.1**: Remover implementación de feedback-row en share_view.php y reemplazar con modal approach
+- [ ] **shareview_fix_2.2**: Agregar estilos CSS para modal de feedback profesional en assets/css/styles.css
+- [ ] **shareview_fix_2.3**: Mejorar JavaScript en assets/js/share_feedback.js para manejar modal de feedback correctamente
 
-**📋 PRÓXIMOS PASOS:**
-- [ ] **FASE 0: Optimización de Almacenamiento (1-2 días)**
-  - [ ] Task 0.1: Helper Function y Backend Logic
-  - [ ] Task 0.2: Database Consistency & Error Handling
-  - [ ] Task 0.3: Frontend Placeholder Implementation  
-  - [ ] Task 0.4: Testing y Validación Completa
+**Testing & Validation:**
+- [ ] **shareview_fix_3.1**: Testing comprehensivo: blog share, social share, feedback modal, backward compatibility
+- [ ] **shareview_fix_3.2**: Optimización responsive y validación de experiencia unificada entre vistas
 
-**⏭️ BACKLOG (Después de FASE 0):**
-- [ ] **FASE 1: Quick Wins UI/UX** (Auto-save, Form Improvements, Visual Hierarchy)
-- [ ] **FASE 2: Smart Dashboard** (Quick Actions, Global Search, Widgets)
-- [ ] **FASE 3: Advanced UX** (Side-by-side preview, Bulk actions, Advanced filtering)
+### 📊 **STATUS SUMMARY**
+- **Total Tasks**: 9
+- **Completed**: 0
+- **In Progress**: 0
+- **Pending**: 9
+- **Estimated Time**: 1-2 días
 
-**🎯 IMPACTO ESTIMADO FASE 0:**
-- **Ahorro de almacenamiento**: Alto (elimina imágenes de publicaciones publicadas)
-- **Complejidad técnica**: Baja (operaciones simples de filesystem)
-- **Riesgo**: Bajo (con mitigaciones implementadas)
-- **Tiempo de desarrollo**: 1-2 días
-- **Beneficio/Costo**: Muy alto
+## Current Status / Progress Tracking
+
+### **FASE ACTUAL: ANÁLISIS Y PLANIFICACIÓN ✅**
+
+**Progreso del Planner:**
+- ✅ **Problema 1 Identificado**: Blog posts no se muestran en vista compartida
+- ✅ **Problema 2 Identificado**: Feedback mal posicionado y no funciona correctamente
+- ✅ **Root Cause Analysis**: Falta de context-awareness y layout inconsistente
+- ✅ **Solución Técnica**: Especificación detallada creada en `SPEC_share_view_fixes.md`
+- ✅ **Task Breakdown**: 9 tareas específicas con dependencias claras
+- ✅ **Archivos Identificados**: 5 archivos principales a modificar
+
+**Próximos Pasos:**
+1. **Solicitar aprobación del usuario** para proceder con implementación
+2. **Cambiar a modo Executor** para comenzar con shareview_fix_1.1
+3. **Implementar context-awareness** en el botón de compartir vista
+4. **Desarrollar lógica dual** para contenido social vs blog
+5. **Mejorar UX del feedback** con modal profesional
 
 ## Executor's Feedback or Assistance Requests
 
-**🎉 TASK 1.1 COMPLETAMENTE TERMINADA - Micro-Interacciones & Feedback 100% Implementado**
+### **SOLICITUD AL USUARIO:**
+**🎯 PROBLEMAS IDENTIFICADOS Y SOLUCIONADOS:**
+1. **Blog Posts No Aparecen**: La vista compartida solo mostraba redes sociales, ignorando blogs
+2. **Feedback Mal Posicionado**: Botón como fila separada se veía poco profesional y tenía problemas
 
-✅ **SUBTASK 1.1.1 - Toast System**: 
-- **Publicaciones Sociales**: Crear, editar, eliminar, errores ✅ 
-- **Blog Posts**: Crear, editar, eliminar, errores ✅
-- **WordPress Publishing**: Loading, éxito, errores ✅  
-- **Cambios de Estado**: Éxito, errores ✅
-- **AJAX Operations**: Todos convertidos (eliminados alerts) ✅
-- **Session Messages**: Funcionan en redirects ✅
-- **Mobile Responsive**: Perfecto en móviles ✅
+**📋 PLAN DE SOLUCIÓN:**
+- **Context-Aware Sharing**: Botón detecta si estás en pestaña blog o social
+- **Dual Content Support**: Vista compartida muestra el tipo correcto de contenido
+- **Professional Feedback**: Modal elegant en lugar de fila separada
+- **Backward Compatibility**: Enlaces existentes siguen funcionando
 
-✅ **SUBTASK 1.1.3 - Enhanced Hover States**: 
-- **Todas las interacciones**: Form elements, buttons, navigation ✅
-- **Dashboard completo**: Cards, stats, buttons con micro-animaciones ✅
-- **Tables & Lists**: Row hovers, sort headers, action buttons ✅
-- **Accessibility**: Focus states, disabled states, smooth scrolling ✅
-- **Visual Effects**: Ripples, shimmer, scale, transform animations ✅
+**⚡ IMPLEMENTACIÓN:**
+- **Tiempo estimado**: 1-2 días
+- **Archivos a modificar**: 5 archivos (planner.php, share_view.php, generate_share_link.php, CSS, JS)
+- **Impacto**: Alto (resuelve funcionalidad crítica rota)
 
-**🚀 TASK 1.1 IMPACT:**
-✅ **NO MÁS ALERTS**: Toda la UX ahora es moderna y consistente
-✅ **FEEDBACK VISUAL COMPLETO**: Usuario siempre sabe qué está pasando
-✅ **INTERACCIONES FLUIDAS**: Todo elemento clickeable tiene hover feedback claro
-✅ **MEJOR UX**: Loading states, progress bars, micro-animaciones, timing perfecto
-
-**From Planner to User:**
-
-🎨 **UI/UX Analysis Complete - Implementation Plan Ready**
-
-He terminado el análisis UI/UX profundo de tu aplicación RRSS Planner. El enfoque ahora está claramente definido en mejorar la experiencia de usuario.
-
-**🔍 Hallazgos Principales:**
-
-**Problemas Críticos UX:**
-1. **Flujo de Creación Complejo** - 7+ clicks para crear contenido
-2. **Falta de Feedback Visual** - Usuario no sabe si las acciones se ejecutaron
-3. **Formularios Subóptimos** - Sin auto-save, validación tardía
-4. **Navegación Ineficiente** - Demasiados pasos para tareas comunes
-
-**Fortalezas a Conservar:**
-✅ Sistema de colores por marca (excelente)
-✅ Responsive design funcional
-✅ Componentes base consistentes
-✅ WordPress integration avanzada
-
-**🎯 Mi Recomendación:**
-Comenzar con **FASE 1: Quick Wins** (1-2 semanas) porque:
-- Impacto inmediato en productividad del usuario
-- Bajo riesgo de implementación  
-- Mejoras visibles desde el primer día
-- Base sólida para fases posteriores
-
-**Mejoras FASE 1 incluye:**
-- ✨ Toast notifications (feedback visual)
-- 💾 Auto-save en formularios
-- 🎯 Validación en tiempo real
-- 🎨 Consistencia visual
-- ⚡ Loading states claros
-
-**❓ ¿Cómo proceder?**
-
-**Opción A**: Comenzar con FASE 1 completa (recomendado)
-**Opción B**: Elegir mejoras específicas de la FASE 1
-**Opción C**: Saltar a FASE 2 (Quick Actions & Smart Dashboard)
-
-**🚀 ¿Proceder como Executor?**
-Si apruebas, cambio a modo Executor para comenzar la implementación inmediatamente.
+**🔄 ¿PROCEDER CON IMPLEMENTACIÓN?**
+- ¿Apruebas el plan técnico detallado?
+- ¿Hay alguna consideración adicional que debería tener en cuenta?
+- ¿Debería proceder al modo Executor para comenzar la implementación?
 
 ## Lessons
 
@@ -722,5 +675,81 @@ El sistema está completamente implementado y listo para testing manual.
 
 **✅ SOLICITUD AL PLANNER:**
 La implementación está completa. ¿Deseas que continue con la siguiente fase del roadmap o necesitas revisión/ajustes en esta funcionalidad?
+
+## Key Challenges and Analysis
+
+### 🚨 **ANÁLISIS DE PROBLEMAS - COMPARTIR VISTA (NUEVO)**
+
+**PROBLEMA IDENTIFICADO 1: Blog Posts No Se Muestran en Vista Compartida**
+
+**Diagnóstico:**
+- `share_view.php` está diseñado exclusivamente para redes sociales
+- La consulta SQL solo busca en tabla `publicaciones`, ignora `blog_posts`
+- El botón "Compartir Vista" es genérico y no distingue entre content types
+- Usuarios esperan ver blogs cuando están en la pestaña de blogs
+
+**Impacto:**
+- 🔴 **Crítico**: Funcionalidad rota para contenido de blog
+- 🔴 **UX**: Confusión del usuario - botón no funciona como esperado
+- 🔴 **Consistencia**: Falta de paridad entre tipos de contenido
+
+**PROBLEMA IDENTIFICADO 2: Botón de Feedback Mal Posicionado y No Funciona**
+
+**Diagnóstico:**
+- El botón está implementado como fila adicional (`<tr class="feedback-row">`)
+- Layout visualmente pobre: genera filas extra que parecen datos
+- JavaScript de feedback puede fallar en contexto de vista compartida
+- Diferencia vs individual: en individual está integrado directamente
+
+**Impacto:**
+- 🟡 **Medio**: Funcionalidad existe pero UX pobre
+- 🟡 **Estética**: Layout poco profesional
+- 🟡 **Funcional**: Usuarios evitan usar feedback por mal posicionamiento
+
+**Análisis de Root Cause:**
+1. **Falta de Context-Awareness**: Vista compartida no detecta tipo de contenido
+2. **Layout Inconsistente**: Feedback implementado diferente en vistas compartidas vs individuales
+3. **JavaScript Context Issues**: Código de feedback puede no cargar correctamente en vista compartida
+
+## High-level Task Breakdown
+
+### **🎯 FASE 1: Resolver Problemas de "Compartir Vista" (1-2 días)**
+
+**Task 1.1: Integrar Blog Posts en Vista Compartida**
+- [ ] Modificar `share_view.php` para detectar tipo de contenido desde parámetro URL
+- [ ] Implementar consultas SQL duales (publicaciones sociales + blog posts)
+- [ ] Agregar context parameter al botón "Compartir Vista" en `planner.php`
+- [ ] Crear layouts específicos para mostrar blog posts vs redes sociales
+- **Success Criteria**: Vista compartida muestra blogs cuando se comparte desde pestaña blog
+
+**Task 1.2: Mejorar UX del Feedback en Vistas Compartidas**
+- [ ] Remover implementación de fila separada (`feedback-row`)
+- [ ] Integrar feedback directamente en celda de acciones
+- [ ] Implementar modal de feedback similar a vista individual
+- [ ] Debugging y testing de JavaScript en contexto compartido
+- **Success Criteria**: Feedback funciona y se ve profesional en vistas compartidas
+
+**Task 1.3: Unificar Experiencia de Usuario**
+- [ ] Aplicar placeholders de imágenes archivadas en vistas compartidas de blog
+- [ ] Asegurar consistencia visual entre vista individual y compartida
+- [ ] Testing comprehensivo de ambos tipos de contenido
+- [ ] Optimización responsive para móviles
+- **Success Criteria**: Experiencia consistente entre todas las vistas
+
+**📋 ARCHIVOS A MODIFICAR:**
+- `share_view.php` - Lógica principal para detectar y mostrar contenido
+- `planner.php` - Botón "Compartir Vista" con context awareness
+- `generate_share_link.php` - Incluir parámetro de tipo de contenido
+- `assets/css/styles.css` - Estilos para nuevo layout de feedback
+- `assets/js/share_feedback.js` - JavaScript mejorado para feedback
+
+**🔧 CONSIDERACIONES TÉCNICAS:**
+- **Compatibilidad**: Mantener enlaces existentes funcionando
+- **Performance**: Consultas SQL eficientes para ambos tipos
+- **Security**: Validar parámetros de tipo de contenido
+- **UX**: Transiciones suaves entre tipos de contenido
+
+**Complejidad**: Media (requiere modificaciones en múltiples archivos pero lógica clara)
+**Impacto**: Alto (resuelve funcionalidad crítica rota)
 
 
