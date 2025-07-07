@@ -200,6 +200,12 @@ if (!$token) {
                                     <td>
                                         <?php if (!empty($pub['imagen_url'])): ?>
                                             <img src="<?php echo htmlspecialchars($pub['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
+                                        <?php elseif ($pub['estado'] === 'publicado'): ?>
+                                            <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
+                                                <i class="fas fa-archive"></i>
+                                                <span>Archivada</span>
+                                                <small>Para optimizar<br>almacenamiento</small>
+                                            </div>
                                         <?php else: ?>
                                             <div class="no-image"><i class="fas fa-image"></i></div>
                                         <?php endif; ?>

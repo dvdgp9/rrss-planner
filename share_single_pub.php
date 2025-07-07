@@ -217,6 +217,14 @@ if (!$token) {
                              <!-- Podríamos hacerla clickable para modal si fuera necesario -->
                             <img src="<?php echo htmlspecialchars($publicacion['imagen_url']); ?>" alt="Imagen de publicación">
                         </div>
+                    <?php elseif ($publicacion['estado'] === 'publicado'): ?>
+                        <div class="pub-image">
+                            <div class="image-placeholder archived size-large fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento del servidor">
+                                <i class="fas fa-archive"></i>
+                                <span>Imagen Archivada</span>
+                                <small>Esta imagen fue archivada automáticamente<br>para optimizar el almacenamiento del servidor</small>
+                            </div>
+                        </div>
                     <?php endif; ?>
                     <div class="pub-text">
                         <p class="pub-text-content"><?php echo nl2br(htmlspecialchars($publicacion['contenido'])); ?></p>

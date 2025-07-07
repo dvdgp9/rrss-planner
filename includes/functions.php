@@ -193,4 +193,131 @@ function formatFecha($fechaDb) {
 function truncateText($text, $length = 100) {
     if (strlen($text) <= $length) return $text;
     return substr($text, 0, $length) . '...';
-} 
+}
+
+// ---- Gestión de Imágenes - Optimización de Almacenamiento ----
+
+/**
+ * Elimina una imagen de publicación del servidor de forma segura
+ * Incluye validaciones, logging y manejo robusto de errores
+ * 
+ * @param string $imagePath Ruta completa de la imagen a borrar
+ * @param string $logContext Contexto adicional para logging (ej: "Publication ID: 123")
+ * @return bool true si se borró exitosamente o no existe, false si hubo error
+ */
+function deletePublicationImage($imagePath, $logContext = '') {
+    // Validar entrada
+    if (empty($imagePath)) {
+        error_log("IMAGE_DELETE_WARNING: Empty image path - {$logContext}");
+        return true; // No es error crítico
+    }
+    
+    // Convertir a ruta absoluta si es relativa
+    if (!file_exists($imagePath)) {
+        // Intentar con ruta relativa desde raíz del proyecto
+        $absolutePath = __DIR__ . '/../' . ltrim($imagePath, '/');
+        if (file_exists($absolutePath)) {
+            $imagePath = $absolutePath;
+        } else {
+            error_log("IMAGE_DELETE_INFO: Image not found for deletion: {$imagePath} - {$logContext}");
+            return true; // No es error crítico si el archivo ya no existe
+        }
+    }
+    
+    // Validación de seguridad: verificar que está en directorio permitido
+    $allowedDirs = [
+        realpath(__DIR__ . '/../uploads/'),
+        realpath(__DIR__ . '/../uploads/blog/')
+    ];
+    
+    $realImagePath = realpath($imagePath);
+    $isInAllowedDir = false;
+    
+    foreach ($allowedDirs as $allowedDir) {
+        if ($allowedDir && $realImagePath && strpos($realImagePath, $allowedDir) === 0) {
+            $isInAllowedDir = true;
+            break;
+        }
+    }
+    
+    if (!$isInAllowedDir) {
+        error_log("IMAGE_DELETE_SECURITY: Attempted to delete file outside allowed directories: {$imagePath} - {$logContext}");
+        return false;
+    }
+    
+    // Verificar permisos de escritura
+    if (!is_writable($imagePath)) {
+        error_log("IMAGE_DELETE_ERROR: Permission denied for image deletion: {$imagePath} - {$logContext}");
+        return false;
+    }
+    
+    // Verificar que es un archivo (no directorio)
+    if (!is_file($imagePath)) {
+        error_log("IMAGE_DELETE_WARNING: Path is not a file: {$imagePath} - {$logContext}");
+        return false;
+    }
+    
+    // Intentar borrar el archivo
+    if (unlink($imagePath)) {
+        error_log("IMAGE_DELETE_SUCCESS: Image deleted successfully: {$imagePath} - {$logContext}");
+        return true;
+    } else {
+        error_log("IMAGE_DELETE_ERROR: Failed to delete image: {$imagePath} - {$logContext}");
+        return false;
+    }
+}
+
+/**
+ * Procesa el borrado automático de imagen al cambiar estado a "publicado"
+ * Mantiene consistencia entre filesystem y base de datos
+ * 
+ * @param PDO $db Conexión a la base de datos
+ * @param string $table Nombre de la tabla (publicaciones o blog_posts)
+ * @param string $imageField Nombre del campo de imagen (imagen_url o imagen_destacada)
+ * @param int $id ID del registro
+ * @param string $currentImagePath Ruta actual de la imagen
+ * @param string $logContext Contexto para logging
+ * @return bool true si se procesó correctamente (o no había imagen), false si hubo error
+ */
+function processImageDeletionOnPublish($db, $table, $imageField, $id, $currentImagePath, $logContext = '') {
+    // Si no hay imagen, no hay nada que hacer
+    if (empty($currentImagePath)) {
+        return true;
+    }
+    
+    try {
+        // Comenzar transacción para consistencia
+        $db->beginTransaction();
+        
+        // Intentar borrar el archivo físico
+        $deletionSuccess = deletePublicationImage($currentImagePath, $logContext);
+        
+        if ($deletionSuccess) {
+            // Solo actualizar BD si el borrado físico fue exitoso
+            $stmt = $db->prepare("UPDATE {$table} SET {$imageField} = NULL WHERE id = ?");
+            $updateSuccess = $stmt->execute([$id]);
+            
+            if ($updateSuccess) {
+                $db->commit();
+                error_log("IMAGE_DELETION_COMPLETE: Database updated after image deletion - {$logContext}");
+                return true;
+            } else {
+                $db->rollback();
+                error_log("IMAGE_DELETION_ERROR: Failed to update database after image deletion - {$logContext}");
+                return false;
+            }
+        } else {
+            // Si no se pudo borrar el archivo, no actualizar BD
+            $db->rollback();
+            error_log("IMAGE_DELETION_SKIPPED: Database not updated due to file deletion failure - {$logContext}");
+            return false;
+        }
+        
+    } catch (Exception $e) {
+        $db->rollback();
+        error_log("IMAGE_DELETION_EXCEPTION: Transaction failed - {$logContext} - Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+// ---- Fin Gestión de Imágenes ---- 

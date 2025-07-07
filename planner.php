@@ -365,6 +365,12 @@ if ($current_linea_id) {
                                 <td data-label="Imagen">
                                     <?php if (!empty($publicacion['imagen_url'])): ?>
                                         <img src="<?php echo htmlspecialchars($publicacion['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
+                                    <?php elseif ($publicacion['estado'] === 'publicado'): ?>
+                                        <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
+                                            <i class="fas fa-archive"></i>
+                                            <span>Archivada</span>
+                                            <small>Para optimizar<br>almacenamiento</small>
+                                        </div>
                                     <?php else: ?>
                                         <span class="no-image"><i class="fas fa-image"></i></span>
                                     <?php endif; ?>
@@ -494,6 +500,12 @@ if ($current_linea_id) {
                                 <td data-label="Imagen">
                                     <?php if (!empty($blog_post['imagen_destacada'])): ?>
                                         <img src="<?php echo htmlspecialchars($blog_post['imagen_destacada']); ?>" alt="Imagen destacada" class="thumbnail">
+                                    <?php elseif ($blog_post['estado'] === 'publish'): ?>
+                                        <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
+                                            <i class="fas fa-archive"></i>
+                                            <span>Archivada</span>
+                                            <small>Para optimizar<br>almacenamiento</small>
+                                        </div>
                                     <?php else: ?>
                                         <span class="no-image"><i class="fas fa-image"></i></span>
                                     <?php endif; ?>
