@@ -135,11 +135,6 @@ try {
         $sync_stmt = $db->prepare("UPDATE lineas_negocio SET wordpress_last_sync = NOW() WHERE id = ?");
         $sync_stmt->execute([$blog_post['linea_negocio_id']]);
         
-        // Delete local image file if it exists
-        if (!empty($blog_post['imagen_destacada']) && file_exists($blog_post['imagen_destacada'])) {
-            unlink($blog_post['imagen_destacada']);
-        }
-
         echo json_encode([
             'success' => true,
             'message' => 'Post publicado exitosamente en WordPress',

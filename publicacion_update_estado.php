@@ -43,28 +43,9 @@ try {
         exit;
     }
     
-    // Si el nuevo estado es 'publicado', manejar la imagen
-    if ($nuevoEstado === 'publicado') {
-        // Obtener la ruta de la imagen actual
-        $stmtImg = $db->prepare("SELECT imagen FROM publicaciones WHERE id = ?");
-        $stmtImg->execute([$publicacionId]);
-        $publicacion = $stmtImg->fetch();
-
-        if ($publicacion && !empty($publicacion['imagen'])) {
-            // Comprobar que no sea ya la imagen por defecto
-            if ($publicacion['imagen'] !== 'assets/images/logos/default.png' && file_exists($publicacion['imagen'])) {
-                unlink($publicacion['imagen']); // Borrar el archivo de imagen
-            }
-        }
-
-        // Actualizar el estado y la imagen a la de por defecto
-        $stmt = $db->prepare("UPDATE publicaciones SET estado = ?, imagen = ? WHERE id = ?");
-        $stmt->execute([$nuevoEstado, 'assets/images/logos/default.png', $publicacionId]);
-    } else {
-        // Si no es 'publicado', solo actualizar el estado
-        $stmt = $db->prepare("UPDATE publicaciones SET estado = ? WHERE id = ?");
-        $stmt->execute([$nuevoEstado, $publicacionId]);
-    }
+    // Actualizar el estado
+    $stmt = $db->prepare("UPDATE publicaciones SET estado = ? WHERE id = ?");
+    $stmt->execute([$nuevoEstado, $publicacionId]);
     
     // Determinar la clase CSS para el estado
     $badgeClass = '';
