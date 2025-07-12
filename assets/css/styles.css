@@ -13,18 +13,6 @@
     --info: #3BAFDA;
     --sidebar-width: 250px;
     --header-height: 60px;
-
-    /* Branding Colors */
-    --ebone-color: #23AAC5;
-    --ebone-dark: #1a8da5;
-    --cubofit-color: #E23633;
-    --cubofit-dark: #c12f2c;
-    --uniges-color1: #9B6FCE;
-    --uniges-color2: #032551;
-    --uniges-dark1: #8a5fb8;
-    --uniges-dark2: #021c3f;
-    --teia-color: #009970;
-    --teia-dark: #007a5a;
 }
 
 * {
@@ -1136,84 +1124,149 @@ textarea.form-control {
 }
 
 /* --- Badge Overrides (from inline styles, more specific) --- */
-.table-container .badge-draft {
-    background-color: #e9ecef;
-    color: #495057;
+.badge-draft {
+    background-color: #e9ecef !important; /* Overrides potential base style */
+    color: #495057 !important;
 }
 
-.table-container .badge-scheduled {
-    background-color: #fd7e14; /* Orange */
-    color: white;
+.badge-scheduled {
+    background-color: #fd7e14 !important; /* Orange */
+    color: white !important;
 }
 
-.table-container .badge-published {
-    background-color: #28a745; /* Green */
-    color: white;
+.badge-published {
+    background-color: #28a745 !important; /* Green */
+    color: white !important;
 }
 
 /* ----- Estilos de Branding por Línea de Negocio ----- */
 
-.linea-ebone {
-    --linea-color: var(--ebone-color);
-    --linea-dark: var(--ebone-dark);
+/* Estilos generales para logos */
+.header-title-logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.linea-cubofit {
-    --linea-color: var(--cubofit-color);
-    --linea-dark: var(--cubofit-dark);
+.header-logo {
+    height: 40px; /* Ajustar altura según sea necesario */
+    width: auto;
+    max-width: 150px; /* Limitar ancho máximo */
+    object-fit: contain;
 }
 
-.linea-uniges {
-    --linea-color: var(--uniges-color1);
-    --linea-dark: var(--uniges-dark1);
-    --linea-gradient: linear-gradient(90deg, var(--uniges-color1) 0%, var(--uniges-color2) 100%);
-    --linea-gradient-dark: linear-gradient(90deg, var(--uniges-dark1) 0%, var(--uniges-dark2) 100%);
+.dashboard-card .logo-icon {
+    width: 60px; /* Tamaño del contenedor del logo en dashboard */
+    height: 35px; /* Ajustar altura */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Alinear logo a la derecha */
 }
 
-.linea-teia {
-    --linea-color: var(--teia-color);
-    --linea-dark: var(--teia-dark);
+.dashboard-card .logo-icon img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
 }
 
-.nav-simple a.active,
-.btn-primary {
-    background-color: var(--linea-color, var(--primary-color));
-    background-image: var(--linea-gradient, none);
+/* Estilos por línea de negocio */
+
+/* Ebone: #23AAC5 */
+.linea-ebone .nav-simple a.active,
+.linea-ebone .btn-primary {
+    background-color: #23AAC5;
     color: white;
 }
 
-.btn-primary:hover {
-    background-color: var(--linea-dark, var(--primary-dark));
-    background-image: var(--linea-gradient-dark, none);
+.linea-ebone .btn-primary:hover {
+    background-color: #1a8da5; /* Un tono más oscuro */
 }
 
-.sort-header a:hover,
-.filter-form .checkbox-item input:checked + label {
-    color: var(--linea-color, var(--primary-color));
+.linea-ebone .sort-header a:hover,
+.linea-ebone .filter-form .checkbox-item input:checked + label {
+    color: #23AAC5;
 }
 
-.dashboard-card .card-footer .btn {
-    background-color: var(--linea-color, var(--primary-color));
-    background-image: var(--linea-gradient, none);
+/* Para dashboard, el color ya se aplica inline, pero podemos añadir hover */
+.dashboard-card:has(.card-header[style*="#23AAC5"]) .card-footer .btn {
+    background-color: #23AAC5;
 }
 
-.dashboard-card .card-footer .btn:hover {
-    background-color: var(--linea-dark, var(--primary-dark));
-    background-image: var(--linea-gradient-dark, none);
+.dashboard-card:has(.card-header[style*="#23AAC5"]) .card-footer .btn:hover {
+    background-color: #1a8da5;
 }
 
-.modal-share .btn-primary {
-    background-color: var(--linea-color, var(--primary-color));
-    background-image: var(--linea-gradient, none);
-    border: none;
+/* CUBOFIT: #E23633 */
+.linea-cubofit .nav-simple a.active,
+.linea-cubofit .btn-primary {
+    background-color: #E23633;
     color: white;
 }
 
-.dropdown-toggle:hover,
-.tab-item.active {
-    border-color: var(--linea-color, var(--primary-color));
-    background-color: var(--linea-color, var(--primary-color));
-    background-image: var(--linea-gradient, none);
+.linea-cubofit .btn-primary:hover {
+    background-color: #c12f2c; /* Un tono más oscuro */
+}
+
+.linea-cubofit .sort-header a:hover,
+.linea-cubofit .filter-form .checkbox-item input:checked + label {
+    color: #E23633;
+}
+
+.dashboard-card:has(.card-header[style*="#E23633"]) .card-footer .btn {
+    background-color: #E23633;
+}
+
+.dashboard-card:has(.card-header[style*="#E23633"]) .card-footer .btn:hover {
+    background-color: #c12f2c;
+}
+
+/* Uniges-3: Gradient #9B6FCE -> #032551 */
+.linea-uniges .nav-simple a.active,
+.linea-uniges .btn-primary {
+    background: linear-gradient(90deg, #9B6FCE 0%, #032551 100%);
+    color: white;
+}
+
+.linea-uniges .btn-primary:hover {
+    /* Podríamos oscurecer ambos colores o aplicar un overlay */
+    background: linear-gradient(90deg, #8a5fb8 0%, #021c3f 100%); 
+}
+
+.linea-uniges .sort-header a:hover,
+.linea-uniges .filter-form .checkbox-item input:checked + label {
+    color: #9B6FCE; /* Usamos el primer color del gradiente */
+}
+
+.dashboard-card:has(.card-header[style*="#9B6FCE"]) .card-footer .btn {
+    background: linear-gradient(90deg, #9B6FCE 0%, #032551 100%);
+}
+
+.dashboard-card:has(.card-header[style*="#9B6FCE"]) .card-footer .btn:hover {
+    background: linear-gradient(90deg, #8a5fb8 0%, #021c3f 100%); 
+}
+
+/* Teia: #009970 */
+.linea-teia .nav-simple a.active,
+.linea-teia .btn-primary {
+    background-color: #009970;
+    color: white;
+}
+
+.linea-teia .btn-primary:hover {
+    background-color: #007a5a; /* Un tono más oscuro */
+}
+
+.linea-teia .sort-header a:hover,
+.linea-teia .filter-form .checkbox-item input:checked + label {
+    color: #009970;
+}
+
+.dashboard-card:has(.card-header[style*="#009970"]) .card-footer .btn {
+    background-color: #009970;
+}
+
+.dashboard-card:has(.card-header[style*="#009970"]) .card-footer .btn:hover {
+    background-color: #007a5a;
 }
 
 /* ----- Fin Estilos de Branding ----- */
@@ -1553,7 +1606,38 @@ textarea.form-control {
 
 /* ----- Fin Enhanced Header Styles ----- */
 
+/* ----- Coming Soon Message for Blog Posts ----- */
+.coming-soon-message {
+    padding: 60px 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
 
+.coming-soon-content h3 {
+    color: var(--secondary-color);
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.coming-soon-content p {
+    color: var(--dark-gray);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.coming-soon-content small {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* ----- Fin Coming Soon Styles ----- */
 
 /* ----- Estilos para Modal Compartir ----- */
 .btn-secondary {
@@ -1668,9 +1752,100 @@ textarea.form-control {
 
 /* ----- Fin Estilos Modal Compartir ----- */
 
+/* ----- Estilos para Miniaturas e Imagen Modal ----- */
+.thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #ddd;
+}
 
+.thumbnail:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
 
+.no-image {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    color: #adb5bd;
+    border: 1px dashed #dee2e6;
+    font-size: 1.2rem;
+}
 
+/* Modal de imagen */
+.modal-image {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 1050; /* Encima del modal de compartir si es necesario */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.85);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-image.show, 
+.modal-image:target /* Para compatibilidad si usamos enlaces */ {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-image-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 85vh;
+    margin: auto;
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal-image.show .modal-image-content,
+.modal-image:target .modal-image-content {
+    transform: scale(1);
+}
+
+.close-image-modal {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1051;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-image-modal:hover {
+    background-color: rgba(255,255,255,0.2);
+    color: #fff;
+    text-decoration: none;
+}
+/* ----- Fin Estilos Imagen Modal ----- */
 
 /* ----- Estilos Feedback en Share View ----- */
 .feedback-row td {
