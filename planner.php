@@ -218,6 +218,8 @@ if ($current_linea_id) {
 <body class="<?php echo $linea_body_class; ?>">
 
     <div class="app-simple">
+        <?php require 'includes/nav.php'; ?>
+        
         <?php if ($page_error): ?>
             <div style="background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center;">
                 <h1>Error</h1>
@@ -225,42 +227,38 @@ if ($current_linea_id) {
                 <p><a href="index.php" class="btn btn-primary">Volver al Dashboard</a></p>
             </div>
         <?php else: ?>
-            <!-- New Enhanced Header with Business Line Dropdown and Content Type Tabs -->
-            <div class="enhanced-header">
-                <div class="header-navigation">
-                    <a href="index.php" class="loop-logo-link">
-                        <img src="assets/images/logos/loop-logo.png" alt="Lööp Logo" class="loop-logo">
-                    </a>
-                    
-                    <a href="index.php" class="dashboard-back-btn">
-                        <i class="fas fa-arrow-left"></i> Dashboard
-                    </a>
-                    
-                    <!-- Business Line Dropdown -->
-                    <div class="business-line-selector">
-                        <button class="dropdown-toggle" id="businessLineDropdown">
+            <!-- Sección de línea de negocio y pestañas -->
+            <div class="planner-header">
+                <div class="planner-header-main">
+                    <div class="planner-title-section">
+                        <div class="planner-logo">
                             <?php if (!empty($current_linea_logo_filename)): ?>
-                                <img src="assets/images/logos/<?php echo htmlspecialchars($current_linea_logo_filename); ?>" alt="Logo" class="dropdown-logo">
+                                <img src="assets/images/logos/<?php echo htmlspecialchars($current_linea_logo_filename); ?>" alt="Logo" class="linea-logo">
                             <?php endif; ?>
-                            <span class="dropdown-text"><?php echo htmlspecialchars($current_linea_nombre); ?></span>
-                            <i class="fas fa-chevron-down dropdown-arrow"></i>
-                        </button>
-                        
-                        <div class="dropdown-menu" id="businessLineDropdownMenu">
-                            <?php foreach ($all_lineas_negocio as $linea): ?>
-                                <a href="planner.php?slug=<?php echo urlencode($linea['slug']); ?>&type=<?php echo urlencode($content_type); ?>" 
-                                   class="dropdown-item <?php echo ($linea['id'] == $current_linea_id) ? 'active' : ''; ?>">
-                                    <?php if (!empty($linea['logo_filename'])): ?>
-                                        <img src="assets/images/logos/<?php echo htmlspecialchars($linea['logo_filename']); ?>" alt="Logo" class="dropdown-item-logo">
-                                    <?php endif; ?>
-                                    <span><?php echo htmlspecialchars($linea['nombre']); ?></span>
-                                </a>
-                            <?php endforeach; ?>
+                        </div>
+                        <div class="planner-title-info">
+                            <h1 class="planner-title"><?php echo htmlspecialchars($current_linea_nombre); ?></h1>
+                            <div class="planner-subtitle">
+                                <select class="linea-selector" onchange="window.location.href = this.value;">
+                                    <?php foreach ($all_lineas_negocio as $linea): ?>
+                                        <option value="planner.php?slug=<?php echo urlencode($linea['slug']); ?>&type=<?php echo urlencode($content_type); ?>" 
+                                                <?php echo ($linea['id'] == $current_linea_id) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($linea['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
                     </div>
+                    
+                    <div class="planner-actions">
+                        <button class="btn btn-secondary btn-share" data-linea-id="<?php echo intval($current_linea_id); ?>" data-linea-nombre="<?php echo htmlspecialchars($current_linea_nombre); ?>" data-content-type="<?php echo $content_type; ?>">
+                            <i class="fas fa-share-alt"></i> Compartir Vista
+                        </button>
+                    </div>
                 </div>
-
-                <!-- Content Type Tabs with Share Button -->
+                
+                <!-- Pestañas de tipo de contenido -->
                 <div class="content-type-tabs-container">
                     <div class="content-type-tabs">
                         <a href="planner.php?slug=<?php echo urlencode($current_linea_slug); ?>&type=social" 
@@ -273,12 +271,6 @@ if ($current_linea_id) {
                             <i class="fas fa-blog"></i>
                             <span>Blog Posts</span>
                         </a>
-                    </div>
-                    
-                    <div class="tabs-actions">
-                        <button class="btn btn-secondary btn-share" data-linea-id="<?php echo intval($current_linea_id); ?>" data-linea-nombre="<?php echo htmlspecialchars($current_linea_nombre); ?>" data-content-type="<?php echo $content_type; ?>">
-                            <i class="fas fa-share-alt"></i> Compartir Vista
-                        </button>
                     </div>
                 </div>
             </div>

@@ -52,7 +52,7 @@ Se requiere implementar un sistema de gestión de administradores para el RRSS P
 - Posibles ajustes de UX/UI según feedback
 
 ## Current Status / Progress Tracking
-**Estado actual:** ✅ Página "Mi cuenta" simplificada y más compacta
+**Estado actual:** ✅ Header del planner unificado con el resto de la aplicación
 
 **Últimos cambios realizados:**
 1. **Dashboard reorganizado:**
@@ -76,38 +76,60 @@ Se requiere implementar un sistema de gestión de administradores para el RRSS P
    - Hover effect más sutil y menos invasivo
    - Espaciado general optimizado
 
+4. **Limpieza de código CSS:**
+   - Eliminadas definiciones duplicadas de .form-control
+   - Consolidada una sola definición consistente
+   - Mantenidas definiciones específicas (.password-form, .blog-form)
+   - Mejorada mantenibilidad del código
+
+5. **Unificación del header del planner:**
+   - Reemplazado enhanced-header por navegación estándar
+   - Creada nueva sección planner-header consistente
+   - Simplificada selección de línea de negocio con select
+   - Mantenidas pestañas RRSS/Blog con mejor diseño
+   - Botón compartir integrado de manera más elegante
+
 ## Executor's Feedback or Assistance Requests
-**Última actualización:** Página "Mi cuenta" simplificada por solicitud del usuario
+**Última actualización:** Header del planner unificado exitosamente
 
-**Cambios de simplificación realizados:**
-1. **Header compacto:**
-   - Padding reducido de 30px a 20px
-   - Avatar de 80px a 50px
-   - Título de 2.5rem a 1.8rem
-   - Gap entre elementos reducido de 25px a 15px
+**Cambios realizados en planner.php:**
+1. **Header unificado:**
+   - Eliminado `enhanced-header` personalizado
+   - Implementado `<?php require 'includes/nav.php'; ?>` estándar
+   - Navegación ahora consistente con toda la aplicación
 
-2. **Profile items minimalistas:**
-   - Eliminado fondo (#f8f9fa) y border-left
-   - Eliminado border-radius y padding excesivo
-   - Añadida línea inferior sutil (border-bottom)
-   - Hover effect más discreto
-   - Gap reducido de 8px a 6px
+2. **Nueva estructura planner-header:**
+   - Sección principal con logo, título y selector de línea
+   - Selector dropdown reemplazado por select más simple
+   - Botón compartir movido a la derecha del header principal
+   - Pestañas de contenido (RRSS/Blog) mantenidas y mejoradas
 
-3. **Espaciado optimizado:**
-   - Grid gap reducido de 25px a 20px
-   - User-profile gap reducido de 20px a 12px
-   - Márgenes generales optimizados
-   - Font-size del profile-value reducido ligeramente
+3. **Estilos CSS agregados:**
+   - `.planner-header` con fondo consistente (#f8f9fa)
+   - `.planner-header-main` con layout flexbox
+   - `.planner-title-section` con logo y título
+   - `.linea-selector` simple y elegante
+   - `.content-type-tabs` rediseñadas con mejor UX
+   - Responsive design para móviles
 
 **Beneficios logrados:**
-- ✅ Página menos recargada visualmente
-- ✅ Elementos más compactos y organizados
-- ✅ Mejor aprovechamiento del espacio
-- ✅ Interfaz más limpia y profesional
-- ✅ Mantenida funcionalidad completa
-- ✅ Responsive design preservado
+- ✅ Navegación completamente unificada
+- ✅ Experiencia de usuario consistente
+- ✅ Selección de línea de negocio más simple
+- ✅ Pestañas RRSS/Blog mejoradas visualmente
+- ✅ Botón compartir mejor integrado
+- ✅ Código más limpio y mantenible
+- ✅ Responsive design mejorado
 
-**Estado:** ✅ Simplificación completada según solicitud del usuario
+**Funcionalidad preservada:**
+- ✅ Todas las funcionalidades del planner intactas
+- ✅ Filtros de redes sociales funcionando
+- ✅ Cambio entre líneas de negocio
+- ✅ Pestañas Posts Sociales / Blog Posts
+- ✅ Botón compartir vista
+- ✅ Ordenación y filtrado de contenido
+
+**Estado:** ✅ Header del planner unificado exitosamente
 
 ## Lessons
 - La navegación debe seguir principios de jerarquía visual clara
@@ -117,5 +139,11 @@ Se requiere implementar un sistema de gestión de administradores para el RRSS P
 - La consistencia visual es clave para una buena experiencia de usuario
 - El diseño responsive debe considerarse desde el inicio
 - Los elementos de acción deben tener contexto y descripción clara
+- **CSS duplicado:** Siempre revisar y consolidar definiciones duplicadas en CSS
+- **Mantenibilidad:** Una sola definición por selector evita conflictos y facilita el mantenimiento
+- **Especificidad:** Usar definiciones específicas (.password-form .form-control) para casos especiales
+- **Consistencia de navegación:** Unificar headers/navegación mejora la experiencia del usuario
+- **Funcionalidad específica:** Se puede mantener funcionalidad específica dentro de un diseño unificado
+- **Selectors simples:** Un select simple puede ser más efectivo que dropdowns complejos
 
 
