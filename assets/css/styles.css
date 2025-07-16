@@ -1301,16 +1301,17 @@ tr:hover {
 
 .form-control {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 15px;
     font-size: 1rem;
-    border: 1px solid var(--light-gray);
-    border-radius: 4px;
-    transition: border-color 0.2s ease;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s, box-shadow 0.3s;
     font-family: 'Open Sans', sans-serif;
 }
 
 .form-control:focus {
-    border-color: var(--primary-color);
+    border-color: #23AAC5;
+    box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.15);
     outline: none;
 }
 
@@ -1971,25 +1972,7 @@ textarea.form-control {
     color: #444;
 }
 
-.form-control {
-    width: 100%;
-    padding: 8px 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-.form-control:focus {
-    border-color: #23AAC5;
-    box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.15);
-    outline: none;
-}
-
-textarea.form-control {
-    min-height: 120px;
-    resize: vertical;
-}
+/* Definición duplicada eliminada - consolidada arriba */
 
 .redes-container {
     margin-bottom: 0;
