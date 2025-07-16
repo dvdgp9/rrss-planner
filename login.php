@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $authenticated = false;
     
-    // Intentar autenticación por email/password (sistema nuevo)
+    // Solo permitir autenticación por email/password
     if (!empty($email) && !empty($password)) {
         $user = authenticate_user($email, $password);
         if ($user) {
@@ -29,17 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Email o contraseña incorrectos.';
         }
-    } 
-    // Si no hay email, intentar con contraseña maestra (sistema anterior)
-    elseif (!empty($password)) {
-        if (authenticate_master_password($password)) {
-            $authenticated = true;
-        } else {
-            $error = 'Contraseña incorrecta.';
-        }
-    }
-    else {
-        $error = 'Por favor, ingrese sus credenciales.';
+    } else {
+        $error = 'Por favor, ingrese email y contraseña.';
     }
     
     // Si la autenticación fue exitosa, redirigir
@@ -280,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="login-page">
     <div class="login-container">
-        <img src="assets/images/logos/logo-grupo-completo.png" alt="Logo" class="login-logo"> 
+        <img src="assets/images/logos/loop-logo.png" alt="Loop Logo" class="login-logo"> 
         <h1>Iniciar Sesión</h1>
         <p class="login-subtitle">Planificador de Redes Sociales</p>
 
@@ -293,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" action="login.php">
             <div class="form-group">
                 <label for="email">📧 Email del Administrador</label>
-                <input type="email" id="email" name="email" placeholder="admin@ebone.es" value="<?php echo htmlspecialchars($email ?? ''); ?>">
+                <input type="email" id="email" name="email" placeholder="Ingresa tu email" value="<?php echo htmlspecialchars($email ?? ''); ?>" required>
             </div>
             <div class="form-group">
                 <label for="password">🔒 Contraseña</label>
@@ -303,12 +294,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span>Acceder al Sistema</span>
             </button>
         </form>
-        
-        <div class="info-box">
-            <strong>💡 Sistema Dual:</strong> Usa email + contraseña para acceso personalizado<br>
-            <strong>👤 Superadmin:</strong> admin@ebone.es / admin123!<br>
-            <em>También funciona solo con contraseña maestra</em>
-        </div>
     </div>
 </body>
 </html> 
