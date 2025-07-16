@@ -104,10 +104,6 @@ try {
 </head>
 <body>
     <div class="app-simple">
-        <div class="header-simple">
-            <button id="btnNuevaLinea" class="btn btn-primary" style="position: absolute; top: 20px; right: 20px;"><i class="fas fa-plus"></i> Nueva Línea de Negocio</button>
-        </div>
-        
         <?php require 'includes/nav.php'; ?>
         
         <?php if (isset($error)): ?>
@@ -136,6 +132,19 @@ try {
                     <div class="stat-value"><?php echo $totalPorEstado['publicado']; ?></div>
                     <div class="stat-label">Publicadas</div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Barra de acciones profesional -->
+        <div class="dashboard-actions">
+            <div class="actions-left">
+                <h3>Líneas de Negocio</h3>
+                <p>Gestiona todas tus líneas de negocio desde aquí</p>
+            </div>
+            <div class="actions-right">
+                <button id="btnNuevaLinea" class="btn btn-primary btn-action">
+                    <i class="fas fa-plus"></i> Nueva Línea de Negocio
+                </button>
             </div>
         </div>
 
