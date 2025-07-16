@@ -223,6 +223,113 @@ function change_password($user_id, $current_password, $new_password) {
     }
 }
 
+/**
+ * Crear nuevo usuario administrador
+ * @param string $nombre
+ * @param string $email
+ * @param string $password
+ * @param string $rol
+ * @return bool|string True si éxito, mensaje de error si falla
+ */
+function create_admin_user($nombre, $email, $password, $rol = 'admin') {
+    if (!is_superadmin()) {
+        return 'Solo los superadmins pueden crear usuarios.';
+    }
+    
+    $db = getDbConnection();
+    try {
+        // Verificar si el email ya existe
+        $stmt = $db->prepare("SELECT id FROM admins WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            return 'Ya existe un usuario con este email.';
+        }
+        
+        // Crear nuevo usuario
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $db->prepare("
+            INSERT INTO admins (nombre, email, password_hash, rol, activo, created_at, updated_at)
+            VALUES (?, ?, ?, ?, 1, NOW(), NOW())
+        ");
+        $stmt->execute([$nombre, $email, $password_hash, $rol]);
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error creating admin user: " . $e->getMessage());
+        return 'Error al crear usuario: ' . $e->getMessage();
+    }
+}
+
+/**
+ * Actualizar estado de usuario (activo/inactivo)
+ * @param int $user_id
+ * @param bool $activo
+ * @return bool|string True si éxito, mensaje de error si falla
+ */
+function toggle_admin_status($user_id, $activo) {
+    if (!is_superadmin()) {
+        return 'Solo los superadmins pueden gestionar usuarios.';
+    }
+    
+    $current_user = get_current_admin_user();
+    if ($user_id == $current_user['id']) {
+        return 'No puedes modificar tu propio estado.';
+    }
+    
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("UPDATE admins SET activo = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$activo ? 1 : 0, $user_id]);
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error toggling admin status: " . $e->getMessage());
+        return 'Error al actualizar estado del usuario.';
+    }
+}
+
+/**
+ * Eliminar usuario administrador
+ * @param int $user_id
+ * @return bool|string True si éxito, mensaje de error si falla
+ */
+function delete_admin_user($user_id) {
+    if (!is_superadmin()) {
+        return 'Solo los superadmins pueden eliminar usuarios.';
+    }
+    
+    $current_user = get_current_admin_user();
+    if ($user_id == $current_user['id']) {
+        return 'No puedes eliminar tu propio usuario.';
+    }
+    
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("DELETE FROM admins WHERE id = ?");
+        $stmt->execute([$user_id]);
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error deleting admin user: " . $e->getMessage());
+        return 'Error al eliminar usuario.';
+    }
+}
+
+/**
+ * Obtener todos los usuarios administradores
+ * @return array
+ */
+function get_all_admin_users() {
+    $db = getDbConnection();
+    try {
+        $stmt = $db->query("SELECT * FROM admins ORDER BY nombre ASC");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error getting admin users: " . $e->getMessage());
+        return [];
+    }
+}
+
 // ---- Fin Autenticación ----
 
 // ---- Gestión de Tokens Compartir ----

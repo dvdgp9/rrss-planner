@@ -80,9 +80,11 @@ if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($logo_path, '/'))) {
         </a>
     <?php endforeach; ?>
     
-    <a href="/wordpress_config.php" class="nav-item <?php echo ($current_script_name === 'wordpress_config.php') ? 'active' : ''; ?>">
-        <i class="fab fa-wordpress"></i> WordPress
-    </a>
+    <?php if (is_superadmin()): ?>
+        <a href="/configuracion.php" class="nav-item <?php echo ($current_script_name === 'configuracion.php') ? 'active' : ''; ?>">
+            <i class="fas fa-cog"></i> Configuración
+        </a>
+    <?php endif; ?>
     
     <a href="/mi_cuenta.php" class="nav-item <?php echo ($current_script_name === 'mi_cuenta.php') ? 'active' : ''; ?>">
         <i class="fas fa-user"></i> Mi cuenta
