@@ -5177,42 +5177,75 @@ td .image-placeholder small {
     gap: 10px;
 }
 
-/* Content Type Tabs - Simplificados */
+/* Content Type Tabs - Restaurado estilo original */
 .content-type-tabs-container {
-    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 0;
     padding: 0 20px;
 }
 
 .content-type-tabs {
     display: flex;
-    gap: 0;
+    gap: 5px;
 }
 
 .tab-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 12px 16px;
+    gap: 8px;
+    padding: 12px 20px;
+    color: var(--dark-gray);
     text-decoration: none;
-    color: #6c757d;
-    border-bottom: 2px solid transparent;
-    transition: all 0.3s ease;
+    border-radius: 8px 8px 0 0;
     font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
-.tab-item:hover {
-    color: #495057;
-    background: rgba(0,0,0,0.05);
+.tab-item:hover:not(.disabled) {
+    background-color: #f8f9fa;
+    color: var(--primary-color);
 }
 
 .tab-item.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
-    background: rgba(0,123,255,0.05);
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-bottom: 3px solid var(--primary-dark);
 }
 
-.tab-item i {
-    font-size: 14px;
+.tab-item.disabled {
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.tab-item.disabled:hover {
+    background-color: transparent;
+    color: #adb5bd;
+}
+
+/* Dynamic Theming for Planner Tabs */
+.linea-ebone .tab-item.active {
+    background-color: #23AAC5;
+    border-bottom-color: #1a8da5;
+}
+
+.linea-cubofit .tab-item.active {
+    background-color: #E23633;
+    border-bottom-color: #c12f2c;
+}
+
+.linea-uniges .tab-item.active {
+    background: linear-gradient(90deg, #9B6FCE 0%, #032551 100%);
+    border-bottom-color: #032551;
+}
+
+.linea-teia .tab-item.active {
+    background-color: #009970;
+    border-bottom-color: #007a5a;
 }
 
 /* Responsive */
