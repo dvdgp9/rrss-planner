@@ -93,23 +93,6 @@
     margin-top: 15px;
 }
 
-.account-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.15);
-    padding: 8px 16px;
-    border-radius: 20px;
-    color: white;
-    font-size: 0.9rem;
-    font-weight: 500;
-    border: 1px solid rgba(255,255,255,0.2);
-}
-
-.account-status i {
-    font-size: 0.7rem;
-}
-
 .status-active .fa-circle {
     color: #4CAF50;
 }
@@ -210,7 +193,6 @@
     flex-direction: column;
     gap: 6px;
     padding: 8px 0;
-    border-bottom: 1px solid #e9ecef;
     transition: all 0.3s ease;
 }
 

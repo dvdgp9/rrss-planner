@@ -83,12 +83,6 @@ if ($current_user['auth_method'] === 'user') {
                     <div class="account-header-info">
                         <h1 class="account-header-title">Mi Cuenta</h1>
                         <p class="account-header-subtitle">Gestiona tu perfil y configuración de seguridad</p>
-                        <div class="account-header-meta">
-                            <span class="account-status <?php echo $current_user['auth_method'] === 'user' ? 'status-active' : 'status-legacy'; ?>">
-                                <i class="fas fa-circle"></i>
-                                <?php echo $current_user['auth_method'] === 'user' ? 'Sistema actual' : 'Sistema anterior'; ?>
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>
