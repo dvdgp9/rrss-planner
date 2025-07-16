@@ -131,83 +131,41 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     align-items: center;
     padding: 10px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: #f8f9fa; /* Light grey, adjust as needed */
     border-bottom: 1px solid #dee2e6;
-    flex-wrap: wrap;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
 }
-
 .nav-logo-link {
     margin-right: 20px;
-    display: inline-block;
+    display: inline-block; /* Ensures proper spacing */
 }
-
 .nav-loop-logo {
-    height: 40px;
+    height: 40px; /* Adjust as needed */
     width: auto;
     vertical-align: middle;
-    filter: brightness(0) invert(1); /* Makes logo white */
 }
-
 .nav-item {
-    padding: 10px 15px;
+    padding: 8px 12px;
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    margin-right: 8px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color: #333;
+    border-radius: 4px;
+    margin-right: 5px; /* Spacing between items */
 }
-
 .nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: white;
-    transform: translateY(-1px);
+    background-color: #e9ecef;
+    color: #000;
 }
-
 .nav-item.active {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: #007bff; /* Example active color: blue */
     color: white;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    font-weight: bold;
 }
-
 .nav-logout {
-    margin-left: auto;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
+    margin-left: auto; /* Pushes logout to the right */
+    background-color: #dc3545; /* Red, as in original */
+    color: white !important; /* Override other color styles */
 }
-
 .nav-logout:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.nav-logout i {
-    font-size: 14px;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    .nav-simple {
-        flex-direction: column;
-        gap: 10px;
-        padding: 15px;
-    }
-    
-    .nav-logout {
-        margin-left: 0;
-        order: 99;
-    }
-    
-    .nav-logo-link {
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
+    background-color: #c82333; /* Darker red on hover */
 }
 </style> 
