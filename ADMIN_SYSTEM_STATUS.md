@@ -29,8 +29,9 @@
 - **Email**: admin@ebone.es
 - **Contraseña**: admin123!
 
-**Alternativa (sistema anterior):**
-- **Solo contraseña**: Contraseña maestra original
+**Nota de seguridad:**
+- **Contraseña maestra**: Desactivada para mayor seguridad
+- **Acceso único**: Solo mediante email + contraseña
 
 ## 📁 ARCHIVOS IMPORTANTES MANTENIDOS
 
@@ -51,20 +52,23 @@ VALUES ('Nuevo Admin', 'admin@example.com', '$2y$10$...', 'admin', 1);
 - Roles granulares por línea de negocio
 - Interfaz de gestión de usuarios
 - Sistema de recuperación de contraseña
+- Autenticación de dos factores (2FA)
 
 ## 🛠️ SOPORTE TÉCNICO
 
 - **Funciones principales**: `authenticate_user()`, `get_current_admin_user()`, `is_superadmin()`
-- **Compatibilidad**: Mantiene compatibilidad con sistema anterior
+- **Seguridad**: Sistema unificado solo con email + contraseña
 - **Escalabilidad**: Preparado para múltiples administradores
 
 ## 💡 NOTAS IMPORTANTES
 
 - Sistema completamente funcional y probado
-- Interfaz moderna y profesional
+- Interfaz moderna y profesional con branding Loop
 - Migración exitosa sin interrupciones
 - Archivos temporales eliminados
 - Documentación completa disponible
+- Contraseña maestra desactivada por seguridad
+- Interfaz limpia sin credenciales expuestas
 
 ---
 

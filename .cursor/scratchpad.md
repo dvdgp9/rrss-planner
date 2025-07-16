@@ -51,22 +51,145 @@ Se ha creado `database_structure.md` con:
 
 **COMPLETADO:** Se ha documentado exitosamente la estructura completa de la base de datos incluyendo todas las tablas, relaciones, índices y consideraciones técnicas.
 
-**NEW REQUEST (CURRENT - Image Storage Optimization):** Optimización de Almacenamiento de Imágenes
+**NEW REQUEST (CURRENT - Admin User Management System):** Implementación de Sistema de Gestión de Usuarios Administradores
 
-El usuario quiere implementar una funcionalidad para ahorrar memoria en el servidor: que las imágenes de publicaciones (tanto de redes sociales como de blog posts) se borren automáticamente del servidor cuando la publicación se marque como "publicada", y mostrar un placeholder después.
+El usuario solicita dos funcionalidades principales para completar el sistema de administradores:
 
-**Objetivo:** Reducir uso de almacenamiento en servidor eliminando imágenes de publicaciones ya publicadas.
+1. **Página "Mi cuenta"**:
+   - Mostrar nombre de usuario actual
+   - Funcionalidad para cambiar contraseña
+   - Añadir enlace en menú del dashboard
+
+2. **Página "Configuración" (reemplazar "WordPress")**:
+   - Gestión de conexiones WordPress (funcionalidad existente)
+   - Gestión de usuarios del sistema
+   - Centralizar configuraciones administrativas
+
+**Objetivo:** Completar el sistema de administradores con funcionalidades de gestión de usuarios y configuración centralizada.
 
 **Alcance:** 
-- Publicaciones de redes sociales (`publicaciones.imagen_url`)
-- Blog posts (`blog_posts.imagen_destacada`)
-- Borrado automático al cambiar estado a "publicado"
-- Placeholder visual en frontend
+- Página de perfil de usuario (`mi_cuenta.php`)
+- Página de configuración administrativa (`configuracion.php`)
+- Actualización del menú de navegación
+- Gestión de usuarios (crear, editar, eliminar administradores)
 
 **Contexto actualizado:**
-- 🎯 ENFOQUE: Optimización de almacenamiento + mejoras UI/UX
+- 🎯 ENFOQUE: Completar sistema de administradores + mejoras UI/UX
 
 ## Key Challenges and Analysis
+
+### 🔐 **ANÁLISIS DE SISTEMA DE GESTIÓN DE USUARIOS ADMINISTRADORES**
+
+#### **EVALUACIÓN DE COMPLEJIDAD**
+
+**🎯 COMPLEJIDAD GENERAL: MEDIA (5-6/10)**
+
+**Factores que facilitan la implementación:**
+✅ **Sistema de autenticación ya funcional** - Base sólida implementada
+✅ **Tabla `admins` ya creada** - Estructura de base de datos lista
+✅ **Funciones auxiliares disponibles** - `get_current_admin_user()`, `is_superadmin()`, etc.
+✅ **Menú de navegación bien estructurado** - Fácil de modificar
+✅ **Funcionalidad WordPress existente** - Solo necesita reubicación
+
+**Factores que aumentan la complejidad:**
+⚠️ **Gestión de usuarios requiere permisos** - Solo superadmins pueden gestionar usuarios
+⚠️ **Validaciones de seguridad** - Cambio de contraseña requiere validación robusta
+⚠️ **Integración con menú existente** - Mantener diseño consistente
+⚠️ **Organización de funcionalidades** - Múltiples configuraciones en una sola página
+
+#### **ANÁLISIS DE REQUERIMIENTOS**
+
+**📋 FUNCIONALIDAD 1: Página "Mi cuenta"**
+
+**Componentes requeridos:**
+- **Información del usuario**: Nombre, email, rol, fecha de último login
+- **Cambio de contraseña**: Formulario con validación
+- **Interfaz responsive**: Diseño consistente con el resto del sistema
+
+**Funciones necesarias:**
+- `change_password($user_id, $old_password, $new_password)` - Nueva función
+- `get_user_profile($user_id)` - Wrapper de `get_current_admin_user()`
+- Validación de contraseña actual antes de cambio
+
+**📋 FUNCIONALIDAD 2: Página "Configuración"**
+
+**Componentes requeridos:**
+- **Gestión de conexiones WordPress**: Migrar funcionalidad existente
+- **Gestión de usuarios**: Solo para superadmins
+  - Lista de usuarios con roles
+  - Crear nuevo usuario
+  - Editar usuario existente
+  - Activar/desactivar usuario
+- **Configuraciones del sistema**: Espacio para futuras expansiones
+
+**Funciones necesarias:**
+- `create_admin_user($name, $email, $password, $role)` - Nueva función
+- `update_admin_user($id, $data)` - Nueva función
+- `toggle_admin_status($id, $active)` - Nueva función
+- `delete_admin_user($id)` - Nueva función (con validaciones)
+
+#### **ARQUITECTURA PROPUESTA**
+
+**🗂️ ESTRUCTURA DE ARCHIVOS:**
+
+```
+mi_cuenta.php              # Página de perfil de usuario
+configuracion.php          # Página de configuración administrativa
+includes/
+  functions.php            # Agregar funciones de gestión de usuarios
+  nav.php                  # Actualizar menú de navegación
+assets/css/
+  styles.css               # Estilos para nuevas páginas
+```
+
+**🔐 PERMISOS Y SEGURIDAD:**
+
+- **Mi cuenta**: Accesible para todos los usuarios autenticados
+- **Configuración**: 
+  - Conexiones WordPress: Accesible para todos los admins
+  - Gestión de usuarios: Solo superadmins
+  - Validaciones robustas para todas las operaciones
+
+#### **PLAN DE IMPLEMENTACIÓN**
+
+**🎯 FASE 1: Página "Mi cuenta" (1-2 días)**
+
+**Task 1.1: Crear página de perfil**
+- Crear `mi_cuenta.php` con información del usuario
+- Formulario de cambio de contraseña
+- Implementar `change_password()` en functions.php
+- Validaciones de seguridad
+
+**Task 1.2: Actualizar navegación**
+- Agregar "Mi cuenta" al menú principal
+- Posicionarlo antes de "Cerrar Sesión"
+- Mantener diseño consistente
+
+**🎯 FASE 2: Página "Configuración" (2-3 días)**
+
+**Task 2.1: Crear página de configuración**
+- Crear `configuracion.php` con sistema de tabs
+- Migrar funcionalidad de WordPress desde `wordpress_config.php`
+- Agregar sección de gestión de usuarios
+
+**Task 2.2: Implementar gestión de usuarios**
+- Funciones CRUD para usuarios
+- Interfaz para crear/editar usuarios
+- Sistema de permisos (solo superadmins)
+- Validaciones y mensajes de error
+
+**Task 2.3: Actualizar navegación**
+- Cambiar enlace "WordPress" por "Configuración"
+- Actualizar icono y texto
+- Mantener funcionalidad existente
+
+**🎯 FASE 3: Testing y refinamiento (1 día)**
+
+**Task 3.1: Pruebas integrales**
+- Probar cambio de contraseña
+- Probar gestión de usuarios
+- Verificar permisos y validaciones
+- Testing responsive
 
 ### 🎨 **ANÁLISIS UI/UX PROFUNDO**
 
@@ -284,14 +407,119 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 
 ## Project Status Board
 
+### **🔐 SISTEMA DE GESTIÓN DE USUARIOS ADMINISTRADORES**
+
+**ESTADO ACTUAL:** 📋 **PLANIFICACIÓN COMPLETADA - LISTO PARA IMPLEMENTACIÓN**
+
+#### **FASE 1: Página "Mi cuenta" (1-2 días)**
+
+**🏠 User Profile Page**
+- [ ] **Task 1.1:** Crear `mi_cuenta.php` con información del usuario actual
+- [ ] **Task 1.1:** Implementar formulario de cambio de contraseña
+- [ ] **Task 1.1:** Función `change_password()` en includes/functions.php
+- [ ] **Task 1.1:** Validaciones de seguridad robustas
+
+**🧭 Navigation Update**
+- [ ] **Task 1.2:** Agregar "Mi cuenta" al menú en includes/nav.php
+- [ ] **Task 1.2:** Posicionar antes de "Cerrar Sesión"
+- [ ] **Task 1.2:** Mantener diseño consistente con íconos Font Awesome
+
+#### **FASE 2: Página "Configuración" (2-3 días)**
+
+**⚙️ Configuration Page Structure**
+- [ ] **Task 2.1:** Crear `configuracion.php` con sistema de tabs
+- [ ] **Task 2.1:** Migrar funcionalidad WordPress desde `wordpress_config.php`
+- [ ] **Task 2.1:** Diseño responsive con navegación por pestañas
+
+**👥 User Management System**
+- [ ] **Task 2.2:** Implementar funciones CRUD para usuarios
+- [ ] **Task 2.2:** Interfaz para crear/editar usuarios
+- [ ] **Task 2.2:** Sistema de permisos (solo superadmins)
+- [ ] **Task 2.2:** Validaciones y mensajes de error
+
+**🔄 Menu Migration**
+- [ ] **Task 2.3:** Cambiar enlace "WordPress" por "Configuración"
+- [ ] **Task 2.3:** Actualizar icono de `fa-wordpress` a `fa-cog`
+- [ ] **Task 2.3:** Mantener funcionalidad existente
+
+#### **FASE 3: Testing y Refinamiento (1 día)**
+
+**🧪 Integration Testing**
+- [ ] **Task 3.1:** Probar cambio de contraseña con diferentes usuarios
+- [ ] **Task 3.1:** Probar gestión de usuarios (crear, editar, activar/desactivar)
+- [ ] **Task 3.1:** Verificar permisos y validaciones de seguridad
+- [ ] **Task 3.1:** Testing responsive en diferentes dispositivos
+
+**📊 MÉTRICAS DE PROGRESO**
+- **Análisis:** ✅ 100% Completado
+- **Planificación:** ✅ 100% Completado
+- **Implementación Fase 1:** ⏳ 0% (Pendiente aprobación)
+- **Implementación Fase 2:** ⏳ 0% (Dependiente de Fase 1)
+- **Implementación Fase 3:** ⏳ 0% (Dependiente de Fase 2)
+
+**🎯 PRÓXIMOS PASOS:**
+1. **Decisión del usuario:** Proceder con implementación
+2. **Desarrollo:** Comenzar con Task 1.1 (Página Mi cuenta)
+3. **Iteración:** Feedback y refinamiento según necesidades
+
+#### **BENEFICIOS ESPERADOS**
+
+**🔐 SEGURIDAD MEJORADA:**
+- Gestión centralizada de usuarios
+- Contraseñas individuales y actualizables
+- Permisos granulares por rol
+
+**👥 EXPERIENCIA DE USUARIO:**
+- Interfaz intuitiva con "Configuración" vs "WordPress"
+- Perfil de usuario accesible
+- Gestión de usuarios simplificada
+
+**📊 ESCALABILIDAD:**
+- Base para futuras funcionalidades administrativas
+- Estructura preparada para roles más específicos
+- Arquitectura modular y extensible
+
+#### **RECOMENDACIONES TÉCNICAS**
+
+**🎨 DISEÑO:**
+- Usar sistema de tabs para organizar configuraciones
+- Mantener consistencia visual con el resto del sistema
+- Implementar iconos Font Awesome apropiados
+
+**🔒 SEGURIDAD:**
+- Validar contraseña actual antes de cambio
+- Hash de contraseñas con `password_hash()`
+- Sanitizar todos los inputs de usuario
+- Implementar rate limiting para cambios de contraseña
+
+**⚡ PERFORMANCE:**
+- Usar preparar statements para todas las consultas
+- Implementar cache para lista de usuarios
+- Optimizar consultas con índices apropiados
+
+#### **CONSIDERACIONES FUTURAS**
+
+**🚀 EXPANSIONES POSIBLES:**
+- Autenticación de dos factores (2FA)
+- Logs de actividad de usuarios
+- Roles granulares por línea de negocio
+- API tokens para integraciones
+- Gestión de sesiones avanzada
+
+**📱 MEJORAS UX:**
+- Notificaciones push para acciones importantes
+- Dark mode toggle
+- Configuración personalizable del dashboard
+- Exportación de datos de usuario
+
 ### 🎯 **FASE 1: Resolver Problemas de "Compartir Vista"**
 
 **✅ IMPLEMENTACIÓN COMPLETA - TODAS LAS TAREAS TERMINADAS**
 
 **Context-Aware Share Integration:**
-- [ ] **shareview_fix_1.1**: Modificar planner.php para agregar data-content-type al botón 'Compartir Vista' con context awareness
-- [ ] **shareview_fix_1.2**: Modificar generate_share_link.php para incluir parámetro de tipo de contenido en URL generado
-- [ ] **shareview_fix_1.3**: Modificar share_view.php para detectar tipo de contenido y implementar consultas SQL duales (social/blog)
+- [x] **shareview_fix_1.1**: Modificar planner.php para agregar data-content-type al botón 'Compartir Vista' con context awareness ✅
+- [x] **shareview_fix_1.2**: Modificar generate_share_link.php para incluir parámetro de tipo de contenido en URL generado ✅
+- [x] **shareview_fix_1.3**: Modificar share_view.php para detectar tipo de contenido y implementar consultas SQL duales (social/blog) ✅
 - [ ] **shareview_fix_1.4**: Crear layouts específicos en share_view.php para mostrar blog posts vs redes sociales con placeholders
 
 **Feedback UX Improvements:**
@@ -312,7 +540,7 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 
 ## Current Status / Progress Tracking
 
-### **✅ FASE ACTUAL: MIGRACIÓN COMPLETADA Y SISTEMA MODERNIZADO**
+### **✅ FASE ACTUAL: SISTEMA FINALIZADO Y OPTIMIZADO**
 
 **Progreso del Executor:**
 - ✅ **Error Reportado**: "Esta página no funciona" - loop.ebone.es
@@ -328,9 +556,12 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 
 **Tareas Finales Completadas:**
 1. ✅ **Sitio completamente funcional** - Todas las funcionalidades restauradas
-2. ✅ **Autenticación operativa** - Sistema dual funcionando correctamente
+2. ✅ **Autenticación operativa** - Sistema unificado funcionando correctamente
 3. ✅ **Login modernizado** - Interfaz renovada con diseño moderno
 4. ✅ **Limpieza de archivos** - Eliminados archivos temporales innecesarios
+5. ✅ **Seguridad mejorada** - Contraseña maestra desactivada
+6. ✅ **Interfaz limpia** - Eliminados mensajes informativos con credenciales
+7. ✅ **Branding actualizado** - Logo Loop implementado
 
 **PRECEDENTE - ANÁLISIS Y PLANIFICACIÓN ✅ (COMPLETADO)**
 
@@ -344,81 +575,39 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 
 ## Executor's Feedback or Assistance Requests
 
-### 🔐 **SISTEMA DE LOGIN PARA ADMINS - PROGRESO**
+### **🔐 SISTEMA DE GESTIÓN DE USUARIOS ADMINISTRADORES**
 
-**ESTADO ACTUAL:** ✅ **FASE 1 COMPLETADA EXITOSAMENTE**
+**ESTADO ACTUAL:** 🚀 **MODO EXECUTOR - INICIANDO IMPLEMENTACIÓN**
 
-#### **✅ COMPLETADO - FASE 1: Implementación Básica de Autenticación**
+**📝 RESTRICCIÓN IMPORTANTE AGREGADA:**
+- ⚠️ **Botón "Configuración" y página configuracion.php**: Solo visible y accesible para SUPERADMINS
+- ⚠️ **Verificación de permisos**: Implementar `is_superadmin()` en toda la funcionalidad de configuración
 
-**RESUMEN DE IMPLEMENTACIÓN:**
-- [x] **Task 1.1**: Tablas de BD creadas (`admins`, `admin_linea_negocio`)
-- [x] **Task 1.2**: Funciones de autenticación implementadas en `functions.php`
-- [x] **Task 1.3**: UI de login actualizada con campo email
-- [x] **Task 1.4**: Sistema de migración y documentación creados
-- [x] **Task 1.5**: Sistema de testing implementado
+#### **✅ TASK 1.1 COMPLETADA: Página "Mi cuenta"**
 
-**ARCHIVOS CREADOS/MODIFICADOS:**
-- ✅ `database_migration_admin_auth.sql` - SQL para crear tablas
-- ✅ `includes/functions.php` - Funciones de autenticación añadidas
-- ✅ `login.php` - Formulario actualizado con email
-- ✅ `logout.php` - Mejorado con nueva función
-- ✅ `admin_migration_helper.php` - Panel de migración
-- ✅ `admin_system_test.php` - Script de testing
-- ✅ `DOCUMENTACION_NUEVOS_ADMINS.md` - Guía de usuario
+**Estado**: 🎉 **IMPLEMENTACIÓN COMPLETADA**
 
-**FUNCIONALIDADES IMPLEMENTADAS:**
-- ✅ **Autenticación dual**: Email/password + compatibilidad con contraseña maestra
-- ✅ **Múltiples administradores**: Sistema escalable
-- ✅ **Roles básicos**: admin y superadmin
-- ✅ **Sesiones mejoradas**: Información de usuario en sesión
-- ✅ **Migración suave**: Sin interrupciones del servicio
-- ✅ **Panel de gestión**: Para crear nuevos admins
-- ✅ **Testing completo**: Validación del sistema
+**Subtareas:**
+- [x] Crear archivo `mi_cuenta.php` con información del usuario ✅
+- [x] Formulario de cambio de contraseña con validaciones ✅
+- [x] Implementar función `change_password()` en `includes/functions.php` ✅
+- [x] Agregar validaciones de seguridad robustas ✅
+- [x] Actualizar navegación en `includes/nav.php` ✅
 
-**CREDENCIALES FUNCIONALES:**
-```
-Superadmin inicial:
-Email: admin@ebone.es
-Contraseña: admin123!
+**Funcionalidades implementadas:**
+- ✅ Página responsive con información del usuario (nombre, email, rol, último acceso)
+- ✅ Formulario de cambio de contraseña con validaciones frontend y backend
+- ✅ Función `change_password()` con validaciones de seguridad
+- ✅ Enlace "Mi cuenta" agregado al menú de navegación
+- ✅ Soporte para usuarios del sistema nuevo y anterior
+- ✅ Validación en tiempo real de coincidencia de contraseñas
 
-Sistema anterior:
-Contraseña maestra: (sigue funcionando)
-```
+**Archivos creados/modificados:**
+- ✅ `mi_cuenta.php` - Página de perfil completa
+- ✅ `includes/functions.php` - Función `change_password()` agregada
+- ✅ `includes/nav.php` - Enlace "Mi cuenta" agregado
 
-**COMPATIBILIDAD GARANTIZADA:**
-- ✅ **Todas las páginas existentes** funcionan sin modificaciones
-- ✅ **Sistema anterior** sigue operativo durante transición
-- ✅ **Páginas públicas** (`share_view.php`, etc.) no afectadas
-- ✅ **Funciones principales** (`is_authenticated()`, `require_authentication()`) preservadas
-
-**TESTING RESULTS:**
-- 🧪 **Script de testing** creado con 7 categorías de validación
-- ✅ **Validación completa** de estructura de BD, funciones, archivos
-- ✅ **Sistema funcional** y listo para uso en producción
-
-**PRÓXIMOS PASOS RECOMENDADOS:**
-1. **Probar credenciales** del superadmin (`admin@ebone.es` / `admin123!`)
-2. **Ejecutar testing** en `/admin_system_test.php`
-3. **Crear más administradores** usando `/admin_migration_helper.php`
-4. **Distribuir documentación** (`DOCUMENTACION_NUEVOS_ADMINS.md`)
-5. **Eliminar archivos temporales** después de migración completa
-
-**FASE 2 - FUNCIONALIDADES AVANZADAS (FUTURO):**
-- ⏳ Sistema de roles granular por línea de negocio
-- ⏳ Interface completa de gestión de usuarios
-- ⏳ Recuperación de contraseña por email
-- ⏳ Logs de actividad y auditoria
-- ⏳ Políticas de seguridad avanzadas
-
-**RESULTADO FINAL:**
-🎉 **SISTEMA DE LOGIN PARA ADMINS IMPLEMENTADO EXITOSAMENTE**
-- **Complejidad estimada**: Media-baja (6-7/10) ✅ CONFIRMADA
-- **Tiempo estimado**: 1-2 semanas ✅ CUMPLIDO
-- **Riesgo**: Bajo ✅ CONFIRMADO
-- **Beneficios**: Seguridad, escalabilidad, auditabilidad ✅ LOGRADOS
-
-**PREGUNTA PARA EL USUARIO:**
-¿Quieres proceder a probar el sistema con las credenciales del superadmin y ejecutar el testing? El sistema está listo para uso en producción.
+**Próximo paso**: Testing de funcionalidad y proceder con Task 1.2
 
 ## Lessons
 
@@ -583,10 +772,12 @@ Contraseña maestra: (sigue funcionando)
 - **Implementación Fase 2:** ⏳ 0% (Planificado para futuro)
 
 **🎯 ESTADO FINAL:**
-- ✅ **Sistema completamente funcional** - Autenticación dual operativa
-- ✅ **Interfaz modernizada** - Login con diseño profesional
+- ✅ **Sistema completamente funcional** - Autenticación unificada operativa
+- ✅ **Interfaz modernizada** - Login con diseño profesional y branding Loop
 - ✅ **Migración exitosa** - Transición sin pérdida de funcionalidad
 - ✅ **Documentación completa** - Guías y archivos de referencia disponibles
+- ✅ **Seguridad optimizada** - Contraseña maestra desactivada
+- ✅ **Interfaz limpia** - Eliminada información sensible del login
 
 ## Executor's Feedback or Assistance Requests
 
@@ -597,6 +788,8 @@ Contraseña maestra: (sigue funcionando)
 ✅ **Interfaz de login modernizada y profesional**
 ✅ **Migración exitosa sin pérdida de funcionalidad**
 ✅ **Archivos limpiados y organizados**
+✅ **Seguridad optimizada con autenticación unificada**
+✅ **Branding Loop implementado correctamente**
 
 **📋 RESUMEN DE IMPLEMENTACIÓN:**
 
@@ -610,6 +803,9 @@ Contraseña maestra: (sigue funcionando)
 - **Interfaz intuitiva**: Campos claramente etiquetados y styled
 - **Responsive design**: Adaptación perfecta a dispositivos móviles
 - **UX mejorada**: Animaciones suaves y feedback visual
+- **Branding actualizado**: Logo Loop implementado
+- **Seguridad mejorada**: Contraseña maestra desactivada
+- **Interfaz limpia**: Eliminados mensajes informativos con credenciales
 
 **📊 ARCHIVOS GESTIONADOS:**
 - ✅ **Mantenidos**: `database_migration_admin_auth.sql`, `DOCUMENTACION_NUEVOS_ADMINS.md`, `ADMIN_SYSTEM_STATUS.md`
@@ -626,11 +822,14 @@ Contraseña maestra: (sigue funcionando)
 - Verificar conflictos con funciones nativas de PHP
 - Importancia de testing exhaustivo antes de deployment
 - Valor de scripts de diagnóstico para debugging rápido
+- Importancia de no exponer credenciales en interfaces de usuario
+- Beneficios de desactivar métodos de autenticación legacy para mayor seguridad
 
 **🚀 PRÓXIMOS PASOS SUGERIDOS (OPCIONAL):**
 1. Añadir más administradores usando la base de datos
 2. Implementar Fase 2 con roles granulares (futuro)
 3. Agregar sistema de recuperación de contraseña (futuro)
+4. Considerar autenticación de dos factores (2FA) para mayor seguridad
 
 **PRECEDENTE - IMPLEMENTACIÓN TÉCNICA COMPLETA (COMPLETADO):**
 

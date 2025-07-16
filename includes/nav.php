@@ -84,6 +84,10 @@ if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($logo_path, '/'))) {
         <i class="fab fa-wordpress"></i> WordPress
     </a>
     
+    <a href="/mi_cuenta.php" class="nav-item <?php echo ($current_script_name === 'mi_cuenta.php') ? 'active' : ''; ?>">
+        <i class="fas fa-user"></i> Mi cuenta
+    </a>
+    
     <a href="/logout.php" class="nav-item nav-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
 </div>
 <script>

@@ -170,6 +170,59 @@ function logout_user() {
     session_destroy();
 }
 
+/**
+ * Cambiar contraseña del usuario
+ * @param int $user_id ID del usuario
+ * @param string $current_password Contraseña actual
+ * @param string $new_password Nueva contraseña
+ * @return bool|string True si éxito, mensaje de error si falla
+ */
+function change_password($user_id, $current_password, $new_password) {
+    // Validar que el usuario ID esté presente
+    if (!$user_id) {
+        return 'Error: ID de usuario no válido.';
+    }
+    
+    // Validar longitud de nueva contraseña
+    if (strlen($new_password) < 6) {
+        return 'La nueva contraseña debe tener al menos 6 caracteres.';
+    }
+    
+    $db = getDbConnection();
+    try {
+        // Obtener la contraseña actual del usuario
+        $stmt = $db->prepare("SELECT password_hash FROM admins WHERE id = ? AND activo = 1");
+        $stmt->execute([$user_id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            return 'Error: Usuario no encontrado o inactivo.';
+        }
+        
+        // Verificar contraseña actual
+        if (!password_verify($current_password, $user['password_hash'])) {
+            return 'La contraseña actual es incorrecta.';
+        }
+        
+        // Generar hash de la nueva contraseña
+        $new_password_hash = password_hash($new_password, PASSWORD_DEFAULT);
+        
+        // Actualizar la contraseña en la base de datos
+        $stmt = $db->prepare("UPDATE admins SET password_hash = ?, updated_at = NOW() WHERE id = ?");
+        $success = $stmt->execute([$new_password_hash, $user_id]);
+        
+        if ($success) {
+            return true;
+        } else {
+            return 'Error al actualizar la contraseña en la base de datos.';
+        }
+        
+    } catch (PDOException $e) {
+        error_log("Error changing password: " . $e->getMessage());
+        return 'Error interno al cambiar la contraseña.';
+    }
+}
+
 // ---- Fin Autenticación ----
 
 // ---- Gestión de Tokens Compartir ----
