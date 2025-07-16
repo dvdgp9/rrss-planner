@@ -162,10 +162,13 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .nav-logout {
     margin-left: auto; /* Pushes logout to the right */
-    background-color: #dc3545; /* Red, as in original */
+    background-color: #dc3545 !important; /* Red, as in original */
     color: white !important; /* Override other color styles */
+    border: 1px solid #dc3545 !important;
 }
 .nav-logout:hover {
-    background-color: #c82333; /* Darker red on hover */
+    background-color: #c82333 !important; /* Darker red on hover */
+    color: white !important;
+    border-color: #c82333 !important;
 }
 </style> 
