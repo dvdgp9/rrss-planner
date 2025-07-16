@@ -16,20 +16,39 @@ if (is_authenticated()) {
 
 // Procesar el formulario de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-
-    if (password_verify($password, MASTER_PASSWORD_HASH)) {
-        // Contraseña correcta: iniciar sesión y redirigir
-        $_SESSION['authenticated'] = true;
-        
+    
+    $authenticated = false;
+    
+    // Intentar autenticación por email/password (sistema nuevo)
+    if (!empty($email) && !empty($password)) {
+        $user = authenticate_user($email, $password);
+        if ($user) {
+            $authenticated = true;
+        } else {
+            $error = 'Email o contraseña incorrectos.';
+        }
+    } 
+    // Si no hay email, intentar con contraseña maestra (sistema anterior)
+    elseif (!empty($password)) {
+        if (authenticate_master_password($password)) {
+            $authenticated = true;
+        } else {
+            $error = 'Contraseña incorrecta.';
+        }
+    }
+    else {
+        $error = 'Por favor, ingrese sus credenciales.';
+    }
+    
+    // Si la autenticación fue exitosa, redirigir
+    if ($authenticated) {
         // Redirigir a la URL original o al dashboard si no hay URL guardada
         $redirect_url = $_SESSION['redirect_url'] ?? 'index.php';
         unset($_SESSION['redirect_url']); // Limpiar la URL guardada
         header('Location: ' . $redirect_url);
         exit;
-    } else {
-        // Contraseña incorrecta
-        $error = 'Contraseña incorrecta.';
     }
 }
 
@@ -128,11 +147,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" action="login.php">
             <div class="form-group">
-                <label for="password">Contraseña Maestra:</label>
+                <label for="email">Email (opcional):</label>
+                <input type="email" id="email" name="email" placeholder="admin@ebone.es" value="<?php echo htmlspecialchars($email ?? ''); ?>">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
                 <input type="password" id="password" name="password" required autofocus>
             </div>
             <button type="submit" class="btn btn-login">Acceder</button>
         </form>
+        
+        <div style="margin-top: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 4px; font-size: 0.9em; color: #1976d2;">
+            <strong>💡 Nuevo:</strong> Ahora puedes usar email + contraseña<br>
+            <strong>📧 Superadmin:</strong> admin@ebone.es / admin123!<br>
+            <em>También funciona la contraseña maestra (solo contraseña)</em>
+        </div>
     </div>
 </body>
 </html> 

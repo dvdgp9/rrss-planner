@@ -12,10 +12,18 @@ require_once __DIR__ . '/../config/db.php';
 // ---- Autenticación ----
 define('MASTER_PASSWORD_HASH', '$2y$12$CLIuTX.v/JWFu4dsytQvdOZHD/F7m8qREIy88Onb5EVBwXya6a.aq');
 
+/**
+ * Verificar si el usuario está autenticado
+ * Funciona tanto con sistema nuevo (admins) como con sistema anterior (master password)
+ */
 function is_authenticated() {
     return isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true;
 }
 
+/**
+ * Requiere autenticación para acceder a la página
+ * Redirige a login.php si no está autenticado
+ */
 function require_authentication() {
     if (!is_authenticated()) {
         // Guardar la URL a la que se intentaba acceder para redirigir después del login
@@ -24,6 +32,144 @@ function require_authentication() {
         exit;
     }
 }
+
+/**
+ * Autenticar usuario por email y contraseña (sistema nuevo)
+ * @param string $email
+ * @param string $password
+ * @return bool|array False si falla, array con info del usuario si éxito
+ */
+function authenticate_user($email, $password) {
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("SELECT id, nombre, email, password_hash, rol FROM admins WHERE email = ? AND activo = 1");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user && password_verify($password, $user['password_hash'])) {
+            // Actualizar último login
+            $stmt_update = $db->prepare("UPDATE admins SET ultimo_login = NOW() WHERE id = ?");
+            $stmt_update->execute([$user['id']]);
+            
+            // Establecer sesión
+            $_SESSION['authenticated'] = true;
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['nombre'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['user_role'] = $user['rol'];
+            $_SESSION['auth_method'] = 'user'; // Para distinguir del sistema anterior
+            
+            return $user;
+        }
+        return false;
+    } catch (PDOException $e) {
+        error_log("Error authenticating user: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Autenticar con contraseña maestra (sistema anterior - compatibilidad temporal)
+ * @param string $password
+ * @return bool
+ */
+function authenticate_master_password($password) {
+    if (password_verify($password, MASTER_PASSWORD_HASH)) {
+        $_SESSION['authenticated'] = true;
+        $_SESSION['auth_method'] = 'master'; // Para distinguir del sistema nuevo
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Obtener información del usuario actual
+ * @return array|null
+ */
+function get_current_user() {
+    if (!is_authenticated()) {
+        return null;
+    }
+    
+    // Si es autenticación nueva, devolver datos del usuario
+    if (isset($_SESSION['auth_method']) && $_SESSION['auth_method'] === 'user') {
+        return [
+            'id' => $_SESSION['user_id'] ?? null,
+            'nombre' => $_SESSION['user_name'] ?? 'Usuario',
+            'email' => $_SESSION['user_email'] ?? '',
+            'rol' => $_SESSION['user_role'] ?? 'admin',
+            'auth_method' => 'user'
+        ];
+    }
+    
+    // Si es autenticación anterior, devolver datos genéricos
+    return [
+        'id' => null,
+        'nombre' => 'Administrador',
+        'email' => '',
+        'rol' => 'admin',
+        'auth_method' => 'master'
+    ];
+}
+
+/**
+ * Verificar si el usuario actual es superadmin
+ * @return bool
+ */
+function is_superadmin() {
+    $user = get_current_user();
+    return $user && $user['rol'] === 'superadmin';
+}
+
+/**
+ * Verificar si el usuario puede acceder a una línea de negocio específica
+ * Por ahora, todos los usuarios autenticados pueden acceder a todo
+ * En el futuro se implementará control granular
+ * @param int $linea_id
+ * @return bool
+ */
+function user_can_access_linea($linea_id) {
+    if (!is_authenticated()) {
+        return false;
+    }
+    
+    $user = get_current_user();
+    
+    // Superadmin puede acceder a todo
+    if ($user && $user['rol'] === 'superadmin') {
+        return true;
+    }
+    
+    // Sistema anterior: acceso completo
+    if ($user && $user['auth_method'] === 'master') {
+        return true;
+    }
+    
+    // Por ahora, todos los admins pueden acceder a todo
+    // TODO: Implementar control granular en Fase 2
+    return true;
+}
+
+/**
+ * Cerrar sesión de usuario
+ */
+function logout_user() {
+    // Destruir todas las variables de sesión
+    $_SESSION = array();
+    
+    // Destruir la cookie de sesión si existe
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+    
+    // Destruir la sesión
+    session_destroy();
+}
+
 // ---- Fin Autenticación ----
 
 // ---- Gestión de Tokens Compartir ----
