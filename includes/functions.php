@@ -86,7 +86,7 @@ function authenticate_master_password($password) {
  * Obtener información del usuario actual
  * @return array|null
  */
-function get_current_user() {
+function get_current_admin_user() {
     if (!is_authenticated()) {
         return null;
     }
@@ -117,7 +117,7 @@ function get_current_user() {
  * @return bool
  */
 function is_superadmin() {
-    $user = get_current_user();
+    $user = get_current_admin_user();
     return $user && $user['rol'] === 'superadmin';
 }
 
@@ -133,7 +133,7 @@ function user_can_access_linea($linea_id) {
         return false;
     }
     
-    $user = get_current_user();
+    $user = get_current_admin_user();
     
     // Superadmin puede acceder a todo
     if ($user && $user['rol'] === 'superadmin') {

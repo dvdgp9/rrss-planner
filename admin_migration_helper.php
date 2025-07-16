@@ -56,7 +56,7 @@ if (!is_superadmin()) {
 
         <?php
         // Mostrar información del usuario actual
-        $current_user = get_current_user();
+        $current_user = get_current_admin_user();
         echo "<div class='section success'>";
         echo "<h3>👤 Usuario Actual</h3>";
         echo "<p><strong>Nombre:</strong> " . htmlspecialchars($current_user['nombre']) . "</p>";

@@ -104,7 +104,7 @@ if (!is_superadmin()) {
         
         show_test("Función authenticate_user", function_exists('authenticate_user'), "Función existe", "Función no encontrada");
         show_test("Función authenticate_master_password", function_exists('authenticate_master_password'), "Función existe", "Función no encontrada");
-        show_test("Función get_current_user", function_exists('get_current_user'), "Función existe", "Función no encontrada");
+        show_test("Función get_current_admin_user", function_exists('get_current_admin_user'), "Función existe", "Función no encontrada");
         show_test("Función is_superadmin", function_exists('is_superadmin'), "Función existe", "Función no encontrada");
         show_test("Función user_can_access_linea", function_exists('user_can_access_linea'), "Función existe", "Función no encontrada");
         show_test("Función logout_user", function_exists('logout_user'), "Función existe", "Función no encontrada");
@@ -112,7 +112,7 @@ if (!is_superadmin()) {
         // TEST 3: Verificar usuario actual
         echo "<h2>👤 Test 3: Usuario Actual</h2>";
         
-        $current_user = get_current_user();
+        $current_user = get_current_admin_user();
         show_test("Usuario autenticado", $current_user !== null, "Usuario válido", "No hay usuario autenticado");
         show_test("Método de auth", isset($current_user['auth_method']), "Método detectado: " . ($current_user['auth_method'] ?? 'desconocido'), "Método no detectado");
         

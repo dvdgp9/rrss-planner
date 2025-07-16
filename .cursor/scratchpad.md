@@ -312,7 +312,22 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 
 ## Current Status / Progress Tracking
 
-### **FASE ACTUAL: ANÁLISIS Y PLANIFICACIÓN ✅**
+### **🚨 FASE ACTUAL: EMERGENCY DEBUGGING - SITIO NO FUNCIONA**
+
+**Progreso del Executor:**
+- ✅ **Error Reportado**: "Esta página no funciona" - loop.ebone.es
+- ❌ **Diagnóstico Inicial Incorrecto**: Tabla `admins` SÍ existe (confirmado por usuario)
+- ✅ **Corrección**: Creado `advanced_debug.php` para diagnóstico completo
+- ✅ **Revisión**: Las tablas y datos están correctos según captura
+- ⏳ **Pendiente**: Identificar la causa real del error
+
+**Próximos Pasos Críticos:**
+1. **Usuario debe ejecutar**: `advanced_debug.php` en el servidor
+2. **Analizar resultados**: Identificar qué está fallando específicamente
+3. **Aplicar solución**: Según el error específico encontrado
+4. **Contingencia**: Revertir cambios si es necesario
+
+**PRECEDENTE - ANÁLISIS Y PLANIFICACIÓN ✅ (COMPLETADO)**
 
 **Progreso del Planner:**
 - ✅ **Problema 1 Identificado**: Blog posts no se muestran en vista compartida
@@ -321,13 +336,6 @@ El usuario quiere implementar una funcionalidad para ahorrar memoria en el servi
 - ✅ **Solución Técnica**: Especificación detallada creada en `SPEC_share_view_fixes.md`
 - ✅ **Task Breakdown**: 9 tareas específicas con dependencias claras
 - ✅ **Archivos Identificados**: 5 archivos principales a modificar
-
-**Próximos Pasos:**
-1. **Solicitar aprobación del usuario** para proceder con implementación
-2. **Cambiar a modo Executor** para comenzar con shareview_fix_1.1
-3. **Implementar context-awareness** en el botón de compartir vista
-4. **Desarrollar lógica dual** para contenido social vs blog
-5. **Mejorar UX del feedback** con modal profesional
 
 ## Executor's Feedback or Assistance Requests
 
@@ -575,9 +583,37 @@ Contraseña maestra: (sigue funcionando)
 
 ## Executor's Feedback or Assistance Requests
 
-**🎯 SOLICITUD DE TESTING MANUAL (CRÍTICO)**
+**🚨 PROBLEMA CRÍTICO DETECTADO - SITIO NO FUNCIONA**
 
-**✅ IMPLEMENTACIÓN TÉCNICA COMPLETA** 
+**❌ ERROR REPORTADO POR USUARIO:**
+- Mensaje: "Esta página no funciona. La página loop.ebone.es no puede procesar esta solicitud ahora."
+- Causa probable: Tabla `admins` no existe en la base de datos
+- Sistema intenta autenticar con nueva función pero falla por tabla inexistente
+
+**🔧 DIAGNÓSTICO CORREGIDO:**
+1. ✅ **Tabla `admins` SÍ existe** - confirmado por captura del usuario
+2. ✅ **Registro de superadmin existe** - admin@ebone.es con rol superadmin
+3. ❌ **Diagnóstico inicial incorrecto** - el problema es OTRO
+4. 🔍 **Investigación en curso** - causa real del error por determinar
+
+**🎯 NUEVA LÍNEA DE INVESTIGACIÓN:**
+1. **Ejecutar diagnóstico avanzado** con `advanced_debug.php` 
+2. **Verificar sintaxis PHP** en archivos modificados
+3. **Comprobar funciones de autenticación** y flujo completo
+4. **Identificar error específico** que causa el fallo del sitio
+
+**ARCHIVOS CREADOS PARA SOLUCIÓN:**
+- `advanced_debug.php` - Script de diagnóstico completo (NUEVO)
+- `debug_test.php` - Script de diagnóstico inicial
+- `database_migration_admin_auth.sql` - Script de migración (ya aplicado)
+- `admin_migration_helper.php` - Interfaz de migración
+
+**PRÓXIMOS PASOS:**
+1. Usuario debe ejecutar `advanced_debug.php` para diagnóstico completo
+2. Identificar la causa real del error
+3. Aplicar solución específica según resultados
+
+**PRECEDENTE - IMPLEMENTACIÓN TÉCNICA COMPLETA (COMPLETADO):**
 
 He finalizado completamente la implementación de los fixes para "Compartir Vista". Todas las tareas de desarrollo están terminadas:
 
