@@ -157,9 +157,22 @@ Se requiere implementar un sistema de gestión de administradores para el RRSS P
 - ✅ Campo `thumbnail_url` incluido específicamente en todas las consultas
 - ✅ Bug adicional corregido en `share_view.php` (consulta de blog posts se sobrescribía)
 
+**SEGUNDO PROBLEMA CRÍTICO IDENTIFICADO:**
+🔧 **Bug de paths del servidor:** La función `getBestThumbnailUrl()` estaba construyendo paths incorrectos para verificar la existencia de thumbnails:
+- **Problema:** Usaba `$_SERVER['DOCUMENT_ROOT']` que incluía `/public/` pero las URLs no
+- **Resultado:** No encontraba thumbnails existentes y devolvía imagen original
+- **Debug mostró:** Los thumbnails SÍ existían físicamente, pero se buscaban en paths incorrectos
+
+**SOLUCIÓN APLICADA AL BUG DE PATHS:**
+- ✅ Reemplazado `$_SERVER['DOCUMENT_ROOT']` por `dirname(__DIR__)` (raíz del proyecto)
+- ✅ Construcción correcta de paths: `$projectRoot . '/' . $thumbnailUrl`
+- ✅ Corregido en `getBestThumbnailUrl()` y `generateThumbnail()` para consistencia
+- ✅ Agregado logging temporal para verificar corrección
+
 **Archivos modificados:**
 - `planner.php`: Consultas de `publicaciones` y `blog_posts` ahora explícitas
-- `share_view.php`: Consultas corregidas y explícitas
+- `share_view.php`: Consultas corregidas y explícitas  
+- `includes/functions.php`: Funciones de thumbnails con paths corregidos
 
 **Últimos cambios realizados:**
 1. **Sistema de thumbnails optimizados (8-10 horas desarrollo):**
@@ -316,5 +329,9 @@ El usuario reportó que el texto de las pestañas "Posts Sociales/Blog Posts" no
 - **Consultas SQL explícitas vs SELECT *:** Cuando se agregan nuevas columnas a una tabla, usar `SELECT *` puede no incluir automáticamente las nuevas columnas por problemas de caché de esquema o drivers. Es mejor ser explícito con los campos necesarios.
 - **Testing de funcionalidades:** Siempre verificar que las funcionalidades implementadas estén funcionando como se esperaba, especialmente después de cambios en base de datos.
 - **Debugging de imágenes:** Usar herramientas de desarrollo del navegador para verificar las URLs de las imágenes que se están cargando cuando hay problemas de thumbnails.
+- **Debugging sistemático:** Crear scripts de debug detallados es más eficiente que adivinar problemas. Un buen script de debug debe verificar: estructura BD, datos reales, archivos físicos, funciones, y directorios.
+- **$_SERVER['DOCUMENT_ROOT'] no es confiable:** En algunos servidores, DOCUMENT_ROOT incluye subdirectorios que no coinciden con las URLs relativas. Es más confiable usar `dirname(__FILE__)` o `__DIR__` para construir paths del proyecto.
+- **Paths consistentes:** Todas las funciones relacionadas (generateThumbnail, getBestThumbnailUrl) deben usar la misma lógica de construcción de paths para evitar inconsistencias.
+- **Logging temporal:** Agregar logs temporales durante debugging ayuda a identificar exactamente dónde fallan las funciones, especialmente con verificaciones de archivos.
 
 

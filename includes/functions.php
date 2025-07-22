@@ -723,18 +723,21 @@ function generateThumbnail($originalImagePath, $size = 60, $quality = 75) {
 
         $results = [];
 
+        // Usar directorio raíz del proyecto para generar URLs consistentes
+        $projectRoot = dirname(__DIR__);
+
         // Generar WebP si está disponible
         if (function_exists('imagewebp')) {
             if (imagewebp($thumbnailImage, $webpThumbnail, 80)) {
                 $results['webp'] = $webpThumbnail;
-                $results['webp_url'] = str_replace($_SERVER['DOCUMENT_ROOT'] ?? '', '', $webpThumbnail);
+                $results['webp_url'] = str_replace($projectRoot . '/', '', $webpThumbnail);
             }
         }
 
         // Generar JPEG siempre como fallback
         if (imagejpeg($thumbnailImage, $jpegThumbnail, $quality)) {
             $results['jpeg'] = $jpegThumbnail;
-            $results['jpeg_url'] = str_replace($_SERVER['DOCUMENT_ROOT'] ?? '', '', $jpegThumbnail);
+            $results['jpeg_url'] = str_replace($projectRoot . '/', '', $jpegThumbnail);
         }
 
         // Limpiar memoria
@@ -777,14 +780,18 @@ function getBestThumbnailUrl($originalImageUrl, $thumbnailUrl = null) {
         return $originalImageUrl;
     }
 
-    // Convertir URL a path del servidor para verificar existencia
-    $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
-    $thumbnailPath = $documentRoot . $thumbnailUrl;
+    // Convertir URL a path del servidor usando directorio actual del proyecto
+    // En lugar de DOCUMENT_ROOT, usar el directorio actual (__DIR__ apunta a includes/)
+    $projectRoot = dirname(__DIR__); // Directorio padre de includes/ (raíz del proyecto)
+    $thumbnailPath = $projectRoot . '/' . $thumbnailUrl;
+
+    // Debug logging para diagnosticar paths
+    error_log("THUMBNAIL_DEBUG: Checking path: {$thumbnailPath}");
 
     // Verificar si el thumbnail existe
     if (!file_exists($thumbnailPath)) {
         // Si el thumbnail no existe, intentar generarlo on-demand
-        $originalPath = $documentRoot . $originalImageUrl;
+        $originalPath = $projectRoot . '/' . $originalImageUrl;
         if (file_exists($originalPath)) {
             $generated = generateThumbnail($originalPath);
             if ($generated && isset($generated['webp_url'])) {
@@ -795,19 +802,23 @@ function getBestThumbnailUrl($originalImageUrl, $thumbnailUrl = null) {
         }
         
         // Si todo falla, usar imagen original
+        error_log("THUMBNAIL_FALLBACK: Using original image - {$originalImageUrl}");
         return $originalImageUrl;
     }
 
-    // Verificar si existe versión WebP
+    // Verificar si existe versión WebP (priorizar WebP sobre otros formatos)
     $pathInfo = pathinfo($thumbnailPath);
     $webpPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
-    $webpUrl = str_replace($documentRoot, '', $webpPath);
     
     if (file_exists($webpPath)) {
+        // Convertir path absoluto de vuelta a URL relativa
+        $webpUrl = str_replace($projectRoot . '/', '', $webpPath);
+        error_log("THUMBNAIL_SUCCESS: Using WebP - {$webpUrl}");
         return $webpUrl;
     }
 
-    // Usar el thumbnail registrado
+    // Si no hay WebP, usar el thumbnail registrado (que existe según verificación anterior)
+    error_log("THUMBNAIL_SUCCESS: Using registered thumbnail - {$thumbnailUrl}");
     return $thumbnailUrl;
 }
 
