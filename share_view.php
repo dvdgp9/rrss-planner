@@ -80,10 +80,12 @@ if (!$token) {
             
             // Obtener contenido según tipo
             if ($contentType === 'blog') {
-                // Consulta para blog posts
+                // Consulta para blog posts - incluir explícitamente thumbnail_url
                 $stmt = $db->prepare("
                     SELECT 
-                        bp.*,
+                        bp.id, bp.titulo, bp.contenido, bp.excerpt, bp.slug,
+                        bp.imagen_destacada, bp.thumbnail_url, bp.fecha_publicacion, bp.estado,
+                        bp.linea_negocio_id, bp.wp_categories_selected, bp.wp_tags_selected,
                         'blog' as content_type,
                         0 as feedback_count,
                         '' as nombres_redes
@@ -94,10 +96,11 @@ if (!$token) {
                 $stmt->execute([$lineaId]);
                 $contentItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } else {
-                // Consulta para publicaciones sociales (original)
+                // Consulta para publicaciones sociales - incluir explícitamente thumbnail_url
                 $stmt = $db->prepare("
                     SELECT 
-                        p.*, 
+                        p.id, p.contenido, p.imagen_url, p.thumbnail_url, 
+                        p.fecha_programada, p.estado, p.linea_negocio_id,
                         'social' as content_type,
                         GROUP_CONCAT(rs.nombre SEPARATOR '|') as nombres_redes, 
                         COUNT(DISTINCT pf.id) as feedback_count 

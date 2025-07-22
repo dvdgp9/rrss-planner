@@ -46,7 +46,8 @@ if (empty($slug)) {
             // --- Conexión y Obtención de Datos de Publicaciones ---
             $sql_publicaciones = "
                 SELECT 
-                    p.*, 
+                    p.id, p.contenido, p.imagen_url, p.thumbnail_url, 
+                    p.fecha_programada, p.estado, p.linea_negocio_id,
                     GROUP_CONCAT(DISTINCT rs.nombre SEPARATOR '|') as nombres_redes, 
                     COUNT(DISTINCT pf.id) as feedback_count 
                 FROM publicaciones p
@@ -137,7 +138,9 @@ $blog_default_sort_dir = ($blog_sort_by === 'fecha_publicacion') ? 'DESC' : 'ASC
         // --- Obtención de Blog Posts ---
         $sql_blog_posts = "
             SELECT 
-                bp.*,
+                bp.id, bp.titulo, bp.contenido, bp.excerpt, bp.slug,
+                bp.imagen_destacada, bp.thumbnail_url, bp.fecha_publicacion, bp.estado,
+                bp.linea_negocio_id, bp.wp_categories_selected, bp.wp_tags_selected,
                 ln.wordpress_enabled,
                 ln.wordpress_url,
                 CASE 
