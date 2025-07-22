@@ -221,7 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Abrir modal al hacer clic en una miniatura
         document.body.addEventListener('click', function(event) {
             if (event.target.classList.contains('thumbnail')) {
-                const imageSrc = event.target.src;
+                // Usar imagen original para modal si está disponible, sino usar src del thumbnail
+                const originalImageSrc = event.target.getAttribute('data-original');
+                const imageSrc = originalImageSrc || event.target.src;
+                
                 if(imageSrc) {
                     modalImage.src = imageSrc;
                     imageModal.classList.add('show');

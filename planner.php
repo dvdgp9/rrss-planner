@@ -356,7 +356,15 @@ if ($current_linea_id) {
                                 <td data-label="Fecha"><?php echo date("d/m/Y", strtotime($publicacion['fecha_programada'])); ?></td>
                                 <td data-label="Imagen">
                                     <?php if (!empty($publicacion['imagen_url'])): ?>
-                                        <img src="<?php echo htmlspecialchars($publicacion['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
+                                        <?php 
+                                        // Usar thumbnail optimizado para mostrar, original para modal
+                                        $thumbnailUrl = getBestThumbnailUrl($publicacion['imagen_url'], $publicacion['thumbnail_url'] ?? null);
+                                        $originalUrl = $publicacion['imagen_url'];
+                                        ?>
+                                        <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
+                                             data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
+                                             alt="Miniatura" 
+                                             class="thumbnail">
                                     <?php elseif ($publicacion['estado'] === 'publicado'): ?>
                                         <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
                                             <i class="fas fa-archive"></i>
@@ -491,7 +499,15 @@ if ($current_linea_id) {
                                 <td data-label="Fecha"><?php echo date("d/m/Y", strtotime($blog_post['fecha_publicacion'])); ?></td>
                                 <td data-label="Imagen">
                                     <?php if (!empty($blog_post['imagen_destacada'])): ?>
-                                        <img src="<?php echo htmlspecialchars($blog_post['imagen_destacada']); ?>" alt="Imagen destacada" class="thumbnail">
+                                        <?php 
+                                        // Usar thumbnail optimizado para mostrar, original para modal
+                                        $thumbnailUrl = getBestThumbnailUrl($blog_post['imagen_destacada'], $blog_post['thumbnail_url'] ?? null);
+                                        $originalUrl = $blog_post['imagen_destacada'];
+                                        ?>
+                                        <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
+                                             data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
+                                             alt="Imagen destacada" 
+                                             class="thumbnail">
                                     <?php elseif ($blog_post['estado'] === 'publish'): ?>
                                         <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
                                             <i class="fas fa-archive"></i>

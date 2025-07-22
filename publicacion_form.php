@@ -172,8 +172,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $destino = $upload_dir . $new_filename;
             
             if (move_uploaded_file($tmp_name, $destino)) {
-                // Si hay una imagen anterior, la eliminamos
+                // Generar thumbnail automáticamente
+                $thumbnailResult = generateThumbnail($destino);
+                $thumbnail_url = null;
+                
+                if ($thumbnailResult) {
+                    // Priorizar WebP si está disponible, sino usar JPEG
+                    if (isset($thumbnailResult['webp_url'])) {
+                        $thumbnail_url = $thumbnailResult['webp_url'];
+                    } elseif (isset($thumbnailResult['jpeg_url'])) {
+                        $thumbnail_url = $thumbnailResult['jpeg_url'];
+                    }
+                    error_log("THUMBNAIL_GENERATED: Publicacion thumbnail created - " . ($thumbnail_url ? $thumbnail_url : 'failed'));
+                }
+                
+                // Si hay una imagen anterior, la eliminamos (incluyendo sus thumbnails)
                 if (!empty($publicacion['imagen_url']) && file_exists($publicacion['imagen_url']) && $modo === 'editar') {
+                    // Eliminar thumbnails de la imagen anterior
+                    $oldImagePath = $publicacion['imagen_url'];
+                    $oldThumbsDir = dirname($oldImagePath) . '/thumbs/';
+                    $oldFilename = pathinfo($oldImagePath, PATHINFO_FILENAME);
+                    
+                    $oldThumbnails = [
+                        $oldThumbsDir . $oldFilename . '_thumb.webp',
+                        $oldThumbsDir . $oldFilename . '_thumb.jpg'
+                    ];
+                    
+                    foreach ($oldThumbnails as $oldThumb) {
+                        if (file_exists($oldThumb)) {
+                            unlink($oldThumb);
+                        }
+                    }
+                    
+                    // Eliminar imagen original
                     unlink($publicacion['imagen_url']);
                 }
                 $imagen_url = $destino;
@@ -188,20 +219,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $db->beginTransaction();
             
+            // Si no se subió nueva imagen en edición, mantener los thumbnails existentes
+            if ($modo === 'editar' && !isset($thumbnail_url)) {
+                $thumbnail_url = $publicacion['thumbnail_url'] ?? null;
+            } elseif ($modo === 'crear' && !isset($thumbnail_url)) {
+                $thumbnail_url = null;
+            }
+            
             if ($modo === 'crear') {
                 $stmt = $db->prepare("
-                    INSERT INTO publicaciones (contenido, imagen_url, fecha_programada, estado, linea_negocio_id)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO publicaciones (contenido, imagen_url, thumbnail_url, fecha_programada, estado, linea_negocio_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$contenido, $imagen_url, $fecha, $estado, $lineaId]);
+                $stmt->execute([$contenido, $imagen_url, $thumbnail_url, $fecha, $estado, $lineaId]);
                 $publicacionId = $db->lastInsertId();
             } else {
                 $stmt = $db->prepare("
                     UPDATE publicaciones 
-                    SET contenido = ?, imagen_url = ?, fecha_programada = ?, estado = ?
+                    SET contenido = ?, imagen_url = ?, thumbnail_url = ?, fecha_programada = ?, estado = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$contenido, $imagen_url, $fecha, $estado, $publicacion['id']]);
+                $stmt->execute([$contenido, $imagen_url, $thumbnail_url, $fecha, $estado, $publicacion['id']]);
                 $publicacionId = $publicacion['id'];
             }
             

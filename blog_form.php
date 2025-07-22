@@ -201,8 +201,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $destino = $upload_dir . $new_filename;
             
             if (move_uploaded_file($tmp_name, $destino)) {
-                // Si hay una imagen anterior, la eliminamos
+                // Generar thumbnail automáticamente
+                $thumbnailResult = generateThumbnail($destino);
+                $thumbnail_url = null;
+                
+                if ($thumbnailResult) {
+                    // Priorizar WebP si está disponible, sino usar JPEG
+                    if (isset($thumbnailResult['webp_url'])) {
+                        $thumbnail_url = $thumbnailResult['webp_url'];
+                    } elseif (isset($thumbnailResult['jpeg_url'])) {
+                        $thumbnail_url = $thumbnailResult['jpeg_url'];
+                    }
+                    error_log("THUMBNAIL_GENERATED: Blog post thumbnail created - " . ($thumbnail_url ? $thumbnail_url : 'failed'));
+                }
+                
+                // Si hay una imagen anterior, la eliminamos (incluyendo sus thumbnails)
                 if (!empty($blogPost['imagen_destacada']) && file_exists($blogPost['imagen_destacada']) && $modo === 'editar') {
+                    // Eliminar thumbnails de la imagen anterior
+                    $oldImagePath = $blogPost['imagen_destacada'];
+                    $oldThumbsDir = dirname($oldImagePath) . '/thumbs/';
+                    $oldFilename = pathinfo($oldImagePath, PATHINFO_FILENAME);
+                    
+                    $oldThumbnails = [
+                        $oldThumbsDir . $oldFilename . '_thumb.webp',
+                        $oldThumbsDir . $oldFilename . '_thumb.jpg'
+                    ];
+                    
+                    foreach ($oldThumbnails as $oldThumb) {
+                        if (file_exists($oldThumb)) {
+                            unlink($oldThumb);
+                        }
+                    }
+                    
+                    // Eliminar imagen original
                     unlink($blogPost['imagen_destacada']);
                 }
                 $imagen_destacada = $destino;
@@ -217,24 +248,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $db->beginTransaction();
             
+            // Si no se subió nueva imagen en edición, mantener los thumbnails existentes
+            if ($modo === 'editar' && !isset($thumbnail_url)) {
+                $thumbnail_url = $blogPost['thumbnail_url'] ?? null;
+            } elseif ($modo === 'crear' && !isset($thumbnail_url)) {
+                $thumbnail_url = null;
+            }
+            
             // Convertir arrays de WordPress a JSON
             $wp_categorias_json = !empty($wp_categorias) ? json_encode(array_map('intval', $wp_categorias)) : null;
             $wp_tags_json = !empty($wp_tags) ? json_encode(array_map('intval', $wp_tags)) : null;
             
             if ($modo === 'crear') {
                 $stmt = $db->prepare("
-                    INSERT INTO blog_posts (titulo, contenido, excerpt, slug, imagen_destacada, fecha_publicacion, estado, linea_negocio_id, wp_categories_selected, wp_tags_selected)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO blog_posts (titulo, contenido, excerpt, slug, imagen_destacada, thumbnail_url, fecha_publicacion, estado, linea_negocio_id, wp_categories_selected, wp_tags_selected)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$titulo, $contenido, $excerpt, $slug, $imagen_destacada, $fecha, $estado, $lineaId, $wp_categorias_json, $wp_tags_json]);
+                $stmt->execute([$titulo, $contenido, $excerpt, $slug, $imagen_destacada, $thumbnail_url, $fecha, $estado, $lineaId, $wp_categorias_json, $wp_tags_json]);
                 $blogPostId = $db->lastInsertId();
             } else {
                 $stmt = $db->prepare("
                     UPDATE blog_posts 
-                    SET titulo = ?, contenido = ?, excerpt = ?, slug = ?, imagen_destacada = ?, fecha_publicacion = ?, estado = ?, wp_categories_selected = ?, wp_tags_selected = ?
+                    SET titulo = ?, contenido = ?, excerpt = ?, slug = ?, imagen_destacada = ?, thumbnail_url = ?, fecha_publicacion = ?, estado = ?, wp_categories_selected = ?, wp_tags_selected = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$titulo, $contenido, $excerpt, $slug, $imagen_destacada, $fecha, $estado, $wp_categorias_json, $wp_tags_json, $blogPost['id']]);
+                $stmt->execute([$titulo, $contenido, $excerpt, $slug, $imagen_destacada, $thumbnail_url, $fecha, $estado, $wp_categorias_json, $wp_tags_json, $blogPost['id']]);
                 $blogPostId = $blogPost['id'];
                 
                 // Eliminar relaciones anteriores

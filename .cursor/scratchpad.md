@@ -10,6 +10,31 @@ Se requiere implementar un sistema de gestión de administradores para el RRSS P
 - Interfaz moderna y profesional consistente con el resto del sistema
 - Gestión completa de usuarios con validaciones robustas
 
+### **💡 Nuevo Desafío: Compresión de Miniaturas**
+**Problema identificado:** Las miniaturas en `planner.php` y `share_view.php` cargan las imágenes originales sin optimizar, causando:
+- Tiempos de carga lentos en tablas con muchas imágenes
+- Alto consumo de ancho de banda innecesario 
+- Experiencia deficiente en dispositivos móviles y conexiones lentas
+- Sobrecarga del servidor CDN con archivos grandes para miniaturas pequeñas
+
+**Análisis técnico:**
+- **Estado actual**: Las imágenes se muestran directamente desde `imagen_url` e `imagen_destacada` sin procesamiento
+- **Tamaño objetivo**: Miniaturas de 60x60px no deberían superar 10-15KB
+- **Formatos objetivo**: WebP para navegadores compatibles, JPEG como fallback
+- **Implementación transparente**: No cambiar la interfaz existente, solo optimizar el backend
+
+**Estrategias de implementación:**
+1. **Generación automática**: Crear miniaturas comprimidas al subir imágenes
+2. **Sistema de caché**: Almacenar thumbnails en directorio `/uploads/thumbs/`
+3. **Fallback inteligente**: Si no existe thumbnail, generar on-demand o usar original
+4. **Integración transparente**: Modificar solo la lógica de carga, no la UI
+
+**Flujo de usuario optimizado:**
+- **Vista de tabla**: Thumbnails ultra-comprimidos (10-15KB) para carga instantánea
+- **Click en imagen**: Modal carga imagen original completa (calidad máxima)  
+- **Experiencia fluida**: No cambios visuales, solo optimización de rendimiento
+- **Fallback automático**: Sistema robusto que siempre muestra algo aunque falle la generación de thumbnails
+
 ## High-level Task Breakdown
 ✅ **Fase 1: Crear página "Mi cuenta"**
 - [x] Crear página mi_cuenta.php con información del usuario
@@ -35,6 +60,76 @@ Se requiere implementar un sistema de gestión de administradores para el RRSS P
 - [ ] Testing integral de todas las funcionalidades
 - [ ] Validar restricciones de acceso por roles
 - [ ] Refinar UX/UI según feedback del usuario
+
+**⚡ Nueva Tarea: Compresión de Miniaturas**
+- [ ] Implementar sistema de compresión automática de thumbnails para planner.php y share_view.php
+- [ ] Crear estructura de almacenamiento organizada para miniaturas
+- [ ] Desarrollar sistema de caché inteligente con fallback automático
+- [ ] Integración transparente sin cambios de interfaz para el usuario
+
+### **🎯 Plan Detallado de Implementación - Compresión de Miniaturas**
+
+**Fase 1: Infraestructura de Compresión (2-3 horas)**
+- [ ] **1.1 Crear función helper para thumbnails**
+  - Función `generateThumbnail($imagePath, $outputSize = 60)` en `includes/functions.php`
+  - Soporte para WebP + JPEG fallback 
+  - Calidad optimizada (75% para JPEG, 80% para WebP)
+  - Validaciones de archivos existentes y permisos de escritura
+  - **Success Criteria**: Función genera thumbnails de 10-15KB para imágenes de 60x60px
+
+- [ ] **1.2 Estructura de directorios**
+  - Crear `/uploads/thumbs/` con subcarpetas por línea de negocio
+  - Crear `/uploads/blog/thumbs/` para miniaturas de blog
+  - Configurar permisos 755 para directorios
+  - Sistema de naming: `original_filename_60x60.webp` / `.jpg`
+  - **Success Criteria**: Estructura de carpetas creada y funcional
+
+**Fase 2: Generación Automática (2-3 horas)**
+- [ ] **2.1 Integrar en upload de publicaciones sociales**
+  - Modificar `publicacion_form.php` para generar thumbnail al subir
+  - Guardar ruta de thumbnail en nueva columna `thumbnail_url` en tabla `publicaciones`
+  - Manejo de errores: si falla generación, usar imagen original
+  - **Success Criteria**: Thumbnails se generan automáticamente en nuevas publicaciones
+
+- [ ] **2.2 Integrar en upload de blog posts**
+  - Modificar `blog_form.php` para generar thumbnail de imagen destacada
+  - Guardar ruta en nueva columna `thumbnail_url` en tabla `blog_posts`
+  - Sincronización con imágenes existentes mediante script de migración
+  - **Success Criteria**: Thumbnails de blog se generan automáticamente
+
+**Fase 3: Implementación en Vistas (1-2 horas)**
+- [ ] **3.1 Actualizar planner.php**
+  - Modificar lógica de carga de imágenes para usar thumbnails
+  - Fallback automático a imagen original si thumbnail no existe
+  - Mantener misma estructura HTML y CSS existente
+  - **Success Criteria**: Planner carga thumbnails optimizados sin cambios visuales
+
+- [ ] **3.2 Actualizar share_view.php**
+  - Aplicar misma lógica de thumbnails en vista compartida
+  - Optimización especial para vista pública (máxima velocidad)
+  - Placeholder profesional para imágenes archivadas sin perder thumbnail
+  - **Success Criteria**: Vistas compartidas cargan 50% más rápido con thumbnails
+
+- [ ] **3.3 Integrar con modal de imagen completa**
+  - Thumbnails en tablas: archivos comprimidos (10-15KB)
+  - Modal onclick: cargar imagen original completa para máxima calidad
+  - Mantener funcionalidad existente del modal (`assets/js/main.js`)
+  - Loading indicator opcional mientras carga imagen completa
+  - **Success Criteria**: Modal muestra imagen original en calidad completa, thumbnails cargan rápido en tablas
+
+**Fase 4: Script de Migración y Cache (2-3 horas)**
+- [ ] **4.1 Script de migración para imágenes existentes**
+  - Crear `generate_missing_thumbnails.php` para procesar imágenes existentes
+  - Procesar en lotes de 20 imágenes para evitar timeout
+  - Progress indicator y logging de errores
+  - Skip de imágenes ya procesadas o inexistentes
+  - **Success Criteria**: Todas las imágenes existentes tienen thumbnails generados
+
+- [ ] **4.2 Sistema de caché inteligente**
+  - Verificar timestamp de imagen original vs thumbnail
+  - Regenerar thumbnail si imagen original es más nueva
+  - Limpieza automática de thumbnails huérfanos (sin imagen original)
+  - **Success Criteria**: Sistema mantiene thumbnails sincronizados automáticamente
 
 ## Project Status Board
 ✅ **Completado:**
@@ -196,5 +291,6 @@ El usuario reportó que el texto de las pestañas "Posts Sociales/Blog Posts" no
 - **Detección inteligente:** Solo mostrar controles UI cuando son necesarios (ej: botón "Ver más" solo si el texto es largo)
 - **JavaScript mínimo:** Funciones simples sin dependencias externas son más confiables y rápidas
 - **Estilos adaptativos:** Los botones y elementos interactivos deben usar colores consistentes con el branding de cada línea
+- **Optimización dual de imágenes:** Thumbnails ultra-comprimidos para vistas de tabla + imágenes originales para modales = mejor rendimiento sin sacrificar calidad
 
 

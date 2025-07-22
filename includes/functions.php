@@ -626,4 +626,237 @@ function processImageDeletionOnPublish($db, $table, $imageField, $id, $currentIm
     }
 }
 
+// ---- Gestión de Thumbnails ----
+
+/**
+ * Genera thumbnails optimizados para miniaturas en tablas
+ * Crea versiones WebP y JPEG comprimidas de 60x60px máximo 15KB
+ * 
+ * @param string $originalImagePath Ruta a la imagen original
+ * @param int $size Tamaño del thumbnail (por defecto 60px)
+ * @param int $quality Calidad JPEG (por defecto 75)
+ * @return array|false Rutas de thumbnails generados o false si falla
+ */
+function generateThumbnail($originalImagePath, $size = 60, $quality = 75) {
+    // Validar que la imagen original existe
+    if (!file_exists($originalImagePath)) {
+        error_log("THUMBNAIL_ERROR: Original image not found: {$originalImagePath}");
+        return false;
+    }
+
+    // Obtener información de la imagen
+    $imageInfo = getimagesize($originalImagePath);
+    if (!$imageInfo) {
+        error_log("THUMBNAIL_ERROR: Invalid image format: {$originalImagePath}");
+        return false;
+    }
+
+    // Determinar el directorio de thumbnails
+    $thumbsDir = dirname($originalImagePath) . '/thumbs/';
+    
+    // Crear directorio si no existe
+    if (!is_dir($thumbsDir)) {
+        if (!mkdir($thumbsDir, 0755, true)) {
+            error_log("THUMBNAIL_ERROR: Cannot create thumbs directory: {$thumbsDir}");
+            return false;
+        }
+    }
+
+    // Generar nombres de archivo para thumbnails
+    $originalFilename = pathinfo($originalImagePath, PATHINFO_FILENAME);
+    $webpThumbnail = $thumbsDir . $originalFilename . "_thumb.webp";
+    $jpegThumbnail = $thumbsDir . $originalFilename . "_thumb.jpg";
+
+    try {
+        // Cargar imagen original según su formato
+        $originalImage = null;
+        switch ($imageInfo[2]) {
+            case IMAGETYPE_JPEG:
+                $originalImage = imagecreatefromjpeg($originalImagePath);
+                break;
+            case IMAGETYPE_PNG:
+                $originalImage = imagecreatefrompng($originalImagePath);
+                break;
+            case IMAGETYPE_WEBP:
+                if (function_exists('imagecreatefromwebp')) {
+                    $originalImage = imagecreatefromwebp($originalImagePath);
+                }
+                break;
+        }
+
+        if (!$originalImage) {
+            error_log("THUMBNAIL_ERROR: Cannot create image resource: {$originalImagePath}");
+            return false;
+        }
+
+        // Obtener dimensiones originales
+        $originalWidth = imagesx($originalImage);
+        $originalHeight = imagesy($originalImage);
+
+        // Calcular dimensiones del thumbnail manteniendo aspecto
+        if ($originalWidth > $originalHeight) {
+            $thumbWidth = $size;
+            $thumbHeight = intval(($originalHeight * $size) / $originalWidth);
+        } else {
+            $thumbHeight = $size;
+            $thumbWidth = intval(($originalWidth * $size) / $originalHeight);
+        }
+
+        // Crear imagen thumbnail
+        $thumbnailImage = imagecreatetruecolor($thumbWidth, $thumbHeight);
+        
+        // Preservar transparencia para PNG/WebP
+        if ($imageInfo[2] == IMAGETYPE_PNG || $imageInfo[2] == IMAGETYPE_WEBP) {
+            imagealphablending($thumbnailImage, false);
+            imagesavealpha($thumbnailImage, true);
+            $transparent = imagecolorallocatealpha($thumbnailImage, 0, 0, 0, 127);
+            imagefill($thumbnailImage, 0, 0, $transparent);
+        }
+
+        // Redimensionar imagen
+        imagecopyresampled(
+            $thumbnailImage, $originalImage,
+            0, 0, 0, 0,
+            $thumbWidth, $thumbHeight,
+            $originalWidth, $originalHeight
+        );
+
+        $results = [];
+
+        // Generar WebP si está disponible
+        if (function_exists('imagewebp')) {
+            if (imagewebp($thumbnailImage, $webpThumbnail, 80)) {
+                $results['webp'] = $webpThumbnail;
+                $results['webp_url'] = str_replace($_SERVER['DOCUMENT_ROOT'] ?? '', '', $webpThumbnail);
+            }
+        }
+
+        // Generar JPEG siempre como fallback
+        if (imagejpeg($thumbnailImage, $jpegThumbnail, $quality)) {
+            $results['jpeg'] = $jpegThumbnail;
+            $results['jpeg_url'] = str_replace($_SERVER['DOCUMENT_ROOT'] ?? '', '', $jpegThumbnail);
+        }
+
+        // Limpiar memoria
+        imagedestroy($originalImage);
+        imagedestroy($thumbnailImage);
+
+        // Verificar que se generó al menos un thumbnail
+        if (empty($results)) {
+            error_log("THUMBNAIL_ERROR: Failed to generate any thumbnail: {$originalImagePath}");
+            return false;
+        }
+
+        // Obtener tamaños de archivo para logging
+        foreach ($results as $format => $path) {
+            if (strpos($format, '_url') === false && file_exists($path)) {
+                $size = filesize($path);
+                error_log("THUMBNAIL_SUCCESS: Generated {$format} thumbnail: {$path} ({$size} bytes)");
+            }
+        }
+
+        return $results;
+
+    } catch (Exception $e) {
+        error_log("THUMBNAIL_EXCEPTION: " . $e->getMessage() . " - Image: {$originalImagePath}");
+        return false;
+    }
+}
+
+/**
+ * Obtiene la mejor URL de thumbnail disponible para mostrar
+ * Prioriza WebP sobre JPEG y maneja fallback a imagen original
+ * 
+ * @param string $originalImageUrl URL de imagen original
+ * @param string $thumbnailUrl URL de thumbnail almacenada en BD (puede ser null)
+ * @return string URL del mejor thumbnail disponible
+ */
+function getBestThumbnailUrl($originalImageUrl, $thumbnailUrl = null) {
+    // Si no hay thumbnail registrado, usar imagen original
+    if (empty($thumbnailUrl)) {
+        return $originalImageUrl;
+    }
+
+    // Convertir URL a path del servidor para verificar existencia
+    $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+    $thumbnailPath = $documentRoot . $thumbnailUrl;
+
+    // Verificar si el thumbnail existe
+    if (!file_exists($thumbnailPath)) {
+        // Si el thumbnail no existe, intentar generarlo on-demand
+        $originalPath = $documentRoot . $originalImageUrl;
+        if (file_exists($originalPath)) {
+            $generated = generateThumbnail($originalPath);
+            if ($generated && isset($generated['webp_url'])) {
+                return $generated['webp_url'];
+            } elseif ($generated && isset($generated['jpeg_url'])) {
+                return $generated['jpeg_url'];
+            }
+        }
+        
+        // Si todo falla, usar imagen original
+        return $originalImageUrl;
+    }
+
+    // Verificar si existe versión WebP
+    $pathInfo = pathinfo($thumbnailPath);
+    $webpPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
+    $webpUrl = str_replace($documentRoot, '', $webpPath);
+    
+    if (file_exists($webpPath)) {
+        return $webpUrl;
+    }
+
+    // Usar el thumbnail registrado
+    return $thumbnailUrl;
+}
+
+/**
+ * Limpia thumbnails huérfanos (sin imagen original)
+ * Útil para mantenimiento del sistema de caché
+ * 
+ * @param string $uploadsDir Directorio base de uploads (ej: 'uploads/')
+ * @return int Número de thumbnails eliminados
+ */
+function cleanOrphanThumbnails($uploadsDir = 'uploads/') {
+    $cleanedCount = 0;
+    $thumbsDirs = [
+        $uploadsDir . 'thumbs/',
+        $uploadsDir . 'blog/thumbs/'
+    ];
+
+    foreach ($thumbsDirs as $thumbsDir) {
+        if (!is_dir($thumbsDir)) continue;
+
+        $thumbnails = glob($thumbsDir . '*_thumb.*');
+        
+        foreach ($thumbnails as $thumbnailPath) {
+            $filename = pathinfo($thumbnailPath, PATHINFO_FILENAME);
+            $originalName = str_replace('_thumb', '', $filename);
+            
+            // Buscar imagen original en el directorio padre
+            $originalDir = dirname($thumbsDir);
+            $possibleExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+            $originalExists = false;
+            
+            foreach ($possibleExtensions as $ext) {
+                if (file_exists($originalDir . '/' . $originalName . '.' . $ext)) {
+                    $originalExists = true;
+                    break;
+                }
+            }
+            
+            // Eliminar thumbnail huérfano
+            if (!$originalExists) {
+                if (unlink($thumbnailPath)) {
+                    $cleanedCount++;
+                    error_log("THUMBNAIL_CLEANUP: Removed orphan thumbnail: {$thumbnailPath}");
+                }
+            }
+        }
+    }
+
+    return $cleanedCount;
+}
+
 // ---- Fin Gestión de Imágenes ---- 
