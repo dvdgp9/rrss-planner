@@ -445,10 +445,12 @@ if ($current_linea_id) {
                                     }
                                     ?>
                                 </td>
-                                <td data-label="Acciones" class="row-actions">
-                                    <a href="publicacion_form.php?id=<?php echo $publicacion['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
-                                    <button class="action-btn share-publication" data-publicacion-id="<?php echo $publicacion['id']; ?>" title="Compartir Publicación"><i class="fas fa-share-square"></i></button>
-                                    <a href="publicacion_delete.php?id=<?php echo $publicacion['id']; ?>&linea_id=<?php echo intval($current_linea_id); ?>&slug_redirect=<?php echo htmlspecialchars($current_linea_slug); ?>" class="action-btn delete" title="Eliminar" ><i class="fas fa-trash-alt"></i></a>
+                                <td data-label="Acciones">
+                                    <div class="row-actions">
+                                        <a href="publicacion_form.php?id=<?php echo $publicacion['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                        <button class="action-btn share-publication" data-publicacion-id="<?php echo $publicacion['id']; ?>" title="Compartir Publicación"><i class="fas fa-share-square"></i></button>
+                                        <a href="publicacion_delete.php?id=<?php echo $publicacion['id']; ?>&linea_id=<?php echo intval($current_linea_id); ?>&slug_redirect=<?php echo htmlspecialchars($current_linea_slug); ?>" class="action-btn delete" title="Eliminar" ><i class="fas fa-trash-alt"></i></a>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -583,16 +585,18 @@ if ($current_linea_id) {
                                         <span style="color: #999; font-size: 12px;">Deshabilitado</span>
                                     <?php endif; ?>
                                 </td>
-                                <td data-label="Acciones" class="row-actions">
-                                    <a href="blog_form.php?id=<?php echo $blog_post['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
-                                    
-                                    <?php if ($blog_post['wordpress_enabled']): ?>
-                                        <button class="action-btn" style="background: #21759b; color: white;" title="Publicar en WordPress" onclick="publishToWordPressFromTable(<?php echo $blog_post['id']; ?>)">
-                                            <i class="fab fa-wordpress"></i>
-                                        </button>
-                                    <?php endif; ?>
-                                    
-                                    <button class="action-btn delete" title="Eliminar" onclick="deleteBlogPost(<?php echo $blog_post['id']; ?>, '<?php echo htmlspecialchars($current_linea_slug); ?>')"><i class="fas fa-trash-alt"></i></button>
+                                <td data-label="Acciones">
+                                    <div class="row-actions">
+                                        <a href="blog_form.php?id=<?php echo $blog_post['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
+
+                                        <?php if ($blog_post['wordpress_enabled']): ?>
+                                            <button class="action-btn" style="background: #21759b; color: white;" title="Publicar en WordPress" onclick="publishToWordPressFromTable(<?php echo $blog_post['id']; ?>)">
+                                                <i class="fab fa-wordpress"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                        
+                                        <button class="action-btn delete" title="Eliminar" onclick="deleteBlogPost(<?php echo $blog_post['id']; ?>, '<?php echo htmlspecialchars($current_linea_slug); ?>')"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
