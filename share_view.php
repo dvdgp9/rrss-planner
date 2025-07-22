@@ -184,6 +184,39 @@ if (!$token) {
         .share-table .col-actions { 
             display: none; 
         }
+        
+        /* Estilos para contenido expandible */
+        .expandable-content {
+            position: relative;
+        }
+        
+        .btn-expand {
+            background: none;
+            border: none;
+            color: <?php echo $lineaColor; ?>;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 4px 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+        
+        .btn-expand:hover {
+            background-color: <?php echo $lineaColor; ?>;
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .content-full {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body class="share-view <?php echo $lineaBodyClass; ?>">
@@ -258,7 +291,19 @@ if (!$token) {
                                         <div class="blog-post-excerpt">
                                             <?php 
                                             if (!empty($post['excerpt'])) {
-                                                echo nl2br(htmlspecialchars(truncateText($post['excerpt'], 150)));
+                                                $fullExcerpt = nl2br(htmlspecialchars($post['excerpt']));
+                                                $truncatedExcerpt = nl2br(htmlspecialchars(truncateText($post['excerpt'], 150)));
+                                                $needsExpansion = strlen($post['excerpt']) > 150;
+                                                
+                                                if ($needsExpansion) {
+                                                    echo '<div class="expandable-content">';
+                                                    echo '<div class="content-truncated">' . $truncatedExcerpt . '</div>';
+                                                    echo '<div class="content-full" style="display: none;">' . $fullExcerpt . '</div>';
+                                                    echo '<button class="btn-expand" onclick="toggleContent(this)">Ver más</button>';
+                                                    echo '</div>';
+                                                } else {
+                                                    echo $fullExcerpt;
+                                                }
                                             } else {
                                                 echo '<em style="color: #999;">Sin excerpt</em>';
                                             }
@@ -307,7 +352,23 @@ if (!$token) {
                             <?php foreach ($contentItems as $pub): ?>
                                 <tr data-estado="<?php echo htmlspecialchars($pub['estado']); ?>">
                                     <td><?php echo formatFecha($pub['fecha_programada']); ?></td>
-                                    <td><?php echo nl2br(htmlspecialchars(truncateText($pub['contenido'], 200))); ?></td>
+                                    <td>
+                                        <?php 
+                                        $fullContent = nl2br(htmlspecialchars($pub['contenido']));
+                                        $truncatedContent = nl2br(htmlspecialchars(truncateText($pub['contenido'], 200)));
+                                        $needsExpansion = strlen($pub['contenido']) > 200;
+                                        
+                                        if ($needsExpansion) {
+                                            echo '<div class="expandable-content">';
+                                            echo '<div class="content-truncated">' . $truncatedContent . '</div>';
+                                            echo '<div class="content-full" style="display: none;">' . $fullContent . '</div>';
+                                            echo '<button class="btn-expand" onclick="toggleContent(this)">Ver más</button>';
+                                            echo '</div>';
+                                        } else {
+                                            echo $fullContent;
+                                        }
+                                        ?>
+                                    </td>
                                     <td>
                                         <?php if (!empty($pub['imagen_url'])): ?>
                                             <img src="<?php echo htmlspecialchars($pub['imagen_url']); ?>" alt="Miniatura" class="thumbnail">
@@ -400,6 +461,27 @@ if (!$token) {
 
     <script src="assets/js/main.js"></script>
     <script src="assets/js/share_feedback.js"></script>
+    
+    <script>
+        // Función para alternar contenido expandible
+        function toggleContent(button) {
+            const expandableContent = button.parentElement;
+            const truncatedContent = expandableContent.querySelector('.content-truncated');
+            const fullContent = expandableContent.querySelector('.content-full');
+            
+            if (fullContent.style.display === 'none') {
+                // Expandir
+                truncatedContent.style.display = 'none';
+                fullContent.style.display = 'block';
+                button.textContent = 'Ver menos';
+            } else {
+                // Contraer
+                truncatedContent.style.display = 'block';
+                fullContent.style.display = 'none';
+                button.textContent = 'Ver más';
+            }
+        }
+    </script>
 
 </body>
 </html> 
