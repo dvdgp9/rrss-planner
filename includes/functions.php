@@ -891,7 +891,7 @@ function getSMTPConfig() {
 }
 
 /**
- * Enviar correo usando SMTP configurado
+ * Enviar correo usando SMTP directo con sockets
  * @param string $to Email destinatario
  * @param string $subject Asunto del correo
  * @param string $htmlBody Contenido HTML del correo
@@ -902,16 +902,7 @@ function sendEmail($to, $subject, $htmlBody, $textBody = '') {
     $config = getSMTPConfig();
     
     try {
-        // Headers básicos
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $config['from_name'] . ' <' . $config['from_email'] . '>',
-            'Reply-To: ' . $config['from_email'],
-            'X-Mailer: PHP/' . phpversion()
-        ];
-        
-        // Configurar contexto SMTP
+        // Establecer conexión SMTP SSL
         $context = stream_context_create([
             'ssl' => [
                 'verify_peer' => false,
@@ -920,31 +911,89 @@ function sendEmail($to, $subject, $htmlBody, $textBody = '') {
             ]
         ]);
         
-        // Configurar ini para SMTP
-        ini_set('SMTP', $config['host']);
-        ini_set('smtp_port', $config['port']);
-        ini_set('sendmail_from', $config['from_email']);
-        
-        // Enviar correo
-        $result = mail(
-            $to,
-            '=?UTF-8?B?' . base64_encode($subject) . '?=',
-            $htmlBody,
-            implode("\r\n", $headers)
+        $socket = stream_socket_client(
+            "ssl://{$config['host']}:{$config['port']}", 
+            $errno, 
+            $errstr, 
+            30, 
+            STREAM_CLIENT_CONNECT, 
+            $context
         );
         
-        if ($result) {
-            error_log("EMAIL_SENT: Successfully sent email to {$to} with subject: {$subject}");
-            return true;
-        } else {
-            $error = 'mail() function returned false';
-            error_log("EMAIL_ERROR: Failed to send email to {$to}: {$error}");
+        if (!$socket) {
+            $error = "Could not connect to SMTP server: {$errstr} ({$errno})";
+            error_log("EMAIL_ERROR: {$error}");
             return $error;
         }
         
+        // Función helper para leer respuesta SMTP
+        $readResponse = function() use ($socket) {
+            $response = '';
+            while ($line = fgets($socket, 515)) {
+                $response .= $line;
+                if (substr($line, 3, 1) === ' ') break;
+            }
+            return trim($response);
+        };
+        
+        // Función helper para enviar comando SMTP
+        $sendCommand = function($command, $expectedCode = null) use ($socket, $readResponse) {
+            fwrite($socket, $command . "\r\n");
+            $response = $readResponse();
+            
+            if ($expectedCode && !preg_match("/^{$expectedCode}/", $response)) {
+                throw new Exception("SMTP Error: {$response} (Expected: {$expectedCode})");
+            }
+            
+            return $response;
+        };
+        
+        // Protocolo SMTP
+        $readResponse(); // Leer mensaje de bienvenida
+        
+        $sendCommand("EHLO {$_SERVER['HTTP_HOST']}", '250');
+        $sendCommand("AUTH LOGIN", '334');
+        $sendCommand(base64_encode($config['username']), '334');  
+        $sendCommand(base64_encode($config['password']), '235');
+        $sendCommand("MAIL FROM:<{$config['from_email']}>", '250');
+        $sendCommand("RCPT TO:<{$to}>", '250');
+        $sendCommand("DATA", '354');
+        
+        // Preparar headers del correo
+        $headers = [
+            "From: {$config['from_name']} <{$config['from_email']}>",
+            "To: {$to}",
+            "Subject: =?UTF-8?B=" . base64_encode($subject) . "?=",
+            "MIME-Version: 1.0",
+            "Content-Type: text/html; charset=UTF-8",
+            "Content-Transfer-Encoding: base64",
+            "X-Mailer: RRSS Planner SMTP Client",
+            "Date: " . date('r')
+        ];
+        
+        // Enviar mensaje completo
+        $message = implode("\r\n", $headers) . "\r\n\r\n" . chunk_split(base64_encode($htmlBody));
+        fwrite($socket, $message . "\r\n.\r\n");
+        
+        $response = $readResponse();
+        if (!preg_match('/^250/', $response)) {
+            throw new Exception("Failed to send message: {$response}");
+        }
+        
+        $sendCommand("QUIT", '221');
+        fclose($socket);
+        
+        error_log("EMAIL_SENT: Successfully sent email to {$to} with subject: {$subject}");
+        return true;
+        
     } catch (Exception $e) {
-        $error = 'Exception: ' . $e->getMessage();
-        error_log("EMAIL_ERROR: Exception sending email to {$to}: {$error}");
+        $error = 'SMTP Exception: ' . $e->getMessage();
+        error_log("EMAIL_ERROR: Failed to send email to {$to}: {$error}");
+        
+        if (isset($socket) && is_resource($socket)) {
+            fclose($socket);
+        }
+        
         return $error;
     }
 }
