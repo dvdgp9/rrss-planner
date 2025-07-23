@@ -1117,7 +1117,8 @@ function getPublicacionContext($publicacion_id) {
         // Generar URL directa al formulario de edición con token temporal
         $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $publicacion['edit_url'] = "{$protocol}://{$host}/publicacion_form.php?id={$publicacion_id}&admin_token={$adminToken}";
+        $rawUrl = "{$protocol}://{$host}/publicacion_form.php?id={$publicacion_id}&admin_token={$adminToken}";
+        $publicacion['edit_url'] = htmlspecialchars($rawUrl, ENT_QUOTES, 'UTF-8');
             
         return $publicacion;
         
