@@ -892,9 +892,31 @@ function getSMTPConfig() {
     }
     
     // Fallback: leer desde archivo config local
-    $configFile = __DIR__ . '/../config/smtp.php';
+    // Estructura: public/includes/functions.php → ../../config/smtp.php
+    $configFile = __DIR__ . '/../../config/smtp.php';
+    error_log("SMTP_CONFIG: Trying to load config from: {$configFile}");
+    
     if (file_exists($configFile)) {
+        error_log("SMTP_CONFIG: Config file found, loading...");
         return require $configFile;
+    } else {
+        error_log("SMTP_CONFIG: Config file not found at: {$configFile}");
+        
+        // Fallback para otras estructuras posibles
+        $fallbackPaths = [
+            __DIR__ . '/../config/smtp.php',  // Un nivel arriba (estructura anterior)
+            dirname(dirname(__DIR__)) . '/config/smtp.php',  // Usando dirname()
+            realpath(__DIR__ . '/../../config/smtp.php')  // Con realpath
+        ];
+        
+        foreach ($fallbackPaths as $path) {
+            if ($path && file_exists($path)) {
+                error_log("SMTP_CONFIG: Fallback config file found at: {$path}");
+                return require $path;
+            }
+        }
+        
+        error_log("SMTP_CONFIG: No config file found in any attempted path");
     }
     
     // Último fallback: configuración por defecto (solo para desarrollo)
