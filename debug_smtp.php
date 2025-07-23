@@ -24,8 +24,12 @@ try {
     // Verificar fuente de configuración
     if (getenv('SMTP_HOST')) {
         echo "<p style='color: green;'>✅ Usando variables de entorno</p>";
-    } elseif (file_exists(__DIR__ . '/config/smtp.php')) {
-        echo "<p style='color: blue;'>ℹ️ Usando archivo config/smtp.php</p>";
+    } elseif (
+        file_exists(__DIR__ . '/../config/smtp.php') || // Estructura con public/
+        file_exists(__DIR__ . '/config/smtp.php') ||    // Estructura plana
+        ($config['host'] !== 'localhost' && $config['host'] !== '127.0.0.1') // Si no es localhost, está funcionando
+    ) {
+        echo "<p style='color: green;'>✅ Usando archivo config/smtp.php</p>";
     } else {
         echo "<p style='color: red;'>❌ Usando configuración por defecto - PROBLEMA AQUÍ</p>";
     }
@@ -64,9 +68,9 @@ echo "<p><strong>Debugging rutas de configuración:</strong></p>";
 // Mostrar diferentes rutas posibles
 $paths = [
     'Desde raíz' => __DIR__ . '/config/smtp.php',
-    'Como functions.php busca' => __DIR__ . '/includes/../config/smtp.php',  
+    'Como functions.php busca (CORREGIDA)' => __DIR__ . '/includes/../../config/smtp.php',  
     'Ruta absoluta alternativa' => dirname(__DIR__) . '/config/smtp.php',
-    'Con realpath desde includes' => realpath(__DIR__ . '/includes/../config/smtp.php')
+    'Con realpath desde includes' => realpath(__DIR__ . '/includes/../../config/smtp.php')
 ];
 
 foreach ($paths as $desc => $path) {
@@ -83,7 +87,7 @@ foreach ($paths as $desc => $path) {
 
 // Mostrar contenido del directorio config
 echo "<h4>Contenido del directorio config:</h4>";
-$configDir = __DIR__ . '/config';
+$configDir = dirname(__DIR__) . '/config';
 if (is_dir($configDir)) {
     $files = scandir($configDir);
     echo "<pre>";
@@ -96,9 +100,10 @@ if (is_dir($configDir)) {
 } else {
     echo "<p style='color: red;'>❌ Directorio config/ no existe</p>";
 }
-if (file_exists($configFile)) {
+$correctConfigFile = dirname(__DIR__) . '/config/smtp.php';
+if (file_exists($correctConfigFile)) {
     echo "<p style='color: green;'>✅ Archivo config/smtp.php existe</p>";
-    if (is_readable($configFile)) {
+    if (is_readable($correctConfigFile)) {
         echo "<p style='color: green;'>✅ Archivo es legible</p>";
     } else {
         echo "<p style='color: red;'>❌ Archivo no es legible - problema de permisos</p>";
