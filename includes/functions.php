@@ -876,17 +876,36 @@ function cleanOrphanThumbnails($uploadsDir = 'uploads/') {
 
 /**
  * Configuración SMTP para envío de correos
- * NOTA: Contraseña NO hardcodeada - usar variable de entorno o config separado
+ * Lee desde archivo config separado o variables de entorno
  */
 function getSMTPConfig() {
+    // Intentar leer desde variables de entorno del servidor primero
+    if (getenv('SMTP_HOST')) {
+        return [
+            'host' => getenv('SMTP_HOST'),
+            'port' => getenv('SMTP_PORT') ?: 465,
+            'username' => getenv('SMTP_USERNAME'),
+            'password' => getenv('SMTP_PASSWORD'),
+            'from_email' => getenv('SMTP_FROM_EMAIL'),
+            'from_name' => getenv('SMTP_FROM_NAME') ?: 'Loop - RRSS Planner'
+        ];
+    }
+    
+    // Fallback: leer desde archivo config local
+    $configFile = __DIR__ . '/../config/smtp.php';
+    if (file_exists($configFile)) {
+        return require $configFile;
+    }
+    
+    // Último fallback: configuración por defecto (solo para desarrollo)
+    error_log("WARNING: Using default SMTP config. Set environment variables or create config/smtp.php");
     return [
-        'host' => 'ebonemx.plesk.trevenque.es',
-        'port' => 465,
-        'username' => 'loop@ebone.es',
-        // IMPORTANTE: En producción, mover contraseña a archivo config separado
-        'password' => '81o9h&4Lr', // TODO: Mover a variable de entorno
-        'from_email' => 'loop@ebone.es',
-        'from_name' => 'Loop - RRSS Planner'
+        'host' => 'localhost',
+        'port' => 25,
+        'username' => 'noreply@localhost',
+        'password' => '',
+        'from_email' => 'noreply@localhost',
+        'from_name' => 'RRSS Planner'
     ];
 }
 
@@ -959,20 +978,20 @@ function sendEmail($to, $subject, $htmlBody, $textBody = '') {
         $sendCommand("RCPT TO:<{$to}>", '250');
         $sendCommand("DATA", '354');
         
-        // Preparar headers del correo
+                 // Preparar headers del correo
         $headers = [
             "From: {$config['from_name']} <{$config['from_email']}>",
             "To: {$to}",
-            "Subject: =?UTF-8?B=" . base64_encode($subject) . "?=",
+            "Subject: {$subject}",
             "MIME-Version: 1.0",
             "Content-Type: text/html; charset=UTF-8",
-            "Content-Transfer-Encoding: base64",
+            "Content-Transfer-Encoding: quoted-printable",
             "X-Mailer: RRSS Planner SMTP Client",
             "Date: " . date('r')
         ];
         
-        // Enviar mensaje completo
-        $message = implode("\r\n", $headers) . "\r\n\r\n" . chunk_split(base64_encode($htmlBody));
+                 // Enviar mensaje completo
+        $message = implode("\r\n", $headers) . "\r\n\r\n" . $htmlBody;
         fwrite($socket, $message . "\r\n.\r\n");
         
         $response = $readResponse();
@@ -1070,10 +1089,13 @@ function getPublicacionContext($publicacion_id) {
             return null;
         }
         
-        // Generar URL directa al formulario de edición
-        $publicacion['edit_url'] = $_SERVER['HTTP_HOST'] ? 
-            'https://' . $_SERVER['HTTP_HOST'] . '/publicacion_form.php?id=' . $publicacion_id :
-            'http://localhost/publicacion_form.php?id=' . $publicacion_id;
+        // Generar token temporal para acceso directo desde email (válido 48 horas)
+        $adminToken = generateAdminAccessToken($publicacion_id);
+        
+        // Generar URL directa al formulario de edición con token temporal
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $publicacion['edit_url'] = "{$protocol}://{$host}/publicacion_form.php?id={$publicacion_id}&admin_token={$adminToken}";
             
         return $publicacion;
         
@@ -1216,6 +1238,115 @@ function sendFeedbackNotification($publicacion_id, $feedback_text) {
         $result['errors'][] = 'Excepción: ' . $e->getMessage();
         error_log("FEEDBACK_NOTIFICATION: Exception for publication {$publicacion_id}: " . $e->getMessage());
         return $result;
+    }
+}
+
+/**
+ * Generar token temporal para acceso administrativo desde email
+ * @param int $publicacion_id ID de la publicación
+ * @return string Token seguro de 32 caracteres
+ */
+function generateAdminAccessToken($publicacion_id) {
+    $db = getDbConnection();
+    try {
+        // Crear tabla si no existe
+        $db->exec("
+            CREATE TABLE IF NOT EXISTS admin_access_tokens (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                token VARCHAR(64) NOT NULL UNIQUE,
+                publicacion_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                used_at TIMESTAMP NULL,
+                INDEX idx_token (token),
+                INDEX idx_publicacion (publicacion_id),
+                INDEX idx_expires (expires_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        // Generar token único
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+48 hours'));
+        
+        // Guardar token en BD
+        $stmt = $db->prepare("
+            INSERT INTO admin_access_tokens (token, publicacion_id, expires_at)
+            VALUES (?, ?, ?)
+        ");
+        $stmt->execute([$token, $publicacion_id, $expiresAt]);
+        
+        error_log("ADMIN_TOKEN: Generated token for publication {$publicacion_id}, expires: {$expiresAt}");
+        return $token;
+        
+    } catch (PDOException $e) {
+        error_log("ERROR: Failed to generate admin access token: " . $e->getMessage());
+        // Fallback: retornar token temporal basado en hash (menos seguro pero funcional)
+        return hash('sha256', $publicacion_id . time() . 'fallback_salt');
+    }
+}
+
+/**
+ * Validar token de acceso administrativo temporal
+ * @param string $token Token a validar
+ * @param int $publicacion_id ID de publicación esperada
+ * @return bool True si token es válido y no ha expirado
+ */
+function validateAdminAccessToken($token, $publicacion_id) {
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("
+            SELECT id, expires_at, used_at 
+            FROM admin_access_tokens 
+            WHERE token = ? AND publicacion_id = ?
+        ");
+        $stmt->execute([$token, $publicacion_id]);
+        $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$tokenData) {
+            error_log("ADMIN_TOKEN: Token not found: {$token}");
+            return false;
+        }
+        
+        // Verificar si ha expirado
+        if (strtotime($tokenData['expires_at']) < time()) {
+            error_log("ADMIN_TOKEN: Token expired: {$token}");
+            return false;
+        }
+        
+        // Marcar token como usado (opcional - permite reutilización por 48h)
+        if (!$tokenData['used_at']) {
+            $stmt = $db->prepare("UPDATE admin_access_tokens SET used_at = NOW() WHERE id = ?");
+            $stmt->execute([$tokenData['id']]);
+        }
+        
+        error_log("ADMIN_TOKEN: Valid token used for publication {$publicacion_id}");
+        return true;
+        
+    } catch (PDOException $e) {
+        error_log("ERROR: Failed to validate admin access token: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Limpiar tokens expirados (función de mantenimiento)
+ * @return int Número de tokens eliminados
+ */
+function cleanExpiredAdminTokens() {
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("DELETE FROM admin_access_tokens WHERE expires_at < NOW()");
+        $stmt->execute();
+        $deleted = $stmt->rowCount();
+        
+        if ($deleted > 0) {
+            error_log("ADMIN_TOKEN: Cleaned {$deleted} expired tokens");
+        }
+        
+        return $deleted;
+    } catch (PDOException $e) {
+        error_log("ERROR: Failed to clean expired admin tokens: " . $e->getMessage());
+        return 0;
     }
 }
 

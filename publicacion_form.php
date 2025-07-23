@@ -1,6 +1,27 @@
 <?php
 require_once 'includes/functions.php';
-require_authentication();
+
+// Verificar acceso: autenticación normal O token administrativo válido
+$adminTokenAccess = false;
+if (isset($_GET['admin_token']) && isset($_GET['id'])) {
+    $publicacionId = intval($_GET['id']);
+    $adminToken = trim($_GET['admin_token']);
+    
+    if (validateAdminAccessToken($adminToken, $publicacionId)) {
+        $adminTokenAccess = true;
+        error_log("ADMIN_ACCESS: Valid token access for publication {$publicacionId}");
+        
+        // Limpiar tokens expirados aprovechando la visita
+        cleanExpiredAdminTokens();
+    } else {
+        error_log("ADMIN_ACCESS: Invalid token access attempt for publication {$publicacionId}");
+    }
+}
+
+// Requiere autenticación solo si no hay token válido
+if (!$adminTokenAccess) {
+    require_authentication();
+}
 
 // Verificar que tengamos el parámetro de línea de negocio (ID o slug)
 $lineaId = null;
@@ -479,7 +500,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="logout.php" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
         
-        <?php require 'includes/nav.php'; ?>
+        <?php 
+        // Solo mostrar navegación si hay autenticación normal
+        if (!$adminTokenAccess) {
+            require 'includes/nav.php'; 
+        }
+        ?>
+        
+        <?php if ($adminTokenAccess): ?>
+        <!-- Banner de Acceso Administrativo -->
+        <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fas fa-shield-check" style="font-size: 1.3rem;"></i>
+                <div>
+                    <strong>🔐 Acceso Administrativo Temporal</strong>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9;">
+                        Accediste desde un enlace de notificación por email. Este acceso expira en 48 horas.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <!-- All errors are now displayed via toast notifications -->
         

@@ -514,11 +514,29 @@ $usuarios = $stmt->fetchAll();
                                 <div class="config-row">
                                     <div class="config-item">
                                         <label><strong>Servidor SMTP:</strong></label>
-                                        <span>ebonemx.plesk.trevenque.es:465</span>
+                                        <span><?php $config = getSMTPConfig(); echo $config['host'] . ':' . $config['port']; ?></span>
                                     </div>
                                     <div class="config-item">
                                         <label><strong>Remitente:</strong></label>
-                                        <span>loop@ebone.es</span>
+                                        <span><?php echo $config['from_email']; ?></span>
+                                    </div>
+                                </div>
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label><strong>Configuración:</strong></label>
+                                        <span><?php 
+                                        if (getenv('SMTP_HOST')) {
+                                            echo 'Variables de entorno del servidor ✅';
+                                        } elseif (file_exists(__DIR__ . '/config/smtp.php')) {
+                                            echo 'Archivo config/smtp.php ✅';
+                                        } else {
+                                            echo 'Configuración por defecto ⚠️';
+                                        }
+                                        ?></span>
+                                    </div>
+                                    <div class="config-item">
+                                        <label><strong>Credenciales:</strong></label>
+                                        <span>Protegidas (no hardcodeadas) 🔒</span>
                                     </div>
                                 </div>
                                 <div class="config-status">
