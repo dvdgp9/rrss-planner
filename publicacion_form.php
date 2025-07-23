@@ -27,23 +27,47 @@ if (!$adminTokenAccess) {
 $lineaId = null;
 $lineaSlug = null;
 
-if (isset($_GET['linea_id'])) {
+// Si accede por token administrativo, obtener linea_id automáticamente desde la publicación
+if ($adminTokenAccess && isset($_GET['id'])) {
+    $db = getDbConnection();
+    $stmt = $db->prepare("SELECT p.linea_negocio_id, ln.slug FROM publicaciones p 
+                         JOIN lineas_negocio ln ON p.linea_negocio_id = ln.id 
+                         WHERE p.id = ?");
+    $stmt->execute([intval($_GET['id'])]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($result) {
+        $lineaId = $result['linea_negocio_id'];
+        $lineaSlug = $result['slug'];
+        error_log("ADMIN_ACCESS: Auto-obtained linea_id={$lineaId}, slug={$lineaSlug} from publication " . intval($_GET['id']));
+        error_log("ADMIN_ACCESS: Token access flow complete - bypassing manual linea_id requirement");
+    } else {
+        error_log("ADMIN_ACCESS: Could not find publication data for ID " . intval($_GET['id']));
+        // Fallback: still try normal parameter flow
+    }
+}
+
+// Verificar parámetros de línea de negocio (normal flow o fallback si token falló)
+if (!$lineaId && isset($_GET['linea_id'])) {
     $lineaId = intval($_GET['linea_id']);
     if (isset($_GET['linea_slug'])) { // Prefer slug if both are somehow present for return path
         $lineaSlug = trim($_GET['linea_slug']);
     }
-} elseif (isset($_GET['linea_slug'])) { // Fallback if only slug is sent (e.g. direct access)
+} elseif (!$lineaId && isset($_GET['linea_slug'])) { // Fallback if only slug is sent (e.g. direct access)
     $lineaSlug = trim($_GET['linea_slug']);
     // Need to fetch ID if only slug is present
     // This part might be needed if we allow access to form only with slug in future
-} else {
-    // If neither is set, redirect to dashboard as before
+} elseif (!$lineaId) {
+    // If neither is set and no token access, redirect to dashboard as before
     $_SESSION['feedback_message'] = ['tipo' => 'error', 'mensaje' => 'Falta el identificador de la línea de negocio.'];
     header("Location: index.php");
     exit;
 }
 
-$db = getDbConnection(); // Initialize DB connection early
+// DB connection already initialized above for token access if needed
+if (!isset($db)) {
+    $db = getDbConnection();
+}
 
 // If we have linea_slug, ensure we have lineaId. If we only have lineaId, fetch slug if needed for return path.
 if ($lineaId && !$lineaSlug) {
