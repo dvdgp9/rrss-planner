@@ -4,7 +4,7 @@
 - **Base de Datos**: `rrss_ebone`
 - **Motor**: MySQL 5.7+
 - **Charset**: utf8mb4
-- **Fecha de Última Actualización**: 2025-01-23
+- **Fecha de Última Actualización**: 2025-07-23
 
 ---
 
@@ -235,7 +235,7 @@ CREATE TABLE share_tokens (
 
 ---
 
-### 12. `publicacion_share_tokens`
+### 12. `publication_share_tokens`
 **Descripción**: Tokens para compartir publicaciones individuales
 ```sql
 CREATE TABLE publicacion_share_tokens (
@@ -252,7 +252,7 @@ CREATE TABLE publicacion_share_tokens (
 
 ---
 
-### 13. `publicacion_feedback`
+### 13. `publication_feedback`
 **Descripción**: Feedback/comentarios sobre publicaciones compartidas
 ```sql
 CREATE TABLE publicacion_feedback (
@@ -269,6 +269,51 @@ CREATE TABLE publicacion_feedback (
 
 ---
 
+### 14. `admins`
+**Descripción**: Administradores del sistema con autenticación individual
+```sql
+CREATE TABLE admins (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('admin', 'superadmin') DEFAULT 'admin',
+    activo TINYINT(1) DEFAULT 1,
+    ultimo_login TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_activo (activo),
+    INDEX idx_rol (rol)
+);
+```
+
+**Datos Actuales**:
+- Super Administrador (admin@ebone.es, rol: superadmin)
+- Lucia Rosales (lrosales@ebone.es, rol: admin)
+- David Gutiérrez (it@ebone.es, rol: superadmin)
+
+---
+
+### 15. `admin_linea_negocio`
+**Descripción**: Relación muchos-a-muchos entre administradores y líneas de negocio para permisos granulares
+```sql
+CREATE TABLE admin_linea_negocio (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT NOT NULL,
+    linea_negocio_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE,
+    FOREIGN KEY (linea_negocio_id) REFERENCES lineas_negocio(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_admin_linea (admin_id, linea_negocio_id),
+    INDEX idx_admin (admin_id),
+    INDEX idx_linea_negocio (linea_negocio_id)
+);
+```
+
+---
+
 ## Relaciones Principales
 
 ### Diagrama de Relaciones
@@ -278,6 +323,7 @@ lineas_negocio (1) ←→ (N) blog_posts
 lineas_negocio (1) ←→ (N) blog_categorias
 lineas_negocio (1) ←→ (N) blog_tags
 lineas_negocio (1) ←→ (N) share_tokens
+lineas_negocio (N) ←→ (N) admins [via admin_linea_negocio]
 
 publicaciones (N) ←→ (N) redes_sociales [via publicacion_red_social]
 lineas_negocio (N) ←→ (N) redes_sociales [via linea_negocio_red_social]
@@ -287,6 +333,8 @@ blog_posts (N) ←→ (N) blog_tags [via blog_post_tag]
 
 publicaciones (1) ←→ (N) publicacion_share_tokens
 publicaciones (1) ←→ (N) publicacion_feedback
+
+admins (N) ←→ (N) lineas_negocio [via admin_linea_negocio]
 ```
 
 ---

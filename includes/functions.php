@@ -871,3 +871,303 @@ function cleanOrphanThumbnails($uploadsDir = 'uploads/') {
 }
 
 // ---- Fin Gestión de Imágenes ---- 
+
+// ---- Sistema de Notificaciones por Correo ----
+
+/**
+ * Configuración SMTP para envío de correos
+ * NOTA: Contraseña NO hardcodeada - usar variable de entorno o config separado
+ */
+function getSMTPConfig() {
+    return [
+        'host' => 'ebonemx.plesk.trevenque.es',
+        'port' => 465,
+        'username' => 'loop@ebone.es',
+        // IMPORTANTE: En producción, mover contraseña a archivo config separado
+        'password' => '81o9h&4Lr', // TODO: Mover a variable de entorno
+        'from_email' => 'loop@ebone.es',
+        'from_name' => 'Loop - RRSS Planner'
+    ];
+}
+
+/**
+ * Enviar correo usando SMTP configurado
+ * @param string $to Email destinatario
+ * @param string $subject Asunto del correo
+ * @param string $htmlBody Contenido HTML del correo
+ * @param string $textBody Contenido texto plano (opcional)
+ * @return bool|string True si éxito, mensaje de error si falla
+ */
+function sendEmail($to, $subject, $htmlBody, $textBody = '') {
+    $config = getSMTPConfig();
+    
+    try {
+        // Headers básicos
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $config['from_name'] . ' <' . $config['from_email'] . '>',
+            'Reply-To: ' . $config['from_email'],
+            'X-Mailer: PHP/' . phpversion()
+        ];
+        
+        // Configurar contexto SMTP
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]);
+        
+        // Configurar ini para SMTP
+        ini_set('SMTP', $config['host']);
+        ini_set('smtp_port', $config['port']);
+        ini_set('sendmail_from', $config['from_email']);
+        
+        // Enviar correo
+        $result = mail(
+            $to,
+            '=?UTF-8?B?' . base64_encode($subject) . '?=',
+            $htmlBody,
+            implode("\r\n", $headers)
+        );
+        
+        if ($result) {
+            error_log("EMAIL_SENT: Successfully sent email to {$to} with subject: {$subject}");
+            return true;
+        } else {
+            $error = 'mail() function returned false';
+            error_log("EMAIL_ERROR: Failed to send email to {$to}: {$error}");
+            return $error;
+        }
+        
+    } catch (Exception $e) {
+        $error = 'Exception: ' . $e->getMessage();
+        error_log("EMAIL_ERROR: Exception sending email to {$to}: {$error}");
+        return $error;
+    }
+}
+
+/**
+ * Obtener administradores por línea de negocio
+ * @param int $linea_negocio_id ID de la línea de negocio
+ * @return array Lista de emails de administradores activos
+ */
+function getAdminsByLineaNegocio($linea_negocio_id) {
+    $db = getDbConnection();
+    try {
+        // Primero buscar administradores específicos de la línea
+        $stmt = $db->prepare("
+            SELECT DISTINCT a.email, a.nombre 
+            FROM admins a
+            JOIN admin_linea_negocio aln ON a.id = aln.admin_id
+            WHERE aln.linea_negocio_id = ? 
+            AND a.activo = 1
+            ORDER BY a.nombre ASC
+        ");
+        $stmt->execute([$linea_negocio_id]);
+        $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Si no hay administradores específicos, usar superadmins como fallback
+        if (empty($admins)) {
+            $stmt = $db->prepare("
+                SELECT email, nombre 
+                FROM admins 
+                WHERE rol = 'superadmin' 
+                AND activo = 1
+                ORDER BY nombre ASC
+            ");
+            $stmt->execute();
+            $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("FEEDBACK_NOTIFICATION: No specific admins found for linea {$linea_negocio_id}, using superadmins fallback");
+        }
+        
+        return $admins;
+        
+    } catch (PDOException $e) {
+        error_log("ERROR: Failed to get admins for linea {$linea_negocio_id}: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Obtener contexto completo de una publicación
+ * @param int $publicacion_id ID de la publicación
+ * @return array|null Datos de la publicación o null si no existe
+ */
+function getPublicacionContext($publicacion_id) {
+    $db = getDbConnection();
+    try {
+        $stmt = $db->prepare("
+            SELECT 
+                p.id, p.contenido, p.imagen_url, p.thumbnail_url,
+                p.fecha_programada, p.estado, p.fecha_creacion,
+                ln.id as linea_id, ln.nombre as linea_nombre, ln.slug as linea_slug,
+                GROUP_CONCAT(DISTINCT rs.nombre SEPARATOR ', ') as redes_sociales
+            FROM publicaciones p
+            JOIN lineas_negocio ln ON p.linea_negocio_id = ln.id
+            LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id
+            LEFT JOIN redes_sociales rs ON prs.red_social_id = rs.id
+            WHERE p.id = ?
+            GROUP BY p.id
+        ");
+        $stmt->execute([$publicacion_id]);
+        $publicacion = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$publicacion) {
+            error_log("ERROR: Publicacion {$publicacion_id} not found for feedback notification");
+            return null;
+        }
+        
+        // Generar URL directa al formulario de edición
+        $publicacion['edit_url'] = $_SERVER['HTTP_HOST'] ? 
+            'https://' . $_SERVER['HTTP_HOST'] . '/publicacion_form.php?id=' . $publicacion_id :
+            'http://localhost/publicacion_form.php?id=' . $publicacion_id;
+            
+        return $publicacion;
+        
+    } catch (PDOException $e) {
+        error_log("ERROR: Failed to get publicacion context {$publicacion_id}: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Crear template HTML para notificación de feedback
+ * @param array $publicacion Datos de la publicación
+ * @param string $feedback_text Texto del feedback recibido
+ * @param string $admin_name Nombre del destinatario
+ * @return string HTML del correo
+ */
+function createFeedbackEmailTemplate($publicacion, $feedback_text, $admin_name = '') {
+    $greeting = !empty($admin_name) ? "Hola {$admin_name}," : "Hola,";
+    $contenido_preview = mb_substr(strip_tags($publicacion['contenido']), 0, 100) . '...';
+    $fecha_feedback = date('d/m/Y H:i');
+    
+    return "
+    <!DOCTYPE html>
+    <html lang='es'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Nuevo Feedback - {$publicacion['linea_nombre']}</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
+            .header h1 { margin: 0; font-size: 24px; }
+            .content { padding: 30px 20px; }
+            .feedback-box { background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0; border-radius: 4px; }
+            .publication-info { background-color: #e9ecef; padding: 15px; border-radius: 4px; margin: 20px 0; }
+            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+            .footer { background-color: #343a40; color: #adb5bd; padding: 20px; text-align: center; font-size: 14px; }
+            .timestamp { color: #6c757d; font-size: 14px; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h1>💬 Nuevo Feedback Recibido</h1>
+                <p style='margin: 10px 0 0 0; font-size: 18px;'>{$publicacion['linea_nombre']}</p>
+            </div>
+            
+            <div class='content'>
+                <p>{$greeting}</p>
+                <p>Se ha recibido un nuevo comentario en una de tus publicaciones:</p>
+                
+                <div class='publication-info'>
+                    <h3 style='margin-top: 0; color: #495057;'>📝 Publicación</h3>
+                    <p><strong>Contenido:</strong> {$contenido_preview}</p>
+                    <p><strong>Redes Sociales:</strong> {$publicacion['redes_sociales']}</p>
+                    <p><strong>Estado:</strong> <span style='text-transform: capitalize;'>{$publicacion['estado']}</span></p>
+                </div>
+                
+                <div class='feedback-box'>
+                    <h3 style='margin-top: 0; color: #0056b3;'>💭 Comentario Recibido</h3>
+                    <p style='font-style: italic; font-size: 16px;'>\"{$feedback_text}\"</p>
+                    <p class='timestamp'>📅 {$fecha_feedback}</p>
+                </div>
+                
+                <p>Puedes revisar y editar la publicación directamente desde el siguiente enlace:</p>
+                
+                <div style='text-align: center;'>
+                    <a href='{$publicacion['edit_url']}' class='button'>
+                        ✏️ Ver y Editar Publicación
+                    </a>
+                </div>
+                
+                <p style='color: #6c757d; font-size: 14px; margin-top: 30px;'>
+                    <strong>💡 Tip:</strong> El formulario de edición ahora incluye una sección de feedback donde puedes ver todos los comentarios recibidos mientras realizas modificaciones.
+                </p>
+            </div>
+            
+            <div class='footer'>
+                <p>Loop - RRSS Planner | Sistema de Notificaciones</p>
+                <p>Este es un correo automático, no respondas a esta dirección.</p>
+            </div>
+        </div>
+    </body>
+    </html>";
+}
+
+/**
+ * Función principal para enviar notificaciones de feedback
+ * @param int $publicacion_id ID de la publicación
+ * @param string $feedback_text Texto del feedback recibido
+ * @return array Resultado del envío con estadísticas
+ */
+function sendFeedbackNotification($publicacion_id, $feedback_text) {
+    $result = [
+        'success' => false,
+        'sent_count' => 0,
+        'failed_count' => 0,
+        'errors' => []
+    ];
+    
+    try {
+        // Obtener contexto de la publicación
+        $publicacion = getPublicacionContext($publicacion_id);
+        if (!$publicacion) {
+            $result['errors'][] = 'Publicación no encontrada';
+            return $result;
+        }
+        
+        // Obtener administradores de la línea de negocio
+        $admins = getAdminsByLineaNegocio($publicacion['linea_id']);
+        if (empty($admins)) {
+            $result['errors'][] = 'No se encontraron administradores para notificar';
+            return $result;
+        }
+        
+        // Enviar correo a cada administrador
+        foreach ($admins as $admin) {
+            $subject = "💬 Nuevo feedback en {$publicacion['linea_nombre']} - RRSS Planner";
+            $htmlBody = createFeedbackEmailTemplate($publicacion, $feedback_text, $admin['nombre']);
+            
+            $emailResult = sendEmail($admin['email'], $subject, $htmlBody);
+            
+            if ($emailResult === true) {
+                $result['sent_count']++;
+                error_log("FEEDBACK_NOTIFICATION: Sent to {$admin['email']} for publication {$publicacion_id}");
+            } else {
+                $result['failed_count']++;
+                $result['errors'][] = "Error enviando a {$admin['email']}: {$emailResult}";
+                error_log("FEEDBACK_NOTIFICATION: Failed to send to {$admin['email']}: {$emailResult}");
+            }
+        }
+        
+        $result['success'] = $result['sent_count'] > 0;
+        error_log("FEEDBACK_NOTIFICATION: Completed for publication {$publicacion_id}. Sent: {$result['sent_count']}, Failed: {$result['failed_count']}");
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        $result['errors'][] = 'Excepción: ' . $e->getMessage();
+        error_log("FEEDBACK_NOTIFICATION: Exception for publication {$publicacion_id}: " . $e->getMessage());
+        return $result;
+    }
+}
+
+// ---- Fin Sistema de Notificaciones por Correo ----

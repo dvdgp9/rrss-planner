@@ -223,6 +223,11 @@ $usuarios = $stmt->fetchAll();
                         <i class="fas fa-users"></i>
                         Gestión de Usuarios
                     </button>
+                    <button class="tab-button <?php echo $active_tab === 'notificaciones' ? 'active' : ''; ?>" 
+                            onclick="switchTab('notificaciones')">
+                        <i class="fas fa-bell"></i>
+                        Notificaciones
+                    </button>
                 </div>
                 
                 <!-- Tab: Conexiones WordPress -->
@@ -490,6 +495,160 @@ $usuarios = $stmt->fetchAll();
                         </div>
                     </div>
                 </div>
+
+                <!-- Tab: Notificaciones -->
+                <div class="tab-content <?php echo $active_tab === 'notificaciones' ? 'active' : ''; ?>" id="tab-notificaciones">
+                    <div class="tab-description">
+                        <h2><i class="fas fa-bell"></i> Notificaciones por Correo</h2>
+                        <p>Configura las notificaciones automáticas que se envían cuando se recibe feedback en las publicaciones</p>
+                    </div>
+                    
+                    <div class="notifications-section">
+                        <!-- Configuración Global -->
+                        <div class="config-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-cog"></i> Configuración Global</h3>
+                                <p>Configuración general del sistema de notificaciones</p>
+                            </div>
+                            <div class="card-content">
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label><strong>Servidor SMTP:</strong></label>
+                                        <span>ebonemx.plesk.trevenque.es:465</span>
+                                    </div>
+                                    <div class="config-item">
+                                        <label><strong>Remitente:</strong></label>
+                                        <span>loop@ebone.es</span>
+                                    </div>
+                                </div>
+                                <div class="config-status">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>Sistema de correo configurado y operativo</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado de Notificaciones por Línea -->
+                        <div class="config-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-business-time"></i> Estado por Línea de Negocio</h3>
+                                <p>Supervisa qué administradores reciben notificaciones para cada línea</p>
+                            </div>
+                            <div class="card-content">
+                                <?php 
+                                foreach ($lineas_negocio as $linea): 
+                                    // Obtener administradores de esta línea
+                                    $stmt_admins = $db->prepare("
+                                        SELECT DISTINCT a.nombre, a.email, a.rol
+                                        FROM admins a
+                                        JOIN admin_linea_negocio aln ON a.id = aln.admin_id
+                                        WHERE aln.linea_negocio_id = ? AND a.activo = 1
+                                        ORDER BY a.nombre ASC
+                                    ");
+                                    $stmt_admins->execute([$linea['id']]);
+                                    $linea_admins = $stmt_admins->fetchAll(PDO::FETCH_ASSOC);
+                                    
+                                    // Si no hay admins específicos, mostrar superadmins
+                                    if (empty($linea_admins)) {
+                                        $stmt_superadmins = $db->prepare("
+                                            SELECT nombre, email, rol
+                                            FROM admins 
+                                            WHERE rol = 'superadmin' AND activo = 1
+                                            ORDER BY nombre ASC
+                                        ");
+                                        $stmt_superadmins->execute();
+                                        $linea_admins = $stmt_superadmins->fetchAll(PDO::FETCH_ASSOC);
+                                    }
+                                ?>
+                                    <div class="linea-notification-card">
+                                        <div class="linea-header">
+                                            <div class="linea-info">
+                                                <img src="assets/images/logos/<?php echo htmlspecialchars($linea['logo_filename'] ?: 'default.png'); ?>" 
+                                                     alt="<?php echo htmlspecialchars($linea['nombre']); ?>"
+                                                     class="linea-logo">
+                                                <div>
+                                                    <h4><?php echo htmlspecialchars($linea['nombre']); ?></h4>
+                                                    <p class="linea-slug">Slug: <?php echo htmlspecialchars($linea['slug']); ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="notification-status">
+                                                <span class="status-badge active">
+                                                    <i class="fas fa-bell"></i>
+                                                    Activas
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="admins-list">
+                                            <h5><i class="fas fa-users"></i> Administradores que reciben notificaciones:</h5>
+                                            <?php if (!empty($linea_admins)): ?>
+                                                <div class="admin-tags">
+                                                    <?php foreach ($linea_admins as $admin): ?>
+                                                        <span class="admin-tag <?php echo $admin['rol']; ?>">
+                                                            <i class="fas fa-user"></i>
+                                                            <?php echo htmlspecialchars($admin['nombre']); ?>
+                                                            <small>(<?php echo htmlspecialchars($admin['email']); ?>)</small>
+                                                        </span>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <p class="no-admins">
+                                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                    No hay administradores asignados a esta línea
+                                                </p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas de Notificaciones -->
+                        <div class="config-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-chart-bar"></i> Estadísticas de Notificaciones</h3>
+                                <p>Información sobre el envío de notificaciones (últimas 24 horas)</p>
+                            </div>
+                            <div class="card-content">
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-icon success">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h4>Sistema Operativo</h4>
+                                            <p>Las notificaciones se envían automáticamente</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-icon info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h4>Configuración Automática</h4>
+                                            <p>Los destinatarios se determinan por línea de negocio</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-box">
+                                    <div class="info-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h5>¿Cómo funcionan las notificaciones?</h5>
+                                        <ul>
+                                            <li>Se envían automáticamente cuando alguien deja feedback en una publicación</li>
+                                            <li>Los destinatarios son los administradores asignados a cada línea de negocio</li>
+                                            <li>Si no hay administradores específicos, se envían a todos los superadmins</li>
+                                            <li>El correo incluye un enlace directo para editar la publicación</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -559,5 +718,305 @@ $usuarios = $stmt->fetchAll();
             });
         });
     </script>
+
+    <!-- Estilos específicos para el tab de notificaciones -->
+    <style>
+        .notifications-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .config-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .config-card .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .config-card .card-header h3 {
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+        }
+
+        .config-card .card-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .config-card .card-content {
+            padding: 25px;
+        }
+
+        .config-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .config-item label {
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .config-item span {
+            color: #007bff;
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .config-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            color: #155724;
+        }
+
+        .linea-notification-card {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fafbfc;
+        }
+
+        .linea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .linea-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .linea-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .linea-info h4 {
+            margin: 0;
+            color: #495057;
+            font-size: 1.2rem;
+        }
+
+        .linea-slug {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .admins-list h5 {
+            color: #495057;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .admin-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #dee2e6;
+        }
+
+        .admin-tag.superadmin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .admin-tag small {
+            opacity: 0.8;
+            font-size: 0.75rem;
+        }
+
+        .no-admins {
+            color: #856404;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stat-icon.info {
+            background: #cce7ff;
+            color: #004085;
+        }
+
+        .stat-content h4 {
+            margin: 0 0 5px 0;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+
+        .stat-content p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .info-icon {
+            color: #004085;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-content h5 {
+            margin: 0 0 10px 0;
+            color: #004085;
+            font-size: 1.1rem;
+        }
+
+        .info-content ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #495057;
+        }
+
+        .info-content li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        .text-warning {
+            color: #ffc107 !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .config-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .linea-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .admin-tags {
+                flex-direction: column;
+            }
+        }
+    </style>
 </body>
 </html> 

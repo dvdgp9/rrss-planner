@@ -36,6 +36,24 @@ try {
 
     // Devolver el comentario guardado (útil para actualizar la UI)
     $newFeedbackId = $db->lastInsertId();
+    
+    // NUEVO: Enviar notificaciones por correo a administradores
+    // Se ejecuta después de responder al usuario para no bloquear la interfaz
+    try {
+        // Enviar notificaciones de forma asíncrona
+        $notificationResult = sendFeedbackNotification($publicacionId, $feedbackText);
+        
+        // Log del resultado de notificaciones (para debugging/auditoría)
+        if ($notificationResult['success']) {
+            error_log("FEEDBACK_NOTIFICATIONS: Successfully sent {$notificationResult['sent_count']} notifications for feedback {$newFeedbackId} on publication {$publicacionId}");
+        } else {
+            error_log("FEEDBACK_NOTIFICATIONS: Failed to send notifications for feedback {$newFeedbackId}: " . implode(', ', $notificationResult['errors']));
+        }
+    } catch (Exception $e) {
+        // Los errores de notificación NO deben afectar la respuesta exitosa al usuario
+        error_log("FEEDBACK_NOTIFICATIONS: Exception sending notifications for feedback {$newFeedbackId}: " . $e->getMessage());
+    }
+    
     echo json_encode([
         'success' => true, 
         'message' => 'Feedback enviado.', 

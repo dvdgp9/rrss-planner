@@ -568,6 +568,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
+
+    <?php if ($accion === 'editar' && !empty($publicacionId)): ?>
+    <!-- Sección de Feedback de la Publicación -->
+    <div class="container-fluid">
+        <div class="form-container">
+            <div class="feedback-section">
+                <h3><i class="fas fa-comments"></i> Feedback Recibido</h3>
+                <p class="feedback-description">Comentarios y sugerencias recibidos sobre esta publicación:</p>
+                
+                <div id="feedback-container">
+                    <div id="feedback-loading" class="text-center" style="padding: 20px;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando feedback...
+                    </div>
+                    <div id="feedback-list" style="display: none;"></div>
+                    <div id="feedback-empty" style="display: none;" class="text-center feedback-empty">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>No se ha recibido feedback para esta publicación aún.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estilos específicos para la sección de feedback -->
+    <style>
+        .feedback-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .feedback-section h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feedback-section h3 i {
+            color: #007bff;
+        }
+
+        .feedback-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .feedback-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .feedback-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .feedback-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .feedback-date {
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .feedback-text {
+            color: #495057;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+        }
+
+        .feedback-empty {
+            padding: 30px;
+            color: #6c757d;
+        }
+
+        .feedback-empty i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #adb5bd;
+        }
+
+        .feedback-count {
+            background: #007bff;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        #feedback-loading {
+            color: #6c757d;
+        }
+
+        #feedback-loading i {
+            color: #007bff;
+            margin-right: 8px;
+        }
+    </style>
+    <?php endif; ?>
     
     <!-- Include main JavaScript file with toast notifications -->
     <script src="assets/js/main.js"></script>
@@ -604,6 +721,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             <?php endif; ?>
         });
+
+        <?php if ($accion === 'editar' && !empty($publicacionId)): ?>
+        // Cargar feedback de la publicación
+        function loadPublicacionFeedback() {
+            const publicacionId = <?php echo intval($publicacionId); ?>;
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedbackLoading = document.getElementById('feedback-loading');
+            const feedbackList = document.getElementById('feedback-list');
+            const feedbackEmpty = document.getElementById('feedback-empty');
+
+            if (!feedbackContainer) return;
+
+            fetch(`get_feedback.php?publicacion_id=${publicacionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    feedbackLoading.style.display = 'none';
+                    
+                    if (data.success && data.feedback && data.feedback.length > 0) {
+                        // Mostrar feedback
+                        displayFeedbackItems(data.feedback);
+                        feedbackList.style.display = 'block';
+                        
+                        // Actualizar título con contador
+                        const titleElement = document.querySelector('.feedback-section h3');
+                        if (titleElement) {
+                            const currentTitle = titleElement.innerHTML;
+                            if (!currentTitle.includes('feedback-count')) {
+                                titleElement.innerHTML = currentTitle + ` <span class="feedback-count">${data.feedback.length}</span>`;
+                            }
+                        }
+                    } else {
+                        // No hay feedback
+                        feedbackEmpty.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading feedback:', error);
+                    feedbackLoading.innerHTML = '<p style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Error al cargar feedback</p>';
+                });
+        }
+
+        function displayFeedbackItems(feedbackItems) {
+            const feedbackList = document.getElementById('feedback-list');
+            if (!feedbackList) return;
+
+            let html = '';
+            feedbackItems.forEach(item => {
+                html += `
+                    <div class="feedback-item">
+                        <div class="feedback-header">
+                            <span class="feedback-date">
+                                <i class="fas fa-clock"></i> ${item.created_at}
+                            </span>
+                        </div>
+                        <div class="feedback-text">${item.feedback_text}</div>
+                    </div>
+                `;
+            });
+            
+            feedbackList.innerHTML = html;
+        }
+
+        // Cargar feedback cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', function() {
+            // Delay pequeño para asegurar que otros scripts han cargado
+            setTimeout(loadPublicacionFeedback, 100);
+        });
+        <?php endif; ?>
     </script>
 </body>
 </html> 
