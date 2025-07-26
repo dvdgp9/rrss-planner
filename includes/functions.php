@@ -1187,8 +1187,7 @@ function createFeedbackEmailTemplate($publicacion, $feedback_text, $admin_name =
                 <p>Puedes revisar y editar la publicación directamente desde el siguiente enlace:</p>
                 
                 <div style='text-align: center;'>
-                    <a href='{$publicacion['edit_url']}' class='button'>
-                        ✏️ Ver y Editar Publicación
+<a href='" . htmlspecialchars($publicacion['edit_url'], ENT_QUOTES, 'UTF-8') . "' class='button'>                        ✏️ Ver y Editar Publicación
                     </a>
                 </div>
                 
