@@ -634,7 +634,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <?php if ($accion === 'editar' && !empty($publicacionId)): ?>
+    <?php if ($modo === 'editar' && !empty($publicacionId)): ?>
     <!-- Sección de Feedback de la Publicación -->
     <div class="container-fluid">
         <div class="form-container">
@@ -787,7 +787,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
         });
 
-        <?php if ($accion === 'editar' && !empty($publicacionId)): ?>
+        <?php if ($modo === 'editar' && !empty($publicacionId)): ?>
         // Cargar feedback de la publicación
         function loadPublicacionFeedback() {
             const publicacionId = <?php echo intval($publicacionId); ?>;
