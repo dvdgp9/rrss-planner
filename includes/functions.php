@@ -1007,7 +1007,7 @@ function sendEmail($to, $subject, $htmlBody, $textBody = '') {
             "Subject: {$subject}",
             "MIME-Version: 1.0",
             "Content-Type: text/html; charset=UTF-8",
-            "Content-Transfer-Encoding: quoted-printable",
+            "Content-Transfer-Encoding: 8bit",
             "X-Mailer: RRSS Planner SMTP Client",
             "Date: " . date('r')
         ];
@@ -1115,10 +1115,10 @@ function getPublicacionContext($publicacion_id) {
         $adminToken = generateAdminAccessToken($publicacion_id);
         
         // Generar URL directa al formulario de edición con token temporal
+        // IMPORTANTE: NO aplicar htmlspecialchars() aquí - la URL debe mantenerse raw para emails
         $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $rawUrl = "{$protocol}://{$host}/publicacion_form.php?id={$publicacion_id}&admin_token={$adminToken}";
-        $publicacion['edit_url'] = htmlspecialchars($rawUrl, ENT_QUOTES, 'UTF-8');
+        $publicacion['edit_url'] = "{$protocol}://{$host}/publicacion_form.php?id={$publicacion_id}&admin_token={$adminToken}";
             
         return $publicacion;
         
