@@ -99,9 +99,6 @@ if (!$token) {
     <title>Vista Publicación: <?php echo $publicacion ? '#'.$publicacion['id'] : 'Error'; ?> - Planificador RRSS</title>
     <link rel="icon" type="image/png" href="assets/images/logos/isotipo-ebone.png">
     <!-- CSS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/styles.css">
     <style>
