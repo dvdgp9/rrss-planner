@@ -1150,12 +1150,12 @@ function createFeedbackEmailTemplate($publicacion, $feedback_text, $admin_name =
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; }
             .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
+            .header { background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%); color: white; padding: 30px 20px; text-align: center; }
             .header h1 { margin: 0; font-size: 24px; }
             .content { padding: 30px 20px; }
             .feedback-box { background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0; border-radius: 4px; }
             .publication-info { background-color: #e9ecef; padding: 15px; border-radius: 4px; margin: 20px 0; }
-            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+            .button { display: inline-block; background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; margin: 20px 0; }
             .footer { background-color: #343a40; color: #adb5bd; padding: 20px; text-align: center; font-size: 14px; }
             .timestamp { color: #6c757d; font-size: 14px; }
         </style>

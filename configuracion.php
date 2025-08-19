@@ -887,7 +887,7 @@ $usuarios = $stmt->fetchAll();
         }
 
         .config-card .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
             color: white;
             padding: 20px;
         }
@@ -1032,7 +1032,7 @@ $usuarios = $stmt->fetchAll();
         }
 
         .admin-tag.superadmin {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
             color: white;
             border-color: #667eea;
         }
