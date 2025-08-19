@@ -186,51 +186,11 @@ try {
         <!-- Cards de líneas de negocio -->
         <div class="dashboard-cards">
             <?php foreach ($lineasNegocio as $index => $linea): 
-                // Determinar URLs, logos y colores según el ID (y slug)
-                $paginaUrl = 'planner.php?slug=' . urlencode($linea['slug'] ?? 'error'); // Default URL structure
-                $logoUrl = 'assets/images/logos/' . ($linea['logo_filename'] ?? 'default.png');
-                $colorPrincipal = '';
-                $colorSecundario = '';
-                $bgColorStyle = ''; // Para manejar el gradiente
-
-                // Colores específicos (puedes ajustar o quitar el switch si el slug es suficiente)
-                switch($linea['id']) {
-                    case 1: // Ebone
-                        $colorPrincipal = '#23AAC5';
-                        $colorSecundario = '#1a8da5'; 
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
-                        break;
-                    case 2: // Cubofit
-                        $colorPrincipal = '#E23633';
-                        $colorSecundario = '#c12f2c'; 
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
-                        break;
-                    case 3: // Uniges
-                        $unigesColor1 = '#9B6FCE';
-                        $unigesColor2 = '#032551';
-                        $colorPrincipal = $unigesColor1; 
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $unigesColor1 . ' 0%, ' . $unigesColor2 . ' 100%);';
-                        break;
-                    case 4: // Teia
-                        $colorPrincipal = '#009970';
-                        $colorSecundario = '#007a5a'; 
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
-                        break;
-                    default: // Otros (usarán slug para URL pero colores por defecto)
-                        $logoUrl = 'assets/images/logos/' . ($linea['logo_filename'] ?? 'default.png'); 
-                        $colorPrincipal = '#6c757d'; 
-                        $colorSecundario = '#5a6268'; 
-                        $bgColorStyle = 'background: linear-gradient(90deg, ' . $colorPrincipal . ' 0%, ' . $colorSecundario . ' 100%);';
-                        break;
-                }
-
-                // Fallback por si el logo no existe
-                if (!file_exists($logoUrl)) {
-                    $logoUrl = 'assets/images/logos/default.png'; // Un logo genérico
-                }
+                // URL por línea de negocio (logo/colores dinámicos eliminados)
+                $paginaUrl = 'planner.php?slug=' . urlencode($linea['slug'] ?? 'error');
             ?>
             <div class="dashboard-card">
-                <div class="card-header" style="<?php echo $bgColorStyle; ?> color: white;">
+                <div class="card-header">
                     <h2><?php echo htmlspecialchars($linea['nombre']); ?></h2>
                 </div>
                 <div class="card-body">

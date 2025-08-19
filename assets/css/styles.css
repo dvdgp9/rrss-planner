@@ -1719,7 +1719,7 @@ textarea.form-control {
 /* --- Dashboard Styles (index.php) --- */
 
 .summary-section {
-    background-color: #fff;
+    background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     padding: 15px;
@@ -1731,7 +1731,7 @@ textarea.form-control {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 15px;
-    color: #333;
+    color: #fff;
 }
 
 .summary-stats {
