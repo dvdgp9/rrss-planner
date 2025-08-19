@@ -866,11 +866,95 @@ function updateStatusModern(selector, publicationId, newStatus, lineaId, isBlogs
     trigger.classList.add('loading');
     showInfoToast('Actualizando estado...', 2000);
     
+    // Blogs: intercept special flows for scheduled/publish
+    if (isBlogs) {
+        if (newStatus === 'scheduled') {
+            // Open scheduling modal
+            trigger.classList.remove('loading');
+            openScheduleModal(lineaId, publicationId, (scheduledDateTime) => {
+                const formData = new FormData();
+                formData.append('blog_post_id', publicationId);
+                formData.append('linea', lineaId);
+                formData.append('scheduled_datetime', scheduledDateTime);
+                
+                fetch('blog_schedule_to_wordpress.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => {
+                    if (!r.ok) {
+                        return r.json().catch(() => { throw new Error(r.statusText); }).then(err => { throw err; });
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        updateStatusSelectorUI(selector, 'scheduled', 'Programado');
+                        const row = selector.closest('tr');
+                        if (row) row.dataset.estado = 'scheduled';
+                        trigger.classList.add('success-flash');
+                        setTimeout(() => trigger.classList.remove('success-flash'), 400);
+                        showSuccessToast('Entrada programada en WordPress');
+                    } else {
+                        showErrorToast('Error al programar: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error scheduling WP post:', err);
+                    showErrorToast('Error al programar: ' + (err.message || 'Error desconocido'));
+                });
+            });
+            return; // prevent default flow
+        }
+        if (newStatus === 'publish') {
+            // Confirm publish to WP
+            const confirmed = window.confirm('¿Publicar ahora este post en WordPress?');
+            if (!confirmed) {
+                trigger.classList.remove('loading');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('blog_post_id', publicationId);
+            fetch('publish_to_wordpress.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => {
+                if (!r.ok) {
+                    return r.json().catch(() => { throw new Error(r.statusText); }).then(err => { throw err; });
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateStatusSelectorUI(selector, 'publish', 'Publicado');
+                    const row = selector.closest('tr');
+                    if (row) row.dataset.estado = 'publish';
+                    trigger.classList.add('success-flash');
+                    setTimeout(() => trigger.classList.remove('success-flash'), 400);
+                    showSuccessToast('Publicado en WordPress');
+                } else {
+                    showErrorToast('Error al publicar: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Error publishing WP post:', err);
+                showErrorToast('Error al publicar: ' + (err.message || 'Error desconocido'));
+            })
+            .finally(() => {
+                trigger.classList.remove('loading');
+            });
+            return; // prevent default flow
+        }
+        // For draft or other states, fall through to simple status update
+    }
+
     // Prepare form data
     const formData = new FormData();
     formData.append('id', publicationId);
     formData.append('estado', newStatus);
     formData.append('linea', lineaId);
+    if (isBlogs) formData.append('type', 'blog'); // REQUIRED by backend
     
     const endpoint = isBlogs ? 'blog_update_estado.php' : 'publicacion_update_estado.php';
     
@@ -993,3 +1077,49 @@ function createStatusSelectorHTML(publicationId, currentStatus, lineaId, isBlogs
 }
 
 // =============== END MODERN STATUS SELECTOR FUNCTIONALITY ===============
+
+// =============== SCHEDULING MODAL HANDLERS ===============
+function openScheduleModal(lineaId, blogPostId, onConfirm) {
+    const modal = document.getElementById('schedule-modal');
+    if (!modal) {
+        alert('No se encontró el modal de programación.');
+        return;
+    }
+    const input = modal.querySelector('#schedule-datetime');
+    const confirmBtn = modal.querySelector('#schedule-confirm');
+    const cancelBtn = modal.querySelector('#schedule-cancel');
+    const closeX = modal.querySelector('#schedule-close-x');
+    // set default datetime to now + 1 hour
+    const now = new Date(Date.now() + 60 * 60 * 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    const local = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    input.value = local;
+    modal.style.display = 'block';
+
+    const cleanup = () => {
+        modal.style.display = 'none';
+        confirmBtn.onclick = null;
+        cancelBtn.onclick = null;
+        if (closeX) closeX.onclick = null;
+    };
+
+    confirmBtn.onclick = () => {
+        const value = input.value;
+        if (!value) {
+            showErrorToast('Selecciona una fecha y hora.');
+            return;
+        }
+        cleanup();
+        onConfirm && onConfirm(value);
+    };
+    cancelBtn.onclick = () => {
+        cleanup();
+        showInfoToast('Programación cancelada');
+    };
+    if (closeX) {
+        closeX.onclick = () => {
+            cleanup();
+            showInfoToast('Programación cancelada');
+        };
+    }
+}

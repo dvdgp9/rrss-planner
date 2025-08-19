@@ -135,6 +135,14 @@ $blog_default_sort_dir = ($blog_sort_by === 'fecha_publicacion') ? 'DESC' : 'ASC
         $sort_dir = $blog_sort_dir;
         $next_sort_dir = ($sort_dir === 'ASC') ? 'DESC' : 'ASC';
         
+        // --- Promoción automática: scheduled -> publish cuando pasa la hora ---
+        try {
+            $auto_pub_stmt = $db->prepare("UPDATE blog_posts SET estado = 'publish' WHERE linea_negocio_id = ? AND estado = 'scheduled' AND fecha_publicacion <= NOW()");
+            $auto_pub_stmt->execute([$current_linea_id]);
+        } catch (PDOException $e) {
+            error_log("Auto publish update failed: " . $e->getMessage());
+        }
+
         // --- Obtención de Blog Posts ---
         $sql_blog_posts = "
             SELECT 
@@ -147,7 +155,7 @@ $blog_default_sort_dir = ($blog_sort_by === 'fecha_publicacion') ? 'DESC' : 'ASC
                 CASE 
                     WHEN bp.estado = 'draft' THEN 'Borrador'
                     WHEN bp.estado = 'scheduled' THEN 'Programado'
-                    WHEN bp.estado = 'published' THEN 'Publicado'
+                    WHEN bp.estado = 'publish' THEN 'Publicado'
                     ELSE bp.estado
                 END as estado_display
             FROM blog_posts bp
@@ -650,6 +658,22 @@ if ($current_linea_id) {
                     </div>
                     <div id="copyPublicationMessage" style="display: none; margin-top: 10px; color: green;">¡Enlace copiado!</div>
                     <div id="sharePublicationError" style="display: none; margin-top: 10px; color: red;"></div>
+                </div>
+            </div>
+
+            <!-- Modal para Programar Publicación de Blog -->
+            <div id="schedule-modal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 420px;">
+                    <span class="close" id="schedule-close-x" style="float:right; cursor:pointer" aria-label="Cerrar">&times;</span>
+                    <h2>Programar publicación</h2>
+                    <p>Selecciona fecha y hora para publicar en WordPress:</p>
+                    <div style="margin: 12px 0;">
+                        <input type="datetime-local" id="schedule-datetime" style="width: 100%; padding: 8px;">
+                    </div>
+                    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 16px;">
+                        <button id="schedule-cancel" class="btn btn-secondary">Cancelar</button>
+                        <button id="schedule-confirm" class="btn btn-primary">Programar</button>
+                    </div>
                 </div>
             </div>
 
