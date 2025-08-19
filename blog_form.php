@@ -361,7 +361,7 @@ function generateSlug($text) {
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- TinyMCE -->
@@ -635,7 +635,7 @@ function generateSlug($text) {
                     'insertdatetime', 'media', 'table', 'wordcount', 'emoticons'
                 ],
                 toolbar: 'undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | link image media | table | code preview fullscreen',
-                content_style: 'body { font-family: "Open Sans", Arial, sans-serif; font-size: 14px; }',
+                content_style: 'body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }',
                 language: 'es',
                 branding: false,
                 promotion: false,
