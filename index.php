@@ -35,31 +35,7 @@ try {
             $linea['stats']['total'] += $result['total'];
         }
         
-        // Obtener la publicación más reciente de esta línea
-        $stmt = $db->prepare("
-            SELECT p.*, COUNT(prs.red_social_id) as redes_count
-            FROM publicaciones p
-            LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id
-            WHERE p.linea_negocio_id = ?
-            GROUP BY p.id
-            ORDER BY p.fecha_programada DESC, p.id DESC
-            LIMIT 1
-        ");
-        $stmt->execute([$linea['id']]);
-        $linea['ultima_publicacion'] = $stmt->fetch();
-        
-        // Obtener próxima publicación programada (que no esté publicada aún)
-        $stmt = $db->prepare("
-            SELECT p.*, COUNT(prs.red_social_id) as redes_count
-            FROM publicaciones p
-            LEFT JOIN publicacion_red_social prs ON p.id = prs.publicacion_id
-            WHERE p.linea_negocio_id = ? AND p.estado = 'programado' AND p.fecha_programada >= CURRENT_DATE()
-            GROUP BY p.id
-            ORDER BY p.fecha_programada ASC, p.id ASC
-            LIMIT 1
-        ");
-        $stmt->execute([$linea['id']]);
-        $linea['proxima_publicacion'] = $stmt->fetch();
+        // Eliminado: previews de última y próxima publicación para simplificar el dashboard
     }
     unset($linea);
     
@@ -211,42 +187,7 @@ try {
                         <span><?php echo $linea['stats']['total']; ?></span>
                     </div>
                     
-                    <!-- Última publicación -->
-                    <?php if (isset($linea['ultima_publicacion']) && $linea['ultima_publicacion']): ?>
-                    <div class="pub-preview">
-                        <div class="pub-preview-title">Última publicación</div>
-                        <div class="pub-content"><?php echo truncateText($linea['ultima_publicacion']['contenido'], 100); ?></div>
-                        <div class="pub-meta">
-                            <span>
-                                <i class="far fa-calendar"></i> 
-                                <?php echo date('d/m/y', strtotime($linea['ultima_publicacion']['fecha_programada'])); ?>
-                            </span>
-                            <span class="badge <?php 
-                                echo $linea['ultima_publicacion']['estado'] === 'borrador' ? 'badge-draft' : 
-                                     ($linea['ultima_publicacion']['estado'] === 'programado' ? 'badge-scheduled' : 'badge-published'); 
-                            ?>">
-                                <?php echo ucfirst($linea['ultima_publicacion']['estado']); ?>
-                            </span>
-                        </div>
-                    </div>
-                    <?php else: ?>
-                    <div class="no-pub">No hay publicaciones disponibles</div>
-                    <?php endif; ?>
-                    
-                    <!-- Próxima publicación programada -->
-                    <?php if (isset($linea['proxima_publicacion']) && $linea['proxima_publicacion']): ?>
-                    <div class="pub-preview" style="margin-top: 15px;">
-                        <div class="pub-preview-title">Próxima programada</div>
-                        <div class="pub-content"><?php echo truncateText($linea['proxima_publicacion']['contenido'], 100); ?></div>
-                        <div class="pub-meta">
-                            <span>
-                                <i class="far fa-calendar"></i> 
-                                <?php echo date('d/m/y', strtotime($linea['proxima_publicacion']['fecha_programada'])); ?>
-                            </span>
-                            <span class="badge badge-scheduled">Programada</span>
-                        </div>
-                    </div>
-                    <?php endif; ?>
+                    <!-- Previews eliminadas para un dashboard más limpio -->
                 </div>
                 <div class="card-footer">
                     <a href="<?php echo htmlspecialchars($paginaUrl); ?>" class="btn btn-sm">
