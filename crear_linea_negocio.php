@@ -6,6 +6,13 @@ header('Content-Type: application/json'); // Establece el tipo de contenido de l
 
 $response = ['success' => false, 'message' => ''];
 
+// Solo superadmins pueden crear nuevas líneas de negocio
+if (!is_superadmin()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado: solo superadmins.']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
     $logo_filename = trim($_POST['logo_filename'] ?? '');

@@ -440,6 +440,64 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // --- End JavaScript for Nueva Línea de Negocio Modal (Consolidado) ---
     
+    // --- JavaScript for Editar Usuario Modal ---
+    const modalEditarUsuario = document.getElementById('modalEditarUsuario');
+    const btnsEditarUsuario = document.querySelectorAll('.btn-edit-usuario');
+    const btnCloseEditarUsuario = document.getElementById('closeEditarUsuario');
+    const btnCancelEditarUsuario = document.getElementById('cancelEditarUsuario');
+    const formEditarUsuario = document.getElementById('formEditarUsuario');
+    const inputEditUserId = document.getElementById('editUserId');
+    const inputEditNombre = document.getElementById('editNombre');
+    const inputEditEmail = document.getElementById('editEmail');
+    const inputEditPassword = document.getElementById('editPassword');
+
+    if (btnsEditarUsuario && btnsEditarUsuario.length && modalEditarUsuario && formEditarUsuario) {
+        btnsEditarUsuario.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const nombre = this.getAttribute('data-nombre') || '';
+                const email = this.getAttribute('data-email') || '';
+
+                if (inputEditUserId) inputEditUserId.value = userId || '';
+                if (inputEditNombre) inputEditNombre.value = nombre;
+                if (inputEditEmail) inputEditEmail.value = email;
+                if (inputEditPassword) inputEditPassword.value = '';
+
+                modalEditarUsuario.classList.add('show');
+            });
+        });
+    }
+
+    function closeEditarUsuarioModal() {
+        if (!modalEditarUsuario) return;
+        modalEditarUsuario.classList.remove('show');
+        // Limpieza ligera
+        if (formEditarUsuario) {
+            // No resetear nombre/email para preservar datos si el usuario reabre; solo password
+            if (inputEditPassword) inputEditPassword.value = '';
+        }
+    }
+
+    if (btnCloseEditarUsuario) {
+        btnCloseEditarUsuario.addEventListener('click', closeEditarUsuarioModal);
+    }
+    if (btnCancelEditarUsuario) {
+        btnCancelEditarUsuario.addEventListener('click', closeEditarUsuarioModal);
+    }
+    if (modalEditarUsuario) {
+        window.addEventListener('click', function(event) {
+            if (event.target === modalEditarUsuario) {
+                closeEditarUsuarioModal();
+            }
+        });
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && modalEditarUsuario.classList.contains('show')) {
+                closeEditarUsuarioModal();
+            }
+        });
+    }
+    // --- End JavaScript for Editar Usuario Modal ---
+    
     // --- Enhanced Header: Business Line Dropdown Functionality ---
     const businessLineDropdown = document.getElementById('businessLineDropdown');
     const businessLineDropdownMenu = document.getElementById('businessLineDropdownMenu');

@@ -9,12 +9,60 @@ if (!is_superadmin()) {
     exit;
 }
 
+// Inicialización de DB y usuario actual antes de cualquier manejador
 $db = getDbConnection();
 $current_user = get_current_admin_user();
 
 // Mensajes de feedback
 $message = '';
 $message_type = '';
+
+// Editar usuario existente (nombre, email, contraseña opcional)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_user') {
+    $user_id = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
+    $nombre = trim($_POST['nombre'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    if (!$user_id) {
+        $message = 'Usuario no válido';
+        $message_type = 'error';
+    } elseif (empty($nombre) || empty($email)) {
+        $message = 'Nombre y email son obligatorios';
+        $message_type = 'error';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $message = 'El email no es válido';
+        $message_type = 'error';
+    } elseif ($password !== '' && strlen($password) < 6) {
+        $message = 'La contraseña debe tener al menos 6 caracteres';
+        $message_type = 'error';
+    } else {
+        try {
+            // Comprobar que el email no está usado por otro usuario
+            $stmt = $db->prepare("SELECT id FROM admins WHERE email = ? AND id <> ?");
+            $stmt->execute([$email, $user_id]);
+            if ($stmt->fetch()) {
+                $message = 'Ya existe otro usuario con este email';
+                $message_type = 'error';
+            } else {
+                if ($password !== '') {
+                    $password_hash = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt_upd = $db->prepare("UPDATE admins SET nombre = ?, email = ?, password_hash = ?, updated_at = NOW() WHERE id = ?");
+                    $stmt_upd->execute([$nombre, $email, $password_hash, $user_id]);
+                } else {
+                    $stmt_upd = $db->prepare("UPDATE admins SET nombre = ?, email = ?, updated_at = NOW() WHERE id = ?");
+                    $stmt_upd->execute([$nombre, $email, $user_id]);
+                }
+                $message = 'Usuario actualizado correctamente';
+                $message_type = 'success';
+            }
+        } catch (PDOException $e) {
+            $message = 'Error al actualizar usuario: ' . $e->getMessage();
+            $message_type = 'error';
+        }
+    }
+    $active_tab = 'usuarios';
+}
 
 // Determinar tab activo
 $active_tab = $_GET['tab'] ?? 'wordpress';
@@ -461,8 +509,16 @@ $usuarios = $stmt->fetchAll();
                                                 <?php endif; ?>
                                             </div>
                                         </div>
-                                        <?php if ($usuario['id'] != $current_user['id']): ?>
-                                            <div class="user-card-actions">
+                                        <div class="user-card-actions">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary btn-edit-usuario"
+                                                    data-user-id="<?php echo $usuario['id']; ?>"
+                                                    data-nombre="<?php echo htmlspecialchars($usuario['nombre']); ?>"
+                                                    data-email="<?php echo htmlspecialchars($usuario['email']); ?>">
+                                                <i class="fas fa-edit"></i>
+                                                Editar
+                                            </button>
+                                            <?php if ($usuario['id'] != $current_user['id']): ?>
                                                 <form method="POST" style="display: inline;">
                                                     <input type="hidden" name="action" value="toggle_user">
                                                     <input type="hidden" name="user_id" value="<?php echo $usuario['id']; ?>">
@@ -480,15 +536,13 @@ $usuarios = $stmt->fetchAll();
                                                         Eliminar
                                                     </button>
                                                 </form>
-                                            </div>
-                                        <?php else: ?>
-                                            <div class="user-card-actions">
+                                            <?php else: ?>
                                                 <span class="current-user-badge">
                                                     <i class="fas fa-user-check"></i>
                                                     Usuario actual
                                                 </span>
-                                            </div>
-                                        <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -496,6 +550,42 @@ $usuarios = $stmt->fetchAll();
                     </div>
                 </div>
 
+                <!-- Modal: Editar Usuario -->
+                <div id="modalEditarUsuario" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Editar Usuario</h2>
+                            <span class="close-button" id="closeEditarUsuario">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" id="formEditarUsuario">
+                                <input type="hidden" name="action" value="update_user">
+                                <input type="hidden" name="user_id" id="editUserId" value="">
+
+                                <div class="form-group">
+                                    <label for="editNombre"><i class="fas fa-user"></i> Nombre completo</label>
+                                    <input type="text" id="editNombre" name="nombre" class="form-control" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editEmail"><i class="fas fa-envelope"></i> Email</label>
+                                    <input type="email" id="editEmail" name="email" class="form-control" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editPassword"><i class="fas fa-lock"></i> Nueva contraseña (opcional)</label>
+                                    <input type="password" id="editPassword" name="password" class="form-control" placeholder="Dejar en blanco para no cambiar">
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" id="cancelEditarUsuario">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Fin Modal: Editar Usuario -->
                 <!-- Tab: Notificaciones -->
                 <div class="tab-content <?php echo $active_tab === 'notificaciones' ? 'active' : ''; ?>" id="tab-notificaciones">
                     <div class="tab-description">
