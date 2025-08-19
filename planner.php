@@ -250,16 +250,6 @@ if ($current_linea_id) {
                         </div>
                         <div class="planner-title-info">
                             <h1 class="planner-title"><?php echo htmlspecialchars($current_linea_nombre); ?></h1>
-                            <div class="planner-subtitle">
-                                <select class="linea-selector" onchange="window.location.href = this.value;">
-                                    <?php foreach ($all_lineas_negocio as $linea): ?>
-                                        <option value="planner.php?slug=<?php echo urlencode($linea['slug']); ?>&type=<?php echo urlencode($content_type); ?>" 
-                                                <?php echo ($linea['id'] == $current_linea_id) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($linea['nombre']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
                         </div>
                     </div>
                     

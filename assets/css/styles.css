@@ -446,21 +446,10 @@
     background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
     border-radius: 16px;
     padding: 30px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    margin-bottom: 25px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     position: relative;
     overflow: hidden;
-}
-
-.config-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: shimmer 3s ease-in-out infinite;
 }
 
 .config-header-content {
