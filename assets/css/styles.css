@@ -8,7 +8,7 @@
     --dark-gray: #656D78;
     --white: #ffffff;
     --success: #00A878;
-    --warning: #F6BB42;
+    --warning: #FFE066;
     --danger: #E9573F;
     --info: #3BAFDA;
     --sidebar-width: 250px;
@@ -2081,7 +2081,7 @@ font-weight: 600;
 }
 
 .badge-scheduled {
-    background-color: #fd7e14 !important; /* Orange */
+    background-color: #E37500 !important; /* Orange (brand) */
     color: white !important;
 }
 
