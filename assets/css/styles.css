@@ -2312,9 +2312,9 @@ font-weight: 600;
     position: relative;
 }
 
-.tab-item:hover:not(.disabled) {
+.tab-item:hover:not(.disabled):not(.active) {
     background-color: #f8f9fa;
-    color: var(--primary-color);
+    color: var(--primary-dark);
 }
 
 .tab-item.active {
@@ -2879,11 +2879,11 @@ font-weight: 600;
 input:checked + .slider {
   /* Use the primary color defined earlier, or a specific color */
   /* Using Ebone blue as an example, adjust if needed for theme */
-   background-color: #23AAC5; /* Ebone color */
+   background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #23AAC5; /* Ebone color */
+  box-shadow: 0 0 0 2px rgba(97, 27, 70, 0.25);
 }
 
 input:checked + .slider:before {
@@ -4015,17 +4015,17 @@ th:hover {
     left: 0;
     width: 0;
     height: 3px;
-    background: linear-gradient(90deg, #23AAC5, #1d8fa6);
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary-dark));
     transition: width 0.3s ease;
 }
 
-.tab-item:hover:not(.disabled)::before {
+.tab-item:hover:not(.disabled):not(.active)::before {
     width: 100%;
 }
 
-.tab-item:hover:not(.disabled) {
+.tab-item:hover:not(.disabled):not(.active) {
     transform: translateY(-2px);
-    background-color: rgba(35, 170, 197, 0.05);
+    background-color: rgba(97, 27, 70, 0.05);
 }
 
 /* Enhanced Stat Cards */
