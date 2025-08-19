@@ -17,12 +17,13 @@ $current_user = get_current_admin_user();
 $message = '';
 $message_type = '';
 
-// Editar usuario existente (nombre, email, contraseña opcional)
+// Editar usuario existente (nombre, email, contraseña opcional, rol)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_user') {
     $user_id = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
     $nombre = trim($_POST['nombre'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $rol = $_POST['rol'] ?? null;
 
     if (!$user_id) {
         $message = 'Usuario no válido';
@@ -36,25 +37,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } elseif ($password !== '' && strlen($password) < 6) {
         $message = 'La contraseña debe tener al menos 6 caracteres';
         $message_type = 'error';
+    } elseif (!in_array($rol, ['admin', 'superadmin'], true)) {
+        $message = 'Rol no válido';
+        $message_type = 'error';
     } else {
         try {
-            // Comprobar que el email no está usado por otro usuario
-            $stmt = $db->prepare("SELECT id FROM admins WHERE email = ? AND id <> ?");
-            $stmt->execute([$email, $user_id]);
-            if ($stmt->fetch()) {
-                $message = 'Ya existe otro usuario con este email';
+            // Obtener rol actual del usuario objetivo
+            $stmt_curr = $db->prepare("SELECT rol, activo FROM admins WHERE id = ?");
+            $stmt_curr->execute([$user_id]);
+            $targetUser = $stmt_curr->fetch(PDO::FETCH_ASSOC);
+            if (!$targetUser) {
+                $message = 'Usuario no encontrado';
                 $message_type = 'error';
             } else {
-                if ($password !== '') {
-                    $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt_upd = $db->prepare("UPDATE admins SET nombre = ?, email = ?, password_hash = ?, updated_at = NOW() WHERE id = ?");
-                    $stmt_upd->execute([$nombre, $email, $password_hash, $user_id]);
-                } else {
-                    $stmt_upd = $db->prepare("UPDATE admins SET nombre = ?, email = ?, updated_at = NOW() WHERE id = ?");
-                    $stmt_upd->execute([$nombre, $email, $user_id]);
+                $can_proceed = true;
+                // Si se intenta bajar de superadmin a admin, asegurar que queda al menos un superadmin activo
+                if ($targetUser['rol'] === 'superadmin' && $rol === 'admin') {
+                    $stmt_count = $db->prepare("SELECT COUNT(*) AS c FROM admins WHERE rol = 'superadmin' AND activo = 1 AND id <> ?");
+                    $stmt_count->execute([$user_id]);
+                    $row = $stmt_count->fetch(PDO::FETCH_ASSOC);
+                    if ((int)$row['c'] === 0) {
+                        $message = 'Debe quedar al menos un superadministrador activo.';
+                        $message_type = 'error';
+                        $can_proceed = false;
+                    }
                 }
-                $message = 'Usuario actualizado correctamente';
-                $message_type = 'success';
+
+                if ($can_proceed) {
+                    // Comprobar que el email no está usado por otro usuario
+                    $stmt = $db->prepare("SELECT id FROM admins WHERE email = ? AND id <> ?");
+                    $stmt->execute([$email, $user_id]);
+                    if ($stmt->fetch()) {
+                        $message = 'Ya existe otro usuario con este email';
+                        $message_type = 'error';
+                    } else {
+                        if ($password !== '') {
+                            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+                            $stmt_upd = $db->prepare("UPDATE admins SET nombre = ?, email = ?, password_hash = ?, rol = ?, updated_at = NOW() WHERE id = ?");
+                            $stmt_upd->execute([$nombre, $email, $password_hash, $rol, $user_id]);
+                        } else {
+                            $stmt_upd = $db->prepare("UPDATE admins SET nombre = ?, email = ?, rol = ?, updated_at = NOW() WHERE id = ?");
+                            $stmt_upd->execute([$nombre, $email, $rol, $user_id]);
+                        }
+                        $message = 'Usuario actualizado correctamente';
+                        $message_type = 'success';
+                    }
+                }
             }
         } catch (PDOException $e) {
             $message = 'Error al actualizar usuario: ' . $e->getMessage();
@@ -64,8 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $active_tab = 'usuarios';
 }
 
-// Determinar tab activo
-$active_tab = $_GET['tab'] ?? 'wordpress';
+// Determinar tab activo si no fue seteado por POST
+if (!isset($active_tab) || $active_tab === '') {
+    $active_tab = $_GET['tab'] ?? 'wordpress';
+}
 
 // === PROCESAMIENTO DE WORDPRESS ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_wordpress') {
@@ -514,7 +544,8 @@ $usuarios = $stmt->fetchAll();
                                                     class="btn btn-sm btn-primary btn-edit-usuario"
                                                     data-user-id="<?php echo $usuario['id']; ?>"
                                                     data-nombre="<?php echo htmlspecialchars($usuario['nombre']); ?>"
-                                                    data-email="<?php echo htmlspecialchars($usuario['email']); ?>">
+                                                    data-email="<?php echo htmlspecialchars($usuario['email']); ?>"
+                                                    data-rol="<?php echo htmlspecialchars($usuario['rol']); ?>">
                                                 <i class="fas fa-edit"></i>
                                                 Editar
                                             </button>
@@ -570,6 +601,14 @@ $usuarios = $stmt->fetchAll();
                                 <div class="form-group">
                                     <label for="editEmail"><i class="fas fa-envelope"></i> Email</label>
                                     <input type="email" id="editEmail" name="email" class="form-control" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editRol"><i class="fas fa-shield-alt"></i> Rol</label>
+                                    <select id="editRol" name="rol" class="form-control">
+                                        <option value="admin">Administrador</option>
+                                        <option value="superadmin">Super Administrador</option>
+                                    </select>
                                 </div>
 
                                 <div class="form-group">
@@ -1126,5 +1165,6 @@ $usuarios = $stmt->fetchAll();
             }
         }
     </style>
+    <script src="assets/js/main.js"></script>
 </body>
-</html> 
+</html>

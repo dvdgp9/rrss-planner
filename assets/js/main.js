@@ -450,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputEditNombre = document.getElementById('editNombre');
     const inputEditEmail = document.getElementById('editEmail');
     const inputEditPassword = document.getElementById('editPassword');
+    const selectEditRol = document.getElementById('editRol');
 
     if (btnsEditarUsuario && btnsEditarUsuario.length && modalEditarUsuario && formEditarUsuario) {
         btnsEditarUsuario.forEach(btn => {
@@ -457,11 +458,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userId = this.getAttribute('data-user-id');
                 const nombre = this.getAttribute('data-nombre') || '';
                 const email = this.getAttribute('data-email') || '';
+                const rol = this.getAttribute('data-rol') || 'admin';
 
                 if (inputEditUserId) inputEditUserId.value = userId || '';
                 if (inputEditNombre) inputEditNombre.value = nombre;
                 if (inputEditEmail) inputEditEmail.value = email;
                 if (inputEditPassword) inputEditPassword.value = '';
+                if (selectEditRol) selectEditRol.value = rol;
 
                 modalEditarUsuario.classList.add('show');
             });
