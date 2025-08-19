@@ -179,18 +179,20 @@ $lineas_negocio = $stmt->fetchAll();
         }
         
         .wp-btn {
-            background: #667eea;
+            background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            transition: background-color 0.3s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(97, 27, 70, 0.25);
         }
         
         .wp-btn:hover {
-            background: #5a6fd8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(97, 27, 70, 0.3);
         }
         
         .wp-help {
