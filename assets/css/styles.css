@@ -19,7 +19,7 @@
 
 /* Header profesional */
 .account-header {
-    background: linear-gradient(135deg, #23AAC5 0%, #1a8da5 100%);
+    background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
@@ -256,9 +256,9 @@
 }
 
 .role-superadmin {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    color: #8B4513;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(97, 27, 70, 0.35);
 }
 
 .role-admin {
@@ -597,12 +597,12 @@
 
 .tab-button.active {
     background: white;
-    color: #667eea;
+    color: var(--primary-dark);
     font-weight: 600;
 }
 
 .tab-button.active::before {
-    background: #667eea;
+    background: var(--primary-dark);
 }
 
 .tab-content {
@@ -1226,7 +1226,7 @@ tr:hover {
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
+    background-color: var(--primary-dark);
     color: var(--white);
 }
 
@@ -1274,7 +1274,7 @@ tr:hover {
 }
 
 .action-btn.edit:hover {
-    background-color: var(--info);
+    background-color: var(--primary-dark);
 }
 
 .action-btn.delete:hover {
@@ -1449,7 +1449,7 @@ textarea.form-control {
     font-size: 0.9rem;
 }
 .nav-simple a.active {
-    background-color: #23AAC5;
+    background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%) !important;
     color: white;
 }
 
@@ -1795,22 +1795,23 @@ textarea.form-control {
 }
 
 .dashboard-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+transform: translateY(-5px);
+box-shadow: 0 12px 30px rgba(0,0,0,0.12);
 }
 
 .dashboard-card .card-header {
-    background: #23AAC5;
-    color: white;
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+background: var(--primary-dark);
+color: white;
+padding: 12px 15px;
+border-top-left-radius: 8px;
+border-top-right-radius: 8px;
+border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .dashboard-card .card-header h2 {
-    margin: 0;
+margin: 0;
+font-size: 1.1rem;
+font-weight: 600;
     font-size: 1.1rem;
     font-weight: 600;
 }
@@ -2430,7 +2431,7 @@ textarea.form-control {
 }
 
 .tab-item.active {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%) !important;
     color: var(--white);
     border-bottom: 3px solid var(--primary-dark);
 }
