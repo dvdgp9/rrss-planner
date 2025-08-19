@@ -1756,7 +1756,7 @@ textarea.form-control {
 .stat-value {
     font-size: 1.8rem;
     font-weight: 600;
-    color: #23AAC5;
+    color: var(--primary-dark);
     margin-bottom: 3px;
 }
 
@@ -1909,7 +1909,7 @@ font-weight: 600;
 
 .card-footer .btn {
     padding: 8px 15px;
-    background-color: #23AAC5;
+    background-color: var(--primary-dark);
     color: white;
     border-radius: 5px;
     text-decoration: none;
@@ -1918,7 +1918,8 @@ font-weight: 600;
 }
 
 .card-footer .btn:hover {
-    background-color: #1d8fa6;
+    background-color: var(--primary-dark);
+    filter: brightness(0.9);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -4866,7 +4867,7 @@ td .image-placeholder small {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, rgba(97, 27, 70, 1) 30%, rgba(227, 117, 0, 1) 100%);
 }
 
 .actions-left h3 {
