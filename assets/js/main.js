@@ -1094,10 +1094,11 @@ function openScheduleModal(lineaId, blogPostId, onConfirm) {
     const pad = (n) => String(n).padStart(2, '0');
     const local = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
     input.value = local;
-    modal.style.display = 'block';
+    // Use CSS-driven modal visibility
+    modal.classList.add('show');
 
     const cleanup = () => {
-        modal.style.display = 'none';
+        modal.classList.remove('show');
         confirmBtn.onclick = null;
         cancelBtn.onclick = null;
         if (closeX) closeX.onclick = null;
