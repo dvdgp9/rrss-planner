@@ -141,13 +141,16 @@ try {
                 <h3>Líneas de Negocio</h3>
                 <p>Gestiona todas tus líneas de negocio desde aquí</p>
             </div>
+            <?php if (is_superadmin()): ?>
             <div class="actions-right">
                 <button id="btnNuevaLinea" class="btn btn-primary btn-action">
                     <i class="fas fa-plus"></i> Nueva Línea de Negocio
                 </button>
             </div>
+            <?php endif; ?>
         </div>
 
+        <?php if (is_superadmin()): ?>
         <!-- Modal para Nueva Línea de Negocio -->
         <div id="modalNuevaLinea" class="modal">
             <div class="modal-content">
@@ -178,6 +181,7 @@ try {
             </div>
         </div>
         <!-- Fin del Modal -->
+        <?php endif; ?>
 
         <!-- Cards de líneas de negocio -->
         <div class="dashboard-cards">
