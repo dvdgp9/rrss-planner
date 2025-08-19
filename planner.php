@@ -141,6 +141,7 @@ $blog_default_sort_dir = ($blog_sort_by === 'fecha_publicacion') ? 'DESC' : 'ASC
                 bp.id, bp.titulo, bp.contenido, bp.excerpt, bp.slug,
                 bp.imagen_destacada, bp.thumbnail_url, bp.fecha_publicacion, bp.estado,
                 bp.linea_negocio_id, bp.wp_categories_selected, bp.wp_tags_selected,
+                bp.wp_post_id, bp.wp_sync_status, bp.wp_sync_error, bp.wp_last_sync,
                 ln.wordpress_enabled,
                 ln.wordpress_url,
                 CASE 
