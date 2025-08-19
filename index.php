@@ -232,13 +232,6 @@ try {
             <div class="dashboard-card">
                 <div class="card-header" style="<?php echo $bgColorStyle; ?> color: white;">
                     <h2><?php echo htmlspecialchars($linea['nombre']); ?></h2>
-                    <?php if (!empty($logoUrl) && file_exists($logoUrl)): ?>
-                        <div class="logo-icon">
-                            <img src="<?php echo htmlspecialchars($logoUrl); ?>" alt="Logo <?php echo htmlspecialchars($linea['nombre']); ?>">
-                        </div>
-                    <?php else: ?>
-                        <div class="icon"><i class="fas fa-building"></i></div> <!-- Icono genérico si no hay logo -->
-                    <?php endif; ?>
                 </div>
                 <div class="card-body">
                     <div class="stat-item">
