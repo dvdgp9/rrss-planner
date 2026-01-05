@@ -50,18 +50,22 @@ try {
     $db = getDbConnection();
     
     if ($type === 'social') {
-        $stmt = $db->prepare("UPDATE publicaciones SET fecha_programada = ? WHERE id = ?");
+        // En la tabla publicaciones es DATETIME. Usamos DATE_FORMAT para mantener la hora si existe, o simplemente actualizar la parte de la fecha.
+        // Pero para simplificar y asegurar persistencia en drag & drop de calendario (que suele ser a nivel de día):
+        $stmt = $db->prepare("UPDATE publicaciones SET fecha_programada = STR_TO_DATE(CONCAT(?, ' ', DATE_FORMAT(fecha_programada, '%H:%i:%s')), '%Y-%m-%d %H:%i:%s') WHERE id = ?");
     } elseif ($type === 'blog') {
-        $stmt = $db->prepare("UPDATE blog_posts SET fecha_publicacion = ? WHERE id = ?");
+        $stmt = $db->prepare("UPDATE blog_posts SET fecha_publicacion = STR_TO_DATE(CONCAT(?, ' ', DATE_FORMAT(fecha_publicacion, '%H:%i:%s')), '%Y-%m-%d %H:%i:%s') WHERE id = ?");
     } else {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Tipo no válido']);
         exit;
     }
     
-    // Solo un execute con los parámetros correctos
     if ($stmt->execute([$new_date, $event_id])) {
-        if ($stmt->rowCount() > 0) {
+        // Obtenemos el rowCount inmediatamente después de ejecutar
+        $count = $stmt->rowCount();
+        
+        if ($count > 0) {
             echo json_encode([
                 'success' => true, 
                 'message' => 'Fecha actualizada correctamente',
@@ -70,22 +74,25 @@ try {
         } else {
             // Verificar si el registro existe para distinguir entre "no encontrado" y "sin cambios"
             if ($type === 'social') {
-                $check = $db->prepare("SELECT id FROM publicaciones WHERE id = ?");
+                $check = $db->prepare("SELECT id, fecha_programada FROM publicaciones WHERE id = ?");
             } else {
-                $check = $db->prepare("SELECT id FROM blog_posts WHERE id = ?");
+                $check = $db->prepare("SELECT id, fecha_publicacion as fecha_programada FROM blog_posts WHERE id = ?");
             }
             $check->execute([$event_id]);
+            $row = $check->fetch(PDO::FETCH_ASSOC);
             
-            if ($check->fetch()) {
+            if ($row) {
+                // Si existe pero rowCount fue 0, es que la fecha ya era la misma
                 echo json_encode([
                     'success' => true, 
                     'message' => 'Sin cambios (la fecha ya era la misma)',
-                    'new_date' => $new_date
+                    'new_date' => $new_date,
+                    'current_db_date' => $row['fecha_programada']
                 ]);
             } else {
                 echo json_encode([
                     'success' => false, 
-                    'error' => "No se encontró el evento con ID $event_id"
+                    'error' => "No se encontró el evento con ID $event_id en la tabla $type"
                 ]);
             }
         }
