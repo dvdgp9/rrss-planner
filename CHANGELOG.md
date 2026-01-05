@@ -13,4 +13,5 @@ Convenciones sugeridas:
 - Eliminar menú subtítulo de cada línea de negocio en planner.php
 - Eliminar próximas publicaciones del dashboard
 - Unificar colores a la nueva paleta
+- Border-radius de .btn a 25px
 
