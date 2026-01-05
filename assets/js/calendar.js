@@ -131,6 +131,13 @@ class EditorialCalendar {
         // Obtener el ID numérico real (quitar el prefijo social_ o blog_)
         const realId = event.id.replace(/^(social_|blog_)/, '');
         
+        console.log('Dragging event:', {
+            id: event.id,
+            realId: realId,
+            type: props.type,
+            newDate: newDate
+        });
+        
         // Mostrar loading
         event.setProp('backgroundColor', '#9ca3af');
         
@@ -146,9 +153,10 @@ class EditorialCalendar {
             });
             
             const result = await response.json();
+            console.log('Update result:', result);
             
             if (result.success) {
-                this.showToast('Fecha actualizada', 'success');
+                this.showToast(result.message || 'Fecha actualizada', 'success');
                 // Restaurar color según estado
                 this.updateEventColor(event, props.estado);
                 
@@ -156,6 +164,7 @@ class EditorialCalendar {
                     this.options.onDateChange(event, newDate);
                 }
             } else {
+                console.error('Update failed:', result.error);
                 info.revert();
                 this.showToast(result.error || 'Error al actualizar', 'error');
             }

@@ -59,6 +59,7 @@ try {
         exit;
     }
     
+    // Solo un execute con los parámetros correctos
     if ($stmt->execute([$new_date, $event_id])) {
         if ($stmt->rowCount() > 0) {
             echo json_encode([
@@ -67,12 +68,26 @@ try {
                 'new_date' => $new_date
             ]);
         } else {
-            // Si rowCount es 0, puede ser porque la fecha es la misma
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Sin cambios (la fecha ya era la misma)',
-                'new_date' => $new_date
-            ]);
+            // Verificar si el registro existe para distinguir entre "no encontrado" y "sin cambios"
+            if ($type === 'social') {
+                $check = $db->prepare("SELECT id FROM publicaciones WHERE id = ?");
+            } else {
+                $check = $db->prepare("SELECT id FROM blog_posts WHERE id = ?");
+            }
+            $check->execute([$event_id]);
+            
+            if ($check->fetch()) {
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Sin cambios (la fecha ya era la misma)',
+                    'new_date' => $new_date
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false, 
+                    'error' => "No se encontró el evento con ID $event_id"
+                ]);
+            }
         }
     } else {
         http_response_code(500);
