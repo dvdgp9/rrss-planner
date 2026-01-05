@@ -128,6 +128,9 @@ class EditorialCalendar {
         const props = event.extendedProps;
         const newDate = event.start.toISOString().split('T')[0];
         
+        // Obtener el ID numérico real (quitar el prefijo social_ o blog_)
+        const realId = event.id.replace(/^(social_|blog_)/, '');
+        
         // Mostrar loading
         event.setProp('backgroundColor', '#9ca3af');
         
@@ -136,7 +139,7 @@ class EditorialCalendar {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    event_id: props.realId,
+                    event_id: realId,
                     new_date: newDate,
                     type: props.type
                 })
