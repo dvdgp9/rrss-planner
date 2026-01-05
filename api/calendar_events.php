@@ -12,7 +12,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Verificar autenticación
-if (!is_logged_in()) {
+if (!is_authenticated()) {
     http_response_code(401);
     echo json_encode(['error' => 'No autorizado']);
     exit;

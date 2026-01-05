@@ -49,6 +49,10 @@ class EditorialCalendar {
             eventStartEditable: true,
             eventDurationEditable: false,
             
+            // Horario restringido para vistas de tiempo
+            slotMinTime: '08:00:00',
+            slotMaxTime: '20:00:00',
+            
             // Estilos personalizados
             dayMaxEvents: 3,
             moreLinkText: 'más',
