@@ -513,21 +513,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body class="<?php echo $bodyClass; ?>">
+    <?php 
+    // Solo mostrar navegación si hay autenticación normal
+    if (!$adminTokenAccess) {
+        require 'includes/nav.php'; 
+    }
+    ?>
+    
     <div class="app-simple">
         <div class="header-simple">
             <div class="header-title-logo">
                 <img src="<?php echo $logoUrl; ?>" alt="Logo <?php echo $lineaNombre; ?>" class="header-logo">
                 <h1><?php echo ($modo === 'crear' ? 'Nueva' : 'Editar'); ?> Publicación - <?php echo $lineaNombre; ?></h1>
             </div>
-            <a href="logout.php" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="btn-volver" class="btn btn-secondary" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Volver al Calendario
+                </button>
+                <?php if (!$adminTokenAccess): ?>
+                <a href="logout.php" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                <?php endif; ?>
+            </div>
         </div>
-        
-        <?php 
-        // Solo mostrar navegación si hay autenticación normal
-        if (!$adminTokenAccess) {
-            require 'includes/nav.php'; 
-        }
-        ?>
         
         <?php if ($adminTokenAccess): ?>
         <!-- Banner de Acceso Administrativo -->
@@ -817,6 +824,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         redes: redes,
                         username: '<?php echo htmlspecialchars($lineaSlug); ?>'
                     });
+                });
+            }
+            
+            // Botón volver al calendario
+            const btnVolver = document.getElementById('btn-volver');
+            const savedView = localStorage.getItem('planner_view');
+            if (btnVolver && savedView === 'calendar') {
+                btnVolver.style.display = 'inline-flex';
+                btnVolver.addEventListener('click', function() {
+                    window.location.href = 'planner.php?slug=<?php echo htmlspecialchars($lineaSlug); ?>';
                 });
             }
         });

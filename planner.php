@@ -315,45 +315,6 @@ if ($current_linea_id) {
                 <div class="calendar-container" id="editorial-calendar"></div>
             </div>
             
-            <?php if ($content_type === 'social'): ?>
-            <div class="filter-sort-container">
-                <form action="planner.php" method="GET" class="filter-form">
-                    <input type="hidden" name="slug" value="<?php echo htmlspecialchars($current_linea_slug); ?>">
-                    <input type="hidden" name="type" value="<?php echo htmlspecialchars($content_type); ?>">
-                     <?php if (isset($_GET['sort'])) { echo '<input type="hidden" name="sort" value="'.htmlspecialchars($_GET['sort']).'">'; } ?>
-                     <?php if (isset($_GET['dir'])) { echo '<input type="hidden" name="dir" value="'.htmlspecialchars($_GET['dir']).'">'; } ?>
-
-                    <div class="filter-group">
-                        <label>Filtrar por Redes Sociales:</label>
-                        <div class="redes-filter">
-                            <?php foreach ($redesDisponiblesFiltro as $red): 
-                                $checked = in_array($red['id'], $redes_filtro_ids) ? 'checked' : '';
-                            ?>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="filtro_red_<?php echo $red['id']; ?>" name="redes[]" value="<?php echo $red['id']; ?>" <?php echo $checked; ?>>
-                                <label for="filtro_red_<?php echo $red['id']; ?>">
-                                    <?php 
-                                    $iconClass = 'fas fa-share-alt'; // Icono por defecto
-                                    switch (strtolower($red['nombre'])) {
-                                        case 'instagram': $iconClass = 'fab fa-instagram'; break;
-                                        case 'facebook': $iconClass = 'fab fa-facebook-f'; break;
-                                        case 'twitter': case 'twitter (x)': $iconClass = 'fab fa-twitter'; break;
-                                        case 'linkedin': $iconClass = 'fab fa-linkedin-in'; break;
-                                        // Añadir más casos si es necesario
-                                    }
-                                    ?>
-                                    <i class="<?php echo $iconClass; ?>"></i>&nbsp;<?php echo htmlspecialchars($red['nombre']); ?>
-                                </label>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Filtrar</button>
-                    <a href="planner.php?slug=<?php echo htmlspecialchars($current_linea_slug); ?>&type=<?php echo htmlspecialchars($content_type); ?>" class="btn btn-secondary">Limpiar Filtros</a>
-                </form>
-            </div>
-            <?php endif; ?>
-            
             <div class="table-container">
                 <?php if ($content_type === 'social'): ?>
                 <div class="table-header">
@@ -732,40 +693,49 @@ if ($current_linea_id) {
         // Calendar instance
         let editorialCalendar = null;
         
-        // View Toggle
+        // View Toggle con persistencia
         const viewToggleBtns = document.querySelectorAll('.view-toggle-btn');
         const tableContainer = document.querySelector('.table-container');
-        const filterContainer = document.querySelector('.filter-sort-container');
         const calendarSection = document.getElementById('calendar-section');
+        
+        // Restaurar vista guardada
+        const savedView = localStorage.getItem('planner_view') || 'table';
+        
+        function setView(view) {
+            // Update active state
+            viewToggleBtns.forEach(b => b.classList.remove('active'));
+            const activeBtn = document.querySelector(`[data-view="${view}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            if (view === 'calendar') {
+                // Show calendar
+                if (tableContainer) tableContainer.style.display = 'none';
+                if (calendarSection) calendarSection.style.display = 'block';
+                
+                // Initialize calendar if not done yet
+                if (!editorialCalendar && window.EditorialCalendar) {
+                    editorialCalendar = new EditorialCalendar('#editorial-calendar', {
+                        lineaId: lineaId,
+                        lineaSlug: lineaSlug,
+                        contentType: 'all'
+                    });
+                }
+            } else {
+                // Show table
+                if (tableContainer) tableContainer.style.display = 'block';
+                if (calendarSection) calendarSection.style.display = 'none';
+            }
+            
+            // Guardar preferencia
+            localStorage.setItem('planner_view', view);
+        }
+        
+        // Aplicar vista guardada al cargar
+        setView(savedView);
         
         viewToggleBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const view = btn.dataset.view;
-                
-                // Update active state
-                viewToggleBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                if (view === 'calendar') {
-                    // Show calendar
-                    if (tableContainer) tableContainer.style.display = 'none';
-                    if (filterContainer) filterContainer.style.display = 'none';
-                    if (calendarSection) calendarSection.style.display = 'block';
-                    
-                    // Initialize calendar if not done yet
-                    if (!editorialCalendar && window.EditorialCalendar) {
-                        editorialCalendar = new EditorialCalendar('#editorial-calendar', {
-                            lineaId: lineaId,
-                            lineaSlug: lineaSlug,
-                            contentType: 'all'
-                        });
-                    }
-                } else {
-                    // Show table
-                    if (tableContainer) tableContainer.style.display = 'block';
-                    if (filterContainer) filterContainer.style.display = contentType === 'social' ? 'flex' : 'none';
-                    if (calendarSection) calendarSection.style.display = 'none';
-                }
+                setView(btn.dataset.view);
             });
         });
         
