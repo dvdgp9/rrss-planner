@@ -1,0 +1,521 @@
+/**
+ * Editorial Calendar Styles
+ * Estilos personalizados para FullCalendar
+ */
+
+/* =================== CALENDAR CONTAINER =================== */
+.calendar-section {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.calendar-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-title i {
+    color: var(--brand-purple);
+}
+
+.calendar-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.calendar-type-toggle {
+    display: flex;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    padding: 2px;
+}
+
+.calendar-type-btn {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+}
+
+.calendar-type-btn.active {
+    background: var(--white);
+    color: var(--gray-800);
+    box-shadow: var(--shadow-sm);
+}
+
+.calendar-type-btn:hover:not(.active) {
+    color: var(--gray-800);
+}
+
+.calendar-container {
+    padding: 20px;
+}
+
+.calendar-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* =================== FULLCALENDAR OVERRIDES =================== */
+.fc {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.fc .fc-button {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    transition: all var(--transition);
+}
+
+.fc .fc-button:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-300);
+    color: var(--gray-800);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+    background: var(--brand-gradient);
+    border-color: transparent;
+    color: var(--white);
+}
+
+.fc .fc-button:focus {
+    box-shadow: 0 0 0 2px rgba(97, 27, 70, 0.2);
+}
+
+.fc .fc-today-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Header */
+.fc .fc-col-header-cell {
+    background: var(--gray-50);
+    border-color: var(--gray-200);
+    padding: 10px 0;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-500);
+    text-decoration: none;
+}
+
+/* Day cells */
+.fc .fc-daygrid-day {
+    border-color: var(--gray-100);
+    transition: background-color var(--transition-fast);
+}
+
+.fc .fc-daygrid-day:hover {
+    background: var(--gray-50);
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    padding: 8px;
+}
+
+.fc .fc-day-today {
+    background: rgba(97, 27, 70, 0.05) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+    background: var(--brand-gradient);
+    color: var(--white);
+    border-radius: var(--radius-full);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fc .fc-day-other .fc-daygrid-day-number {
+    color: var(--gray-400);
+}
+
+/* Events */
+.fc .fc-event {
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 3px 6px;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin: 1px 2px;
+}
+
+.fc .fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.fc .fc-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fc .fc-daygrid-event-dot {
+    display: none;
+}
+
+/* Blog events */
+.fc .fc-event.blog-event {
+    border-left: 3px solid var(--brand-orange);
+}
+
+.fc .fc-event.calendar-event-social {
+    border-left: 3px solid var(--brand-purple);
+}
+
+/* More link */
+.fc .fc-more-link {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--brand-purple);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+}
+
+.fc .fc-more-link:hover {
+    background: rgba(97, 27, 70, 0.1);
+}
+
+/* Popover */
+.fc .fc-popover {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+}
+
+.fc .fc-popover-header {
+    background: var(--gray-50);
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* List view */
+.fc .fc-list-event {
+    cursor: pointer;
+}
+
+.fc .fc-list-event:hover td {
+    background: var(--gray-50);
+}
+
+.fc .fc-list-event-title a {
+    color: var(--gray-800);
+    font-weight: 500;
+}
+
+.fc .fc-list-day-cushion {
+    background: var(--gray-50);
+}
+
+/* =================== EVENT POPUP =================== */
+.calendar-event-popup {
+    position: absolute;
+    z-index: 1000;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--gray-200);
+    width: 320px;
+    animation: popupFadeIn 0.2s ease;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.popup-type-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+.popup-type-badge.social {
+    background: rgba(97, 27, 70, 0.1);
+    color: var(--brand-purple);
+}
+
+.popup-type-badge.blog {
+    background: rgba(227, 117, 0, 0.1);
+    color: var(--brand-orange);
+}
+
+.popup-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    font-size: 1.2rem;
+    color: var(--gray-500);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+}
+
+.popup-close:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.popup-content {
+    padding: 16px;
+}
+
+.popup-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+}
+
+.popup-text h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0 0 4px 0;
+}
+
+.popup-text p {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    margin: 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.popup-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.popup-status {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+}
+
+.popup-status.borrador,
+.popup-status.draft {
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+
+.popup-status.programado,
+.popup-status.scheduled {
+    background: var(--warning-light);
+    color: #92400e;
+}
+
+.popup-status.publicado,
+.popup-status.publish {
+    background: var(--success-light);
+    color: #065f46;
+}
+
+.popup-redes {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.popup-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.popup-actions .btn {
+    flex: 1;
+    justify-content: center;
+}
+
+/* =================== VIEW TOGGLE =================== */
+.view-toggle-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+}
+
+.view-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.view-toggle-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-600);
+}
+
+.view-toggle {
+    display: flex;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    padding: 3px;
+}
+
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+}
+
+.view-toggle-btn.active {
+    background: var(--white);
+    color: var(--gray-800);
+    box-shadow: var(--shadow-sm);
+}
+
+.view-toggle-btn:hover:not(.active) {
+    color: var(--gray-800);
+}
+
+.view-toggle-btn i {
+    font-size: 0.9rem;
+}
+
+/* =================== RESPONSIVE =================== */
+@media (max-width: 768px) {
+    .calendar-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .calendar-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .calendar-event-popup {
+        width: calc(100vw - 32px);
+        max-width: 320px;
+        left: 16px !important;
+        right: 16px;
+    }
+    
+    .view-toggle-section {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .view-toggle-left {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .view-toggle {
+        width: 100%;
+    }
+    
+    .view-toggle-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}

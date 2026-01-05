@@ -340,6 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Estilos propios -->
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/feed-simulator.css">
     <style>
         .app-simple {
             max-width: 1200px;
@@ -625,6 +626,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="form-group buttons">
                     <a href="<?php echo $paginaRetorno; ?>" class="btn btn-secondary">Cancelar</a>
+                    <button type="button" id="btn-preview-post" class="btn btn-secondary">
+                        <i class="fas fa-eye"></i> Vista Previa
+                    </button>
                     <button type="submit" class="btn btn-primary">Guardar Publicación</button>
                 </div>
             </form>
@@ -750,6 +754,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <!-- Include main JavaScript file with toast notifications -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/feed-simulator.js"></script>
     
     <script>
         // Script para vista previa de imagen
@@ -782,6 +787,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     showErrorToast(<?php echo json_encode($error); ?>);
                 <?php endforeach; ?>
             <?php endif; ?>
+            
+            // Feed Simulator Preview Button
+            const previewBtn = document.getElementById('btn-preview-post');
+            if (previewBtn && window.FeedSimulator) {
+                previewBtn.addEventListener('click', function() {
+                    const contenido = document.getElementById('contenido').value || '';
+                    const previewImg = document.getElementById('preview-img');
+                    const previewActual = document.getElementById('preview-actual');
+                    
+                    // Get image URL (from new preview or existing image)
+                    let imagen = '';
+                    if (previewImg && previewImg.src && previewImg.src !== window.location.href) {
+                        imagen = previewImg.src;
+                    } else if (previewActual && previewActual.src) {
+                        imagen = previewActual.src;
+                    }
+                    
+                    // Get selected networks
+                    const redesCheckboxes = document.querySelectorAll('input[name="redes[]"]:checked');
+                    const redes = Array.from(redesCheckboxes).map(cb => {
+                        const label = document.querySelector(`label[for="${cb.id}"]`);
+                        return label ? label.textContent.trim() : '';
+                    }).join(', ');
+                    
+                    window.FeedSimulator.previewPost({
+                        contenido: contenido,
+                        imagen: imagen,
+                        redes: redes,
+                        username: '<?php echo htmlspecialchars($lineaSlug); ?>'
+                    });
+                });
+            }
         });
 
         <?php if ($modo === 'editar' && !empty($publicacionId)): ?>

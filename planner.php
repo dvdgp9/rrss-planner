@@ -211,7 +211,10 @@ function getSortLinkPlanner($currentSlug, $currentSortBy, $currentSortDir, $next
     <link rel="icon" type="image/png" href="assets/images/logos/Loop-favicon.png">
     <!-- Fuente Geist cargada globalmente desde assets/css/styles.css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/calendar.css">
+    <link rel="stylesheet" href="assets/css/feed-simulator.css">
 </head>
 <?php
 // Determinar clase de línea para theming dinámico
@@ -273,6 +276,43 @@ if ($current_linea_id) {
                         </a>
                     </div>
                 </div>
+            </div>
+            
+            <!-- View Toggle: Table / Calendar -->
+            <div class="view-toggle-section">
+                <div class="view-toggle-left">
+                    <span class="view-toggle-label">Vista:</span>
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn active" data-view="table">
+                            <i class="fas fa-list"></i>
+                            <span>Tabla</span>
+                        </button>
+                        <button class="view-toggle-btn" data-view="calendar">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Calendario</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="view-toggle-right">
+                    <button class="btn btn-secondary btn-sm" id="btn-preview-simulator" style="display: none;">
+                        <i class="fas fa-mobile-alt"></i> Simulador de Feed
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Calendar Section (hidden by default) -->
+            <div class="calendar-section" id="calendar-section" style="display: none;">
+                <div class="calendar-header">
+                    <h2 class="calendar-title"><i class="fas fa-calendar-alt"></i> Calendario Editorial</h2>
+                    <div class="calendar-controls">
+                        <div class="calendar-type-toggle">
+                            <button class="calendar-type-btn active" data-type="all">Todo</button>
+                            <button class="calendar-type-btn" data-type="social">Social</button>
+                            <button class="calendar-type-btn" data-type="blog">Blog</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="calendar-container" id="editorial-calendar"></div>
             </div>
             
             <?php if ($content_type === 'social'): ?>
@@ -445,6 +485,13 @@ if ($current_linea_id) {
                                 <td data-label="Acciones">
                                     <div class="row-actions">
                                         <a href="publicacion_form.php?id=<?php echo $publicacion['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                        <button class="action-btn preview-post" 
+                                            data-contenido="<?php echo htmlspecialchars($publicacion['contenido']); ?>"
+                                            data-imagen="<?php echo htmlspecialchars($publicacion['thumbnail_url'] ?: $publicacion['imagen_url']); ?>"
+                                            data-redes="<?php echo htmlspecialchars($publicacion['nombres_redes']); ?>"
+                                            title="Vista Previa">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                         <button class="action-btn share-publication" data-publicacion-id="<?php echo $publicacion['id']; ?>" title="Compartir Publicación"><i class="fas fa-share-square"></i></button>
                                         <a href="publicacion_delete.php?id=<?php echo $publicacion['id']; ?>&linea_id=<?php echo intval($current_linea_id); ?>&slug_redirect=<?php echo htmlspecialchars($current_linea_slug); ?>" class="action-btn delete" title="Eliminar" ><i class="fas fa-trash-alt"></i></a>
                                     </div>
@@ -669,8 +716,88 @@ if ($current_linea_id) {
     </div> <!-- Fin app-simple -->
     
     <!-- Scripts JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="assets/js/main.js"></script>
-    <script src="assets/js/share.js" defer></script> <!-- ADDED share.js -->
+    <script src="assets/js/share.js" defer></script>
+    <script src="assets/js/calendar.js" defer></script>
+    <script src="assets/js/feed-simulator.js" defer></script>
+    
+    <script>
+    // Initialize Calendar and Feed Simulator
+    document.addEventListener('DOMContentLoaded', function() {
+        const lineaId = <?php echo intval($current_linea_id); ?>;
+        const lineaSlug = '<?php echo htmlspecialchars($current_linea_slug); ?>';
+        const contentType = '<?php echo $content_type; ?>';
+        
+        // Calendar instance
+        let editorialCalendar = null;
+        
+        // View Toggle
+        const viewToggleBtns = document.querySelectorAll('.view-toggle-btn');
+        const tableContainer = document.querySelector('.table-container');
+        const filterContainer = document.querySelector('.filter-sort-container');
+        const calendarSection = document.getElementById('calendar-section');
+        
+        viewToggleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                
+                // Update active state
+                viewToggleBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                if (view === 'calendar') {
+                    // Show calendar
+                    if (tableContainer) tableContainer.style.display = 'none';
+                    if (filterContainer) filterContainer.style.display = 'none';
+                    if (calendarSection) calendarSection.style.display = 'block';
+                    
+                    // Initialize calendar if not done yet
+                    if (!editorialCalendar && window.EditorialCalendar) {
+                        editorialCalendar = new EditorialCalendar('#editorial-calendar', {
+                            lineaId: lineaId,
+                            lineaSlug: lineaSlug,
+                            contentType: 'all'
+                        });
+                    }
+                } else {
+                    // Show table
+                    if (tableContainer) tableContainer.style.display = 'block';
+                    if (filterContainer) filterContainer.style.display = contentType === 'social' ? 'flex' : 'none';
+                    if (calendarSection) calendarSection.style.display = 'none';
+                }
+            });
+        });
+        
+        // Calendar type toggle
+        document.querySelectorAll('.calendar-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.calendar-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                if (editorialCalendar) {
+                    editorialCalendar.setContentType(btn.dataset.type);
+                }
+            });
+        });
+        
+        // Preview Post buttons
+        document.querySelectorAll('.preview-post').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const postData = {
+                    contenido: btn.dataset.contenido || '',
+                    imagen: btn.dataset.imagen || '',
+                    redes: btn.dataset.redes || '',
+                    username: lineaSlug
+                };
+                
+                if (window.FeedSimulator) {
+                    window.FeedSimulator.previewPost(postData);
+                }
+            });
+        });
+    });
+    </script>
     
     <script>
         // Handle PHP session messages with toast notifications

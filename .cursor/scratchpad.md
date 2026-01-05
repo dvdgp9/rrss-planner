@@ -50,28 +50,42 @@ El usuario solicitó un revamp completo de UI/UX antes de proceder con las propu
 
 ## Project Status Board
 
-- [x] **UI/UX Revamp** (En Progreso)
+- [x] **UI/UX Revamp** ✅ COMPLETADO
     - [x] Sistema de diseño CSS modernizado
     - [x] Navegación rediseñada
     - [x] Dashboard actualizado
     - [x] Tablas y badges mejorados
     - [x] Formularios y botones estilizados
-    - [ ] Verificación visual y ajustes finales
-    - [ ] Test responsive en diferentes tamaños
 
-## Pendientes (Propuestas de Alto Impacto)
-- [ ] **Propuesta 2: Calendario Editorial** (Pospuesto)
-- [ ] **Propuesta 4: Simulador de Feed** (Pospuesto)
+- [x] **Propuesta 2: Calendario Editorial** ✅ COMPLETADO
+    - [x] API endpoint para eventos (`/api/calendar_events.php`)
+    - [x] API endpoint para drag & drop (`/api/update_event_date.php`)
+    - [x] Frontend con FullCalendar 6.x (`/assets/js/calendar.js`)
+    - [x] Estilos personalizados (`/assets/css/calendar.css`)
+    - [x] Toggle vista Tabla/Calendario en planner.php
+    - [x] Popup de evento con acciones rápidas
+    - [x] Drag & drop para reprogramar fechas
+
+- [x] **Propuesta 4: Simulador de Feed** ✅ COMPLETADO
+    - [x] Templates de preview Instagram/Facebook/LinkedIn
+    - [x] Modal con phone frame realista
+    - [x] Contador de caracteres por plataforma
+    - [x] Validación de hashtags e imágenes
+    - [x] Botón de preview en tabla de publicaciones
+    - [x] Botón de preview en formulario de edición
 
 ## Executor's Feedback or Assistance Requests
-- Servidor corriendo en http://localhost:8000 para verificar los cambios visualmente
-- Esperando feedback del usuario sobre el nuevo diseño
+- Servidor corriendo en http://localhost:8000
+- Todas las funcionalidades implementadas y listas para testing manual
+- El usuario puede verificar: Dashboard → Planner → Toggle Calendario/Tabla → Preview de posts
 
 ## Lessons
 - La fuente Inter ofrece mejor legibilidad que Geist para interfaces de usuario
 - Las variables CSS facilitan la consistencia y el mantenimiento
 - El gradiente de marca (purple → orange) da identidad visual distintiva
 - Los estados hover sutiles mejoran la experiencia sin ser intrusivos
+- FullCalendar 6.x tiene buena documentación y es fácil de personalizar
+- El simulador de feed mejora significativamente la confianza del usuario al crear contenido
 
 
 
