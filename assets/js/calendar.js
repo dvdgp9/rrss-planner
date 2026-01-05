@@ -77,10 +77,12 @@ class EditorialCalendar {
                 this.handleEventDrop(info);
             },
             
-            // Click en día vacío
-            // handleDateClick: (info) => {
-            //     this.handleDateClick(info);
-            // },
+            // Click en día vacío (DESHABILITADO)
+            /*
+            dateClick: (info) => {
+                this.handleDateClick(info);
+            },
+            */
             
             // Render personalizado de eventos
             eventDidMount: (info) => {

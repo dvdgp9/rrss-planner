@@ -51,23 +51,33 @@ try {
     
     if ($type === 'social') {
         $stmt = $db->prepare("UPDATE publicaciones SET fecha_programada = ? WHERE id = ?");
-        $stmt->execute([$new_date, $event_id]);
     } elseif ($type === 'blog') {
         $stmt = $db->prepare("UPDATE blog_posts SET fecha_publicacion = ? WHERE id = ?");
-        $stmt->execute([$new_date, $event_id]);
     } else {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Tipo no válido']);
         exit;
     }
     
-    // Si la ejecución no lanzó excepción, consideramos éxito
-    // rowCount() puede ser 0 si se arrastró a la misma fecha (no hay cambios)
-    echo json_encode([
-        'success' => true, 
-        'message' => 'Fecha procesada correctamente',
-        'new_date' => $new_date
-    ]);
+    if ($stmt->execute([$new_date, $event_id])) {
+        if ($stmt->rowCount() > 0) {
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Fecha actualizada correctamente',
+                'new_date' => $new_date
+            ]);
+        } else {
+            // Si rowCount es 0, puede ser porque la fecha es la misma
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Sin cambios (la fecha ya era la misma)',
+                'new_date' => $new_date
+            ]);
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error al ejecutar la actualización']);
+    }
     
 } catch (PDOException $e) {
     http_response_code(500);
