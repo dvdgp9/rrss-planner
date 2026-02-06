@@ -99,7 +99,7 @@ if (!$token) {
                 // Consulta para publicaciones sociales - incluir explícitamente thumbnail_url
                 $stmt = $db->prepare("
                     SELECT 
-                        p.id, p.contenido, p.imagen_url, p.thumbnail_url, 
+                        p.id, p.contenido, p.imagen_url, p.imagenes_json, p.thumbnail_url, 
                         p.fecha_programada, p.estado, p.linea_negocio_id,
                         'social' as content_type,
                         GROUP_CONCAT(rs.nombre SEPARATOR '|') as nombres_redes, 
@@ -378,16 +378,28 @@ if (!$token) {
                                         ?>
                                     </td>
                                     <td>
-                                        <?php if (!empty($pub['imagen_url'])): ?>
+                                        <?php
+                                        $socialImages = parsePublicationImages($pub['imagenes_json'] ?? null, $pub['imagen_url'] ?? null);
+                                        $imageCount = count($socialImages);
+                                        $primaryImage = $socialImages[0] ?? '';
+                                        ?>
+                                        <?php if (!empty($primaryImage)): ?>
                                             <?php 
                                             // Usar thumbnail optimizado para mostrar, original para modal
-                                            $thumbnailUrl = getBestThumbnailUrl($pub['imagen_url'], $pub['thumbnail_url'] ?? null);
-                                            $originalUrl = $pub['imagen_url'];
+                                            $thumbnailUrl = getBestThumbnailUrl($primaryImage, $pub['thumbnail_url'] ?? null);
+                                            $originalUrl = $primaryImage;
                                             ?>
-                                            <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
-                                                 data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
-                                                 alt="Miniatura" 
-                                                 class="thumbnail">
+                                            <div style="position: relative; display: inline-block;">
+                                                <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
+                                                     data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
+                                                     alt="Miniatura" 
+                                                     class="thumbnail">
+                                                <?php if ($imageCount > 1): ?>
+                                                    <span style="position:absolute;right:-6px;top:-6px;background:#1f7a8c;color:#fff;border-radius:10px;font-size:10px;padding:2px 6px;font-weight:600;">
+                                                        +<?php echo $imageCount - 1; ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
                                         <?php elseif ($pub['estado'] === 'publicado'): ?>
                                             <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
                                                 <i class="fas fa-archive"></i>

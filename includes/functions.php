@@ -501,6 +501,69 @@ function truncateText($text, $length = 100) {
     return substr($text, 0, $length) . '...';
 }
 
+/**
+ * Normaliza el listado de imágenes de una publicación social.
+ * Usa imagenes_json si existe y añade fallback con imagen_url para compatibilidad.
+ *
+ * @param string|null $imagenesJson JSON con array de rutas de imágenes
+ * @param string|null $fallbackImageUrl Ruta legacy (imagen_url)
+ * @return array Lista única de rutas válidas
+ */
+function parsePublicationImages($imagenesJson = null, $fallbackImageUrl = null) {
+    $images = [];
+
+    if (!empty($imagenesJson)) {
+        $decoded = json_decode($imagenesJson, true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $path) {
+                if (is_string($path)) {
+                    $path = trim($path);
+                    if ($path !== '') {
+                        $images[] = $path;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!empty($fallbackImageUrl)) {
+        $fallbackImageUrl = trim($fallbackImageUrl);
+        if ($fallbackImageUrl !== '' && !in_array($fallbackImageUrl, $images, true)) {
+            array_unshift($images, $fallbackImageUrl);
+        }
+    }
+
+    return array_values(array_unique($images));
+}
+
+/**
+ * Codifica una lista de rutas de imágenes al formato JSON persistido en BD.
+ *
+ * @param array $imagePaths
+ * @return string|null
+ */
+function encodePublicationImages($imagePaths) {
+    if (!is_array($imagePaths) || empty($imagePaths)) {
+        return null;
+    }
+
+    $cleaned = [];
+    foreach ($imagePaths as $path) {
+        if (is_string($path)) {
+            $path = trim($path);
+            if ($path !== '') {
+                $cleaned[] = $path;
+            }
+        }
+    }
+
+    if (empty($cleaned)) {
+        return null;
+    }
+
+    return json_encode(array_values(array_unique($cleaned)), JSON_UNESCAPED_SLASHES);
+}
+
 // ---- Gestión de Imágenes - Optimización de Almacenamiento ----
 
 /**
@@ -1092,7 +1155,7 @@ function getPublicacionContext($publicacion_id) {
     try {
         $stmt = $db->prepare("
             SELECT 
-                p.id, p.contenido, p.imagen_url, p.thumbnail_url,
+                p.id, p.contenido, p.imagen_url, p.imagenes_json, p.thumbnail_url,
                 p.fecha_programada, p.estado, p.fecha_creacion,
                 ln.id as linea_id, ln.nombre as linea_nombre, ln.slug as linea_slug,
                 GROUP_CONCAT(DISTINCT rs.nombre SEPARATOR ', ') as redes_sociales

@@ -83,9 +83,10 @@ try {
     $db->commit();
     $_SESSION['feedback_message'] = ['tipo' => 'success', 'mensaje' => 'Publicación eliminada correctamente.'];
     
-    // Eliminar la imagen del servidor si existe
-    if (!empty($publicacion['imagen_url']) && file_exists($publicacion['imagen_url'])) {
-        unlink($publicacion['imagen_url']);
+    // Eliminar todas las imágenes del servidor si existen (portada + carrusel)
+    $imagesToDelete = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
+    foreach ($imagesToDelete as $imagePath) {
+        deletePublicationImage($imagePath, "Delete publication {$publicacionId}");
     }
 } catch (Exception $e) {
     $db->rollBack();

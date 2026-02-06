@@ -134,10 +134,12 @@ $publicacion = [
     'id' => '',
     'contenido' => '',
     'imagen_url' => '',
+    'imagenes_json' => null,
     'fecha_programada' => date('Y-m-d'),
     'estado' => 'borrador',
     'linea_negocio_id' => $lineaId
 ];
+$imagenesPublicacion = [];
 $redesSeleccionadas = [];
 $errores = [];
 
@@ -155,6 +157,7 @@ if (isset($_GET['id'])) {
     
     if ($publicacionBD) {
         $publicacion = $publicacionBD;
+        $imagenesPublicacion = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
         
         // Formatear la fecha para que funcione con el input type="date"
         if (!empty($publicacion['fecha_programada'])) {
@@ -195,34 +198,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Procesar imagen si se sube una nueva
-    $imagen_url = $publicacion['imagen_url']; // Mantener la actual por defecto
-    
-    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-        $filename = $_FILES['imagen']['name'];
-        $tmp_name = $_FILES['imagen']['tmp_name'];
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
-        if (!in_array($ext, $allowed)) {
-            $errores[] = "Formato de imagen no permitido. Use: jpg, jpeg, png o gif.";
-        } else {
-            // Crear directorio si no existe
-            $upload_dir = 'uploads/' . $lineaId . '/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+    $imagenesPublicacion = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
+    $imagen_url = $imagenesPublicacion[0] ?? null; // Portada por compatibilidad
+    $imagenes_json = encodePublicationImages($imagenesPublicacion);
+    $thumbnail_url = $publicacion['thumbnail_url'] ?? null;
+
+    $hasImageInput = isset($_FILES['imagen']) && isset($_FILES['imagen']['name']);
+    $hasNewImages = false;
+    $uploadedImages = [];
+
+    if ($hasImageInput) {
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $isMultiple = is_array($_FILES['imagen']['name']);
+        $totalFiles = $isMultiple ? count($_FILES['imagen']['name']) : 1;
+
+        for ($i = 0; $i < $totalFiles; $i++) {
+            $errorCode = $isMultiple ? $_FILES['imagen']['error'][$i] : $_FILES['imagen']['error'];
+            if ($errorCode === UPLOAD_ERR_NO_FILE) {
+                continue;
             }
-            
-            // Generar nombre único
-            $new_filename = uniqid() . '.' . $ext;
+
+            $hasNewImages = true;
+            if ($errorCode !== UPLOAD_ERR_OK) {
+                $errores[] = "Error al subir una de las imágenes.";
+                continue;
+            }
+
+            $filename = $isMultiple ? $_FILES['imagen']['name'][$i] : $_FILES['imagen']['name'];
+            $tmp_name = $isMultiple ? $_FILES['imagen']['tmp_name'][$i] : $_FILES['imagen']['tmp_name'];
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowed, true)) {
+                $errores[] = "Formato de imagen no permitido. Use: jpg, jpeg, png, gif o webp.";
+                continue;
+            }
+
+            $uploadedImages[] = ['tmp_name' => $tmp_name, 'ext' => $ext];
+        }
+    }
+
+    if ($hasNewImages && empty($errores)) {
+        $upload_dir = 'uploads/' . $lineaId . '/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $newImagePaths = [];
+        foreach ($uploadedImages as $index => $uploadData) {
+            $new_filename = uniqid() . '.' . $uploadData['ext'];
             $destino = $upload_dir . $new_filename;
-            
-            if (move_uploaded_file($tmp_name, $destino)) {
-                // Generar thumbnail automáticamente
+
+            if (!move_uploaded_file($uploadData['tmp_name'], $destino)) {
+                $errores[] = "Error al subir una de las imágenes.";
+                break;
+            }
+
+            $newImagePaths[] = $destino;
+
+            // Generar thumbnail solo para la portada (primera imagen)
+            if ($index === 0) {
                 $thumbnailResult = generateThumbnail($destino);
                 $thumbnail_url = null;
-                
+
                 if ($thumbnailResult) {
-                    // Priorizar WebP si está disponible, sino usar JPEG
                     if (isset($thumbnailResult['webp_url'])) {
                         $thumbnail_url = $thumbnailResult['webp_url'];
                     } elseif (isset($thumbnailResult['jpeg_url'])) {
@@ -230,32 +268,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     error_log("THUMBNAIL_GENERATED: Publicacion thumbnail created - " . ($thumbnail_url ? $thumbnail_url : 'failed'));
                 }
-                
-                // Si hay una imagen anterior, la eliminamos (incluyendo sus thumbnails)
-                if (!empty($publicacion['imagen_url']) && file_exists($publicacion['imagen_url']) && $modo === 'editar') {
-                    // Eliminar thumbnails de la imagen anterior
-                    $oldImagePath = $publicacion['imagen_url'];
+            }
+        }
+
+        if (!empty($errores)) {
+            // Limpiar archivos parciales subidos si hubo error durante el proceso
+            foreach ($newImagePaths as $partialImagePath) {
+                if (file_exists($partialImagePath)) {
+                    unlink($partialImagePath);
+                }
+            }
+        } else {
+            // Si estamos editando y subimos nuevas imágenes, reemplazamos el carrusel anterior
+            if ($modo === 'editar') {
+                $oldImages = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
+                foreach ($oldImages as $oldImagePath) {
                     $oldThumbsDir = dirname($oldImagePath) . '/thumbs/';
                     $oldFilename = pathinfo($oldImagePath, PATHINFO_FILENAME);
-                    
                     $oldThumbnails = [
                         $oldThumbsDir . $oldFilename . '_thumb.webp',
                         $oldThumbsDir . $oldFilename . '_thumb.jpg'
                     ];
-                    
+
                     foreach ($oldThumbnails as $oldThumb) {
                         if (file_exists($oldThumb)) {
                             unlink($oldThumb);
                         }
                     }
-                    
-                    // Eliminar imagen original
-                    unlink($publicacion['imagen_url']);
+
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
                 }
-                $imagen_url = $destino;
-            } else {
-                $errores[] = "Error al subir la imagen";
             }
+
+            $imagenesPublicacion = $newImagePaths;
+            $imagen_url = $newImagePaths[0] ?? null;
+            $imagenes_json = encodePublicationImages($newImagePaths);
         }
     }
     
@@ -265,26 +314,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->beginTransaction();
             
             // Si no se subió nueva imagen en edición, mantener los thumbnails existentes
-            if ($modo === 'editar' && !isset($thumbnail_url)) {
+            if (!$hasNewImages) {
                 $thumbnail_url = $publicacion['thumbnail_url'] ?? null;
-            } elseif ($modo === 'crear' && !isset($thumbnail_url)) {
-                $thumbnail_url = null;
             }
             
             if ($modo === 'crear') {
                 $stmt = $db->prepare("
-                    INSERT INTO publicaciones (contenido, imagen_url, thumbnail_url, fecha_programada, estado, linea_negocio_id)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO publicaciones (contenido, imagen_url, imagenes_json, thumbnail_url, fecha_programada, estado, linea_negocio_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$contenido, $imagen_url, $thumbnail_url, $fecha, $estado, $lineaId]);
+                $stmt->execute([$contenido, $imagen_url, $imagenes_json, $thumbnail_url, $fecha, $estado, $lineaId]);
                 $publicacionId = $db->lastInsertId();
             } else {
                 $stmt = $db->prepare("
                     UPDATE publicaciones 
-                    SET contenido = ?, imagen_url = ?, thumbnail_url = ?, fecha_programada = ?, estado = ?
+                    SET contenido = ?, imagen_url = ?, imagenes_json = ?, thumbnail_url = ?, fecha_programada = ?, estado = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$contenido, $imagen_url, $thumbnail_url, $fecha, $estado, $publicacion['id']]);
+                $stmt->execute([$contenido, $imagen_url, $imagenes_json, $thumbnail_url, $fecha, $estado, $publicacion['id']]);
                 $publicacionId = $publicacion['id'];
             }
             
@@ -324,6 +371,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $publicacion['fecha_programada'] = $fecha;
     $publicacion['estado'] = $estado;
     $publicacion['imagen_url'] = $imagen_url;
+    $publicacion['imagenes_json'] = $imagenes_json;
+    $imagenesPublicacion = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
     $redesSeleccionadas = $redes;
 }
 ?>
@@ -563,19 +612,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-row">
                     <div class="form-column">
                         <div class="form-group">
-                            <label for="imagen">Imagen:</label>
-                            <input type="file" id="imagen" name="imagen" class="form-control" accept="image/*">
+                            <label for="imagen">Imágenes (carrusel):</label>
+                            <input type="file" id="imagen" name="imagen[]" class="form-control" accept="image/*" multiple>
                             
-                            <?php if (!empty($publicacion['imagen_url'])): ?>
+                            <?php if (!empty($imagenesPublicacion)): ?>
                                 <div class="preview-container">
-                                    <p>Imagen actual:</p>
-                                    <img src="<?php echo $publicacion['imagen_url']; ?>" alt="Vista previa" id="preview-actual">
+                                    <p>Imágenes actuales:</p>
+                                    <div id="preview-actual" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                        <?php foreach ($imagenesPublicacion as $imgPath): ?>
+                                            <img src="<?php echo htmlspecialchars($imgPath); ?>" alt="Vista previa actual" style="max-width: 120px; max-height: 120px;">
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
                             <?php endif; ?>
                             
                             <div class="preview-container" id="preview-container" style="display: none;">
-                                <p>Vista previa:</p>
-                                <img src="" alt="Vista previa" id="preview-img">
+                                <p>Nuevas imágenes:</p>
+                                <div id="preview-img-list" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
                             </div>
                         </div>
                     </div>
@@ -766,17 +819,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         // Script para vista previa de imagen
         document.getElementById('imagen').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const previewContainer = document.getElementById('preview-container');
-                    const previewImg = document.getElementById('preview-img');
-                    previewImg.src = e.target.result;
-                    previewContainer.style.display = 'block';
-                }
-                reader.readAsDataURL(file);
+            const files = Array.from(e.target.files || []);
+            const previewContainer = document.getElementById('preview-container');
+            const previewList = document.getElementById('preview-img-list');
+
+            if (!previewContainer || !previewList) return;
+
+            previewList.innerHTML = '';
+
+            if (files.length === 0) {
+                previewContainer.style.display = 'none';
+                return;
             }
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.alt = 'Vista previa';
+                    img.style.maxWidth = '120px';
+                    img.style.maxHeight = '120px';
+                    img.style.borderRadius = '5px';
+                    img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    img.style.objectFit = 'contain';
+                    previewList.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            previewContainer.style.display = 'block';
         });
         
         // Handle PHP session messages and form errors with toast notifications
@@ -800,13 +872,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (previewBtn && window.FeedSimulator) {
                 previewBtn.addEventListener('click', function() {
                     const contenido = document.getElementById('contenido').value || '';
-                    const previewImg = document.getElementById('preview-img');
-                    const previewActual = document.getElementById('preview-actual');
+                    const previewImgList = document.querySelector('#preview-img-list img');
+                    const previewActual = document.querySelector('#preview-actual img');
                     
                     // Get image URL (from new preview or existing image)
                     let imagen = '';
-                    if (previewImg && previewImg.src && previewImg.src !== window.location.href) {
-                        imagen = previewImg.src;
+                    if (previewImgList && previewImgList.src) {
+                        imagen = previewImgList.src;
                     } else if (previewActual && previewActual.src) {
                         imagen = previewActual.src;
                     }

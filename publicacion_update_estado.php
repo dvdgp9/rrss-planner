@@ -34,8 +34,8 @@ try {
     $db = getDbConnection();
     
     // Verificar que la publicación existe y pertenece a esta línea
-    // También obtener el estado actual y la imagen para procesamiento posterior
-    $stmt = $db->prepare("SELECT id, estado, imagen_url FROM publicaciones WHERE id = ? AND linea_negocio_id = ?");
+    // También obtener el estado actual y las imágenes para procesamiento posterior
+    $stmt = $db->prepare("SELECT id, estado, imagen_url, imagenes_json FROM publicaciones WHERE id = ? AND linea_negocio_id = ?");
     $stmt->execute([$publicacionId, $lineaId]);
     
     $publicacion = $stmt->fetch();
@@ -47,26 +47,31 @@ try {
     
     $estadoAnterior = $publicacion['estado'];
     $imagenActual = $publicacion['imagen_url'];
+    $imagenesActuales = parsePublicationImages($publicacion['imagenes_json'] ?? null, $imagenActual);
     
     // Actualizar el estado
     $stmt = $db->prepare("UPDATE publicaciones SET estado = ? WHERE id = ?");
     $stmt->execute([$nuevoEstado, $publicacionId]);
     
-    // OPTIMIZACIÓN DE ALMACENAMIENTO: Borrar imagen si cambia a "publicado"
-    if ($nuevoEstado === 'publicado' && $estadoAnterior !== 'publicado' && !empty($imagenActual)) {
+    $imagesArchived = false;
+
+    // OPTIMIZACIÓN DE ALMACENAMIENTO: Borrar imágenes si cambia a "publicado"
+    if ($nuevoEstado === 'publicado' && $estadoAnterior !== 'publicado' && !empty($imagenesActuales)) {
         $logContext = "Social Publication ID: {$publicacionId}, Linea: {$lineaId}";
-        $imageDeleted = processImageDeletionOnPublish(
-            $db, 
-            'publicaciones', 
-            'imagen_url', 
-            $publicacionId, 
-            $imagenActual, 
-            $logContext
-        );
-        
-        // Log el resultado pero no fallar la operación si no se pudo borrar la imagen
-        if (!$imageDeleted) {
-            error_log("IMAGE_DELETION_WARNING: Could not delete image for published social post - {$logContext}");
+        $allDeleted = true;
+
+        foreach ($imagenesActuales as $imagePath) {
+            if (!deletePublicationImage($imagePath, $logContext)) {
+                $allDeleted = false;
+            }
+        }
+
+        if ($allDeleted) {
+            $stmtCleanup = $db->prepare("UPDATE publicaciones SET imagen_url = NULL, imagenes_json = NULL, thumbnail_url = NULL WHERE id = ?");
+            $stmtCleanup->execute([$publicacionId]);
+            $imagesArchived = true;
+        } else {
+            error_log("IMAGE_DELETION_WARNING: Could not delete all images for published social post - {$logContext}");
         }
     }
     
@@ -94,9 +99,9 @@ try {
     ];
     
     // Añadir información sobre borrado de imagen si ocurrió
-    if ($nuevoEstado === 'publicado' && $estadoAnterior !== 'publicado' && !empty($imagenActual)) {
+    if ($imagesArchived) {
         $response['imageArchived'] = true;
-        $response['message'] = 'Estado actualizado e imagen archivada para optimizar almacenamiento';
+        $response['message'] = 'Estado actualizado e imágenes archivadas para optimizar almacenamiento';
     }
     
     echo json_encode($response);

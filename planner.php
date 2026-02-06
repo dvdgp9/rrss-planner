@@ -46,7 +46,7 @@ if (empty($slug)) {
             // --- Conexión y Obtención de Datos de Publicaciones ---
             $sql_publicaciones = "
                 SELECT 
-                    p.id, p.contenido, p.imagen_url, p.thumbnail_url, 
+                    p.id, p.contenido, p.imagen_url, p.imagenes_json, p.thumbnail_url, 
                     p.fecha_programada, p.estado, p.linea_negocio_id,
                     GROUP_CONCAT(DISTINCT rs.nombre SEPARATOR '|') as nombres_redes, 
                     COUNT(DISTINCT pf.id) as feedback_count 
@@ -356,16 +356,28 @@ if ($current_linea_id) {
                             <tr data-estado="<?php echo htmlspecialchars($publicacion['estado']); ?>">
                                 <td data-label="Fecha"><?php echo date("d/m/Y", strtotime($publicacion['fecha_programada'])); ?></td>
                                 <td data-label="Imagen">
-                                    <?php if (!empty($publicacion['imagen_url'])): ?>
+                                    <?php
+                                    $socialImages = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
+                                    $imageCount = count($socialImages);
+                                    $primaryImage = $socialImages[0] ?? '';
+                                    ?>
+                                    <?php if (!empty($primaryImage)): ?>
                                         <?php 
                                         // Usar thumbnail optimizado para mostrar, original para modal
-                                        $thumbnailUrl = getBestThumbnailUrl($publicacion['imagen_url'], $publicacion['thumbnail_url'] ?? null);
-                                        $originalUrl = $publicacion['imagen_url'];
+                                        $thumbnailUrl = getBestThumbnailUrl($primaryImage, $publicacion['thumbnail_url'] ?? null);
+                                        $originalUrl = $primaryImage;
                                         ?>
-                                        <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
-                                             data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
-                                             alt="Miniatura" 
-                                             class="thumbnail">
+                                        <div style="position: relative; display: inline-block;">
+                                            <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
+                                                 data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
+                                                 alt="Miniatura" 
+                                                 class="thumbnail">
+                                            <?php if ($imageCount > 1): ?>
+                                                <span style="position:absolute;right:-6px;top:-6px;background:#1f7a8c;color:#fff;border-radius:10px;font-size:10px;padding:2px 6px;font-weight:600;">
+                                                    +<?php echo $imageCount - 1; ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php elseif ($publicacion['estado'] === 'publicado'): ?>
                                         <div class="image-placeholder archived size-small fade-in" data-tooltip="Imagen archivada para optimizar almacenamiento">
                                             <i class="fas fa-archive"></i>
@@ -448,7 +460,7 @@ if ($current_linea_id) {
                                         <a href="publicacion_form.php?id=<?php echo $publicacion['id']; ?>&linea_slug=<?php echo htmlspecialchars($current_linea_slug); ?>&linea_id=<?php echo intval($current_linea_id); ?>" class="action-btn edit" title="Editar"><i class="fas fa-edit"></i></a>
                                         <button class="action-btn preview-post" 
                                             data-contenido="<?php echo htmlspecialchars($publicacion['contenido']); ?>"
-                                            data-imagen="<?php echo htmlspecialchars($publicacion['thumbnail_url'] ?: $publicacion['imagen_url']); ?>"
+                                            data-imagen="<?php echo htmlspecialchars($publicacion['thumbnail_url'] ?: $primaryImage); ?>"
                                             data-redes="<?php echo htmlspecialchars($publicacion['nombres_redes']); ?>"
                                             title="Vista Previa">
                                             <i class="fas fa-eye"></i>
