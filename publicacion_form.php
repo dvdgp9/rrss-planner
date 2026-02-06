@@ -198,10 +198,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Procesar imagen si se sube una nueva
-    $imagenesPublicacion = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
+    $imagenesOriginales = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
+    $imagenesPublicacion = $imagenesOriginales;
+    $imagenPortadaOriginal = $imagenesOriginales[0] ?? null;
     $imagen_url = $imagenesPublicacion[0] ?? null; // Portada por compatibilidad
     $imagenes_json = encodePublicationImages($imagenesPublicacion);
     $thumbnail_url = $publicacion['thumbnail_url'] ?? null;
+    $imagesToDeleteAfterCommit = [];
+
+    // Eliminar imágenes existentes marcadas desde el formulario
+    $removeExistingImages = isset($_POST['remove_existing_images']) && is_array($_POST['remove_existing_images'])
+        ? $_POST['remove_existing_images']
+        : [];
+
+    if (!empty($removeExistingImages)) {
+        foreach ($removeExistingImages as $removePath) {
+            $removePath = trim((string) $removePath);
+            if ($removePath === '') {
+                continue;
+            }
+            if (in_array($removePath, $imagenesPublicacion, true)) {
+                $imagenesPublicacion = array_values(array_filter($imagenesPublicacion, function($img) use ($removePath) {
+                    return $img !== $removePath;
+                }));
+                $imagesToDeleteAfterCommit[] = $removePath;
+            }
+        }
+    }
 
     $hasImageInput = isset($_FILES['imagen']) && isset($_FILES['imagen']['name']);
     $hasNewImages = false;
@@ -255,20 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $newImagePaths[] = $destino;
 
-            // Generar thumbnail solo para la portada (primera imagen)
-            if ($index === 0) {
-                $thumbnailResult = generateThumbnail($destino);
-                $thumbnail_url = null;
-
-                if ($thumbnailResult) {
-                    if (isset($thumbnailResult['webp_url'])) {
-                        $thumbnail_url = $thumbnailResult['webp_url'];
-                    } elseif (isset($thumbnailResult['jpeg_url'])) {
-                        $thumbnail_url = $thumbnailResult['jpeg_url'];
-                    }
-                    error_log("THUMBNAIL_GENERATED: Publicacion thumbnail created - " . ($thumbnail_url ? $thumbnail_url : 'failed'));
-                }
-            }
+            // El thumbnail final se calculará después de componer el carrusel definitivo
         }
 
         if (!empty($errores)) {
@@ -279,32 +289,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } else {
-            // Si estamos editando y subimos nuevas imágenes, reemplazamos el carrusel anterior
-            if ($modo === 'editar') {
-                $oldImages = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
-                foreach ($oldImages as $oldImagePath) {
-                    $oldThumbsDir = dirname($oldImagePath) . '/thumbs/';
-                    $oldFilename = pathinfo($oldImagePath, PATHINFO_FILENAME);
-                    $oldThumbnails = [
-                        $oldThumbsDir . $oldFilename . '_thumb.webp',
-                        $oldThumbsDir . $oldFilename . '_thumb.jpg'
-                    ];
+            // Añadir nuevas imágenes al carrusel existente
+            $imagenesPublicacion = array_values(array_merge($imagenesPublicacion, $newImagePaths));
+        }
+    }
 
-                    foreach ($oldThumbnails as $oldThumb) {
-                        if (file_exists($oldThumb)) {
-                            unlink($oldThumb);
-                        }
-                    }
+    $imagen_url = $imagenesPublicacion[0] ?? null;
+    $imagenes_json = encodePublicationImages($imagenesPublicacion);
+    $imagenPortadaActual = $imagen_url;
 
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
-                }
+    // Recalcular thumbnail solo si cambia la portada o si no existía thumbnail
+    if (empty($imagenPortadaActual)) {
+        $thumbnail_url = null;
+    } elseif ($imagenPortadaActual !== $imagenPortadaOriginal || empty($thumbnail_url)) {
+        $thumbnailResult = generateThumbnail($imagenPortadaActual);
+        $thumbnail_url = null;
+
+        if ($thumbnailResult) {
+            if (isset($thumbnailResult['webp_url'])) {
+                $thumbnail_url = $thumbnailResult['webp_url'];
+            } elseif (isset($thumbnailResult['jpeg_url'])) {
+                $thumbnail_url = $thumbnailResult['jpeg_url'];
             }
-
-            $imagenesPublicacion = $newImagePaths;
-            $imagen_url = $newImagePaths[0] ?? null;
-            $imagenes_json = encodePublicationImages($newImagePaths);
+            error_log("THUMBNAIL_GENERATED: Publicacion thumbnail created - " . ($thumbnail_url ? $thumbnail_url : 'failed'));
         }
     }
     
@@ -312,11 +319,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errores)) {
         try {
             $db->beginTransaction();
-            
-            // Si no se subió nueva imagen en edición, mantener los thumbnails existentes
-            if (!$hasNewImages) {
-                $thumbnail_url = $publicacion['thumbnail_url'] ?? null;
-            }
             
             if ($modo === 'crear') {
                 $stmt = $db->prepare("
@@ -348,6 +350,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $db->commit();
+
+            // Borrado físico diferido tras commit (evita inconsistencias en caso de rollback)
+            foreach (array_unique($imagesToDeleteAfterCommit) as $deletedImagePath) {
+                $deletedThumbsDir = dirname($deletedImagePath) . '/thumbs/';
+                $deletedFilename = pathinfo($deletedImagePath, PATHINFO_FILENAME);
+                $deletedThumbnails = [
+                    $deletedThumbsDir . $deletedFilename . '_thumb.webp',
+                    $deletedThumbsDir . $deletedFilename . '_thumb.jpg'
+                ];
+
+                foreach ($deletedThumbnails as $deletedThumb) {
+                    if (file_exists($deletedThumb)) {
+                        unlink($deletedThumb);
+                    }
+                }
+
+                deletePublicationImage($deletedImagePath, "Delete from form publication {$publicacionId}");
+            }
             
             // Establecer mensaje de éxito
             if ($modo === 'crear') {
@@ -372,6 +392,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $publicacion['estado'] = $estado;
     $publicacion['imagen_url'] = $imagen_url;
     $publicacion['imagenes_json'] = $imagenes_json;
+    $publicacion['thumbnail_url'] = $thumbnail_url;
     $imagenesPublicacion = parsePublicationImages($publicacion['imagenes_json'] ?? null, $publicacion['imagen_url'] ?? null);
     $redesSeleccionadas = $redes;
 }
@@ -620,7 +641,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <p>Imágenes actuales:</p>
                                     <div id="preview-actual" style="display: flex; flex-wrap: wrap; gap: 10px;">
                                         <?php foreach ($imagenesPublicacion as $imgPath): ?>
-                                            <img src="<?php echo htmlspecialchars($imgPath); ?>" alt="Vista previa actual" style="max-width: 120px; max-height: 120px;">
+                                            <div class="current-image-item" style="border:1px solid #ddd;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:center;">
+                                                <img src="<?php echo htmlspecialchars($imgPath); ?>" alt="Vista previa actual" style="max-width: 120px; max-height: 120px;">
+                                                <label style="font-size:12px;color:#a11;display:flex;align-items:center;gap:6px;">
+                                                    <input type="checkbox" class="remove-existing-image" name="remove_existing_images[]" value="<?php echo htmlspecialchars($imgPath); ?>">
+                                                    Eliminar
+                                                </label>
+                                            </div>
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
@@ -850,6 +877,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             previewContainer.style.display = 'block';
         });
+
+        // Marcar visualmente imágenes existentes seleccionadas para eliminar
+        document.querySelectorAll('.remove-existing-image').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const item = this.closest('.current-image-item');
+                if (!item) return;
+                item.style.opacity = this.checked ? '0.45' : '1';
+                item.classList.toggle('marked-remove', this.checked);
+            });
+        });
         
         // Handle PHP session messages and form errors with toast notifications
         document.addEventListener('DOMContentLoaded', function() {
@@ -875,13 +912,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     const previewImgList = document.querySelector('#preview-img-list img');
                     const previewActual = document.querySelector('#preview-actual img');
                     
-                    // Get image URL (from new preview or existing image)
-                    let imagen = '';
-                    if (previewImgList && previewImgList.src) {
-                        imagen = previewImgList.src;
+                    // Obtener imágenes para preview (nuevas o existentes no marcadas para eliminar)
+                    let imagenes = [];
+                    const newPreviewImages = Array.from(document.querySelectorAll('#preview-img-list img'));
+                    const currentImages = Array.from(document.querySelectorAll('#preview-actual .current-image-item:not(.marked-remove) img'));
+
+                    if (newPreviewImages.length > 0) {
+                        imagenes = newPreviewImages.map(img => img.src).filter(Boolean);
+                    } else if (currentImages.length > 0) {
+                        imagenes = currentImages.map(img => img.src).filter(Boolean);
+                    } else if (previewImgList && previewImgList.src) {
+                        imagenes = [previewImgList.src];
                     } else if (previewActual && previewActual.src) {
-                        imagen = previewActual.src;
+                        imagenes = [previewActual.src];
                     }
+
+                    const imagen = imagenes[0] || '';
                     
                     // Get selected networks
                     const redesCheckboxes = document.querySelectorAll('input[name="redes[]"]:checked');
@@ -893,6 +939,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     window.FeedSimulator.previewPost({
                         contenido: contenido,
                         imagen: imagen,
+                        imagenes: imagenes,
                         redes: redes,
                         username: '<?php echo htmlspecialchars($lineaSlug); ?>'
                     });

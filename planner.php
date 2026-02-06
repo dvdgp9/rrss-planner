@@ -366,10 +366,12 @@ if ($current_linea_id) {
                                         // Usar thumbnail optimizado para mostrar, original para modal
                                         $thumbnailUrl = getBestThumbnailUrl($primaryImage, $publicacion['thumbnail_url'] ?? null);
                                         $originalUrl = $primaryImage;
+                                        $imagesJsonAttr = htmlspecialchars(json_encode($socialImages), ENT_QUOTES, 'UTF-8');
                                         ?>
                                         <div style="position: relative; display: inline-block;">
                                             <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
                                                  data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
+                                                 data-images="<?php echo $imagesJsonAttr; ?>"
                                                  alt="Miniatura" 
                                                  class="thumbnail">
                                             <?php if ($imageCount > 1): ?>
@@ -461,6 +463,7 @@ if ($current_linea_id) {
                                         <button class="action-btn preview-post" 
                                             data-contenido="<?php echo htmlspecialchars($publicacion['contenido']); ?>"
                                             data-imagen="<?php echo htmlspecialchars($publicacion['thumbnail_url'] ?: $primaryImage); ?>"
+                                            data-imagenes="<?php echo htmlspecialchars(json_encode($socialImages), ENT_QUOTES, 'UTF-8'); ?>"
                                             data-redes="<?php echo htmlspecialchars($publicacion['nombres_redes']); ?>"
                                             title="Vista Previa">
                                             <i class="fas fa-eye"></i>
@@ -626,7 +629,10 @@ if ($current_linea_id) {
             <!-- Modal para previsualización de imagen -->
             <div id="imageModal" class="modal-image">
                 <span class="close-image-modal">&times;</span>
+                <button type="button" class="modal-image-nav prev" aria-label="Anterior">‹</button>
                 <img class="modal-image-content" id="modalImageSrc">
+                <button type="button" class="modal-image-nav next" aria-label="Siguiente">›</button>
+                <div class="modal-image-counter" id="modalImageCounter"></div>
             </div>
              <!-- Modal para mostrar feedback -->
             <div id="feedbackDisplayModal" class="modal-feedback-display">
@@ -766,9 +772,22 @@ if ($current_linea_id) {
         // Preview Post buttons
         document.querySelectorAll('.preview-post').forEach(btn => {
             btn.addEventListener('click', () => {
+                let imagenes = [];
+                if (btn.dataset.imagenes) {
+                    try {
+                        const parsedImages = JSON.parse(btn.dataset.imagenes);
+                        if (Array.isArray(parsedImages)) {
+                            imagenes = parsedImages.filter(Boolean);
+                        }
+                    } catch (error) {
+                        imagenes = [];
+                    }
+                }
+
                 const postData = {
                     contenido: btn.dataset.contenido || '',
                     imagen: btn.dataset.imagen || '',
+                    imagenes: imagenes,
                     redes: btn.dataset.redes || '',
                     username: lineaSlug
                 };

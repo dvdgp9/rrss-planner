@@ -218,28 +218,117 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeImageBtn = imageModal ? imageModal.querySelector('.close-image-modal') : null;
 
     if (imageModal && modalImage && closeImageBtn) {
+        let modalImages = [];
+        let currentModalImageIndex = 0;
+
+        // Reutiliza botones/counter existentes o los crea si la vista no los trae
+        let prevNavBtn = imageModal.querySelector('.modal-image-nav.prev');
+        let nextNavBtn = imageModal.querySelector('.modal-image-nav.next');
+        let counterEl = imageModal.querySelector('.modal-image-counter');
+
+        if (!prevNavBtn) {
+            prevNavBtn = document.createElement('button');
+            prevNavBtn.type = 'button';
+            prevNavBtn.className = 'modal-image-nav prev';
+            prevNavBtn.setAttribute('aria-label', 'Anterior');
+            prevNavBtn.textContent = '‹';
+            imageModal.appendChild(prevNavBtn);
+        }
+        if (!nextNavBtn) {
+            nextNavBtn = document.createElement('button');
+            nextNavBtn.type = 'button';
+            nextNavBtn.className = 'modal-image-nav next';
+            nextNavBtn.setAttribute('aria-label', 'Siguiente');
+            nextNavBtn.textContent = '›';
+            imageModal.appendChild(nextNavBtn);
+        }
+        if (!counterEl) {
+            counterEl = document.createElement('div');
+            counterEl.className = 'modal-image-counter';
+            imageModal.appendChild(counterEl);
+        }
+
+        function normalizeImages(imagesCandidate, fallbackImage) {
+            let list = [];
+            if (Array.isArray(imagesCandidate)) {
+                list = imagesCandidate.filter(Boolean);
+            }
+            if (!list.length && fallbackImage) {
+                list = [fallbackImage];
+            }
+            return list;
+        }
+
+        function renderModalImage() {
+            if (!modalImages.length) return;
+            modalImage.src = modalImages[currentModalImageIndex];
+
+            const isCarousel = modalImages.length > 1;
+            prevNavBtn.style.display = isCarousel ? 'flex' : 'none';
+            nextNavBtn.style.display = isCarousel ? 'flex' : 'none';
+            counterEl.style.display = isCarousel ? 'block' : 'none';
+            counterEl.textContent = isCarousel ? `${currentModalImageIndex + 1} / ${modalImages.length}` : '';
+        }
+
+        function openImageModal(imagesCandidate, startIndex = 0) {
+            modalImages = normalizeImages(imagesCandidate, '');
+            if (!modalImages.length) return;
+            currentModalImageIndex = Math.max(0, Math.min(startIndex, modalImages.length - 1));
+            renderModalImage();
+            imageModal.classList.add('show');
+        }
+
+        function moveModalImage(step) {
+            if (modalImages.length <= 1) return;
+            currentModalImageIndex = (currentModalImageIndex + step + modalImages.length) % modalImages.length;
+            renderModalImage();
+        }
+
         // Abrir modal al hacer clic en una miniatura
         document.body.addEventListener('click', function(event) {
             if (event.target.classList.contains('thumbnail')) {
-                // Usar imagen original para modal si está disponible, sino usar src del thumbnail
-                const originalImageSrc = event.target.getAttribute('data-original');
-                const imageSrc = originalImageSrc || event.target.src;
-                
-                if(imageSrc) {
-                    modalImage.src = imageSrc;
-                    imageModal.classList.add('show');
+                const originalImageSrc = event.target.getAttribute('data-original') || event.target.src;
+                const imagesRaw = event.target.getAttribute('data-images');
+                let images = [];
+
+                if (imagesRaw) {
+                    try {
+                        const parsed = JSON.parse(imagesRaw);
+                        if (Array.isArray(parsed)) {
+                            images = parsed.filter(Boolean);
+                        }
+                    } catch (e) {
+                        images = [];
+                    }
                 }
+
+                if (!images.length && originalImageSrc) {
+                    images = [originalImageSrc];
+                }
+                const startIndex = images.indexOf(originalImageSrc);
+                openImageModal(images, startIndex >= 0 ? startIndex : 0);
             }
         });
 
-        function closeImageModal() { // Renombrada para claridad
+        function closeImageModal() {
             imageModal.classList.remove('show');
-            setTimeout(() => { 
+            setTimeout(() => {
                 if (!imageModal.classList.contains('show')) {
-                    modalImage.src = ''; 
+                    modalImage.src = '';
+                    modalImages = [];
+                    currentModalImageIndex = 0;
                 }
             }, 300);
         }
+
+        prevNavBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            moveModalImage(-1);
+        });
+        nextNavBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            moveModalImage(1);
+        });
         closeImageBtn.addEventListener('click', closeImageModal);
         imageModal.addEventListener('click', function(event) {
             if (event.target === imageModal) {
@@ -247,8 +336,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && imageModal.classList.contains('show')) {
+            if (!imageModal.classList.contains('show')) return;
+            if (event.key === 'Escape') {
                 closeImageModal();
+            } else if (event.key === 'ArrowLeft') {
+                moveModalImage(-1);
+            } else if (event.key === 'ArrowRight') {
+                moveModalImage(1);
             }
         });
     } // Fin Image Modal Logic

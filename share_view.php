@@ -388,10 +388,12 @@ if (!$token) {
                                             // Usar thumbnail optimizado para mostrar, original para modal
                                             $thumbnailUrl = getBestThumbnailUrl($primaryImage, $pub['thumbnail_url'] ?? null);
                                             $originalUrl = $primaryImage;
+                                            $imagesJsonAttr = htmlspecialchars(json_encode($socialImages), ENT_QUOTES, 'UTF-8');
                                             ?>
                                             <div style="position: relative; display: inline-block;">
                                                 <img src="<?php echo htmlspecialchars($thumbnailUrl); ?>" 
                                                      data-original="<?php echo htmlspecialchars($originalUrl); ?>" 
+                                                     data-images="<?php echo $imagesJsonAttr; ?>"
                                                      alt="Miniatura" 
                                                      class="thumbnail">
                                                 <?php if ($imageCount > 1): ?>

@@ -8,6 +8,8 @@ class FeedSimulator {
         this.modal = null;
         this.currentPlatform = 'instagram';
         this.postData = {};
+        this.carouselImages = [];
+        this.currentImageIndex = 0;
         this.init();
     }
     
@@ -153,6 +155,12 @@ class FeedSimulator {
                             </div>
                         </div>
                     </div>
+
+                    <div class="sim-carousel-controls" style="display: none;">
+                        <button type="button" class="sim-carousel-btn prev" aria-label="Imagen anterior">‹</button>
+                        <span class="sim-carousel-counter">1 / 1</span>
+                        <button type="button" class="sim-carousel-btn next" aria-label="Imagen siguiente">›</button>
+                    </div>
                     
                     <!-- Validation Messages -->
                     <div class="preview-validations">
@@ -204,8 +212,21 @@ class FeedSimulator {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('show')) {
                 this.close();
+            } else if (this.modal.classList.contains('show') && e.key === 'ArrowLeft') {
+                this.moveCarousel(-1);
+            } else if (this.modal.classList.contains('show') && e.key === 'ArrowRight') {
+                this.moveCarousel(1);
             }
         });
+
+        const prevBtn = this.modal.querySelector('.sim-carousel-btn.prev');
+        const nextBtn = this.modal.querySelector('.sim-carousel-btn.next');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.moveCarousel(-1));
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.moveCarousel(1));
+        }
     }
     
     open(postData = {}) {
@@ -241,9 +262,14 @@ class FeedSimulator {
     }
     
     updatePreview() {
-        const { contenido, imagen, redes, username } = this.postData;
+        const { contenido, imagen, imagenes, redes, username } = this.postData;
         const text = contenido || '';
-        const imageUrl = imagen || '';
+        const imageUrls = Array.isArray(imagenes) && imagenes.length
+            ? imagenes.filter(Boolean)
+            : (imagen ? [imagen] : []);
+        this.carouselImages = imageUrls;
+        this.currentImageIndex = 0;
+        const imageUrl = this.getCurrentImageUrl();
         
         // Extract hashtags
         const hashtags = this.extractHashtags(text);
@@ -257,6 +283,7 @@ class FeedSimulator {
         // Update counters and validations
         this.updateCharCounter();
         this.updateValidations();
+        this.updateCarouselControls();
     }
     
     updateInstagramPreview(text, hashtags, imageUrl, username) {
@@ -315,6 +342,40 @@ class FeedSimulator {
             placeholder.style.display = 'flex';
         }
     }
+
+    getCurrentImageUrl() {
+        if (!this.carouselImages.length) return '';
+        return this.carouselImages[this.currentImageIndex] || '';
+    }
+
+    updateCarouselControls() {
+        const controls = this.modal.querySelector('.sim-carousel-controls');
+        const counter = this.modal.querySelector('.sim-carousel-counter');
+        if (!controls || !counter) return;
+
+        const total = this.carouselImages.length;
+        if (total > 1) {
+            controls.style.display = 'flex';
+            counter.textContent = `${this.currentImageIndex + 1} / ${total}`;
+        } else {
+            controls.style.display = 'none';
+            counter.textContent = '1 / 1';
+        }
+    }
+
+    moveCarousel(step) {
+        const total = this.carouselImages.length;
+        if (total <= 1) return;
+
+        this.currentImageIndex = (this.currentImageIndex + step + total) % total;
+        const imageUrl = this.getCurrentImageUrl();
+
+        // Actualizar solo imágenes, manteniendo el resto del contenido
+        this.updateImage(this.modal.querySelector('.instagram-preview'), '.ig-image', '.ig-image-placeholder', imageUrl);
+        this.updateImage(this.modal.querySelector('.facebook-preview'), '.fb-image', '.fb-image-placeholder', imageUrl);
+        this.updateImage(this.modal.querySelector('.linkedin-preview'), '.li-image', '.li-image-placeholder', imageUrl);
+        this.updateCarouselControls();
+    }
     
     updateCharCounter() {
         const text = this.postData.contenido || '';
@@ -347,7 +408,7 @@ class FeedSimulator {
     
     updateValidations() {
         const text = this.postData.contenido || '';
-        const imageUrl = this.postData.imagen || '';
+        const imageUrl = this.getCurrentImageUrl() || this.postData.imagen || '';
         const hashtags = this.extractHashtags(text);
         
         const validations = {
