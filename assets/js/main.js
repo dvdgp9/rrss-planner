@@ -534,7 +534,156 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     // --- End JavaScript for Nueva Línea de Negocio Modal (Consolidado) ---
-    
+
+    // --- JavaScript for Editar / Eliminar Línea de Negocio ---
+    const modalEditarLinea = document.getElementById('modalEditarLinea');
+    const btnCloseEditarLinea = document.getElementById('closeEditarLineaModal');
+    const formEditarLinea = document.getElementById('formEditarLinea');
+    const messageAreaEditarLinea = document.getElementById('modalEditarLineaMessage');
+
+    const modalEliminarLinea = document.getElementById('modalEliminarLinea');
+    const btnCloseEliminarLinea = document.getElementById('closeEliminarLineaModal');
+    const formEliminarLinea = document.getElementById('formEliminarLinea');
+    const messageAreaEliminarLinea = document.getElementById('modalEliminarLineaMessage');
+
+    function closeLineaModal(modal) {
+        if (modal) modal.classList.remove('show');
+    }
+
+    // Open edit modal
+    document.querySelectorAll('.btn-edit-linea').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!modalEditarLinea || !formEditarLinea) return;
+            const card = this.closest('.dashboard-card');
+            if (!card) return;
+
+            const id = card.getAttribute('data-linea-id') || '';
+            const nombre = card.getAttribute('data-linea-nombre') || '';
+            const slug = card.getAttribute('data-linea-slug') || '';
+            const logo = card.getAttribute('data-linea-logo') || '';
+            const redesStr = card.getAttribute('data-linea-redes') || '';
+            const redesIds = redesStr ? redesStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            formEditarLinea.reset();
+            if (messageAreaEditarLinea) messageAreaEditarLinea.textContent = '';
+
+            document.getElementById('editarLineaId').value = id;
+            document.getElementById('editarNombreLinea').value = nombre;
+            document.getElementById('editarSlugLinea').value = slug;
+
+            const preview = document.getElementById('editarLogoPreview');
+            if (preview) {
+                if (logo) {
+                    preview.innerHTML = '<img src="assets/images/logos/' + encodeURIComponent(logo) + '" alt="logo" style="height:48px;width:auto;border:1px solid #ddd;border-radius:4px;padding:4px;background:#fff;">';
+                } else {
+                    preview.innerHTML = '<em style="color:#666;">(sin logo)</em>';
+                }
+            }
+
+            document.querySelectorAll('.editar-red-checkbox').forEach(cb => {
+                cb.checked = redesIds.includes(cb.value);
+            });
+
+            modalEditarLinea.classList.add('show');
+        });
+    });
+
+    if (btnCloseEditarLinea) btnCloseEditarLinea.addEventListener('click', () => closeLineaModal(modalEditarLinea));
+
+    if (formEditarLinea) {
+        formEditarLinea.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (messageAreaEditarLinea) messageAreaEditarLinea.textContent = '';
+
+            const slugInput = document.getElementById('editarSlugLinea');
+            if (slugInput && slugInput.value && !/^[a-z0-9-]+$/.test(slugInput.value)) {
+                if (messageAreaEditarLinea) messageAreaEditarLinea.innerHTML = '<span style="color: red;">El slug solo puede contener minúsculas, números y guiones.</span>';
+                return;
+            }
+
+            const anyRed = document.querySelectorAll('.editar-red-checkbox:checked').length > 0;
+            if (!anyRed) {
+                if (messageAreaEditarLinea) messageAreaEditarLinea.innerHTML = '<span style="color: red;">Selecciona al menos una red social.</span>';
+                return;
+            }
+
+            const formData = new FormData(formEditarLinea);
+            fetch('editar_linea_negocio.php', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        if (messageAreaEditarLinea) messageAreaEditarLinea.innerHTML = '<span style="color: green;">' + data.message + '</span>';
+                        setTimeout(() => {
+                            closeLineaModal(modalEditarLinea);
+                            window.location.reload();
+                        }, 900);
+                    } else {
+                        if (messageAreaEditarLinea) messageAreaEditarLinea.innerHTML = '<span style="color: red;">Error: ' + (data.message || 'No se pudo actualizar la línea.') + '</span>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error editar línea:', err);
+                    if (messageAreaEditarLinea) messageAreaEditarLinea.innerHTML = '<span style="color: red;">Error de conexión.</span>';
+                });
+        });
+    }
+
+    // Open delete modal
+    document.querySelectorAll('.btn-delete-linea').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!modalEliminarLinea || !formEliminarLinea) return;
+            const card = this.closest('.dashboard-card');
+            if (!card) return;
+
+            const id = card.getAttribute('data-linea-id') || '';
+            const nombre = card.getAttribute('data-linea-nombre') || '';
+            const slug = card.getAttribute('data-linea-slug') || '';
+
+            formEliminarLinea.reset();
+            if (messageAreaEliminarLinea) messageAreaEliminarLinea.textContent = '';
+
+            document.getElementById('eliminarLineaId').value = id;
+            document.getElementById('eliminarLineaNombre').textContent = nombre;
+            document.getElementById('eliminarSlugHint').textContent = slug;
+
+            modalEliminarLinea.classList.add('show');
+        });
+    });
+
+    if (btnCloseEliminarLinea) btnCloseEliminarLinea.addEventListener('click', () => closeLineaModal(modalEliminarLinea));
+
+    if (formEliminarLinea) {
+        formEliminarLinea.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (messageAreaEliminarLinea) messageAreaEliminarLinea.textContent = '';
+
+            const formData = new FormData(formEliminarLinea);
+            fetch('eliminar_linea_negocio.php', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        if (messageAreaEliminarLinea) messageAreaEliminarLinea.innerHTML = '<span style="color: green;">' + data.message + '</span>';
+                        setTimeout(() => {
+                            closeLineaModal(modalEliminarLinea);
+                            window.location.reload();
+                        }, 900);
+                    } else {
+                        if (messageAreaEliminarLinea) messageAreaEliminarLinea.innerHTML = '<span style="color: red;">Error: ' + (data.message || 'No se pudo eliminar la línea.') + '</span>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error eliminar línea:', err);
+                    if (messageAreaEliminarLinea) messageAreaEliminarLinea.innerHTML = '<span style="color: red;">Error de conexión.</span>';
+                });
+        });
+    }
+
+    window.addEventListener('click', function(event) {
+        if (event.target === modalEditarLinea) closeLineaModal(modalEditarLinea);
+        if (event.target === modalEliminarLinea) closeLineaModal(modalEliminarLinea);
+    });
+    // --- End Editar / Eliminar Línea de Negocio ---
+
     // --- JavaScript for Editar Usuario Modal ---
     const modalEditarUsuario = document.getElementById('modalEditarUsuario');
     const btnsEditarUsuario = document.querySelectorAll('.btn-edit-usuario');
