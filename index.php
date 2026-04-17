@@ -132,20 +132,32 @@ try {
                     <span class="close-button" id="closeNuevaLineaModal">&times;</span>
                 </div>
                 <div class="modal-body">
-                    <form id="formNuevaLinea">
+                    <form id="formNuevaLinea" enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="nombreLinea">Nombre de la línea:</label>
                             <input type="text" id="nombreLinea" name="nombre" required>
                         </div>
                         <div class="form-group">
-                            <label for="logoFilenameLinea">Archivo del logo (ej: logo.png):</label>
-                            <input type="text" id="logoFilenameLinea" name="logo_filename" required>
-                            <small>Asegúrate de que el archivo exista en `assets/images/logos/`</small>
+                            <label for="logoFileLinea">Logo:</label>
+                            <input type="file" id="logoFileLinea" name="logo_file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml" required>
+                            <small>Formatos permitidos: PNG, JPG, WEBP, SVG. Se guardará en <code>assets/images/logos/</code>.</small>
                         </div>
                         <div class="form-group">
                             <label for="slugLinea">Slug (ej: nombre-linea):</label>
                             <input type="text" id="slugLinea" name="slug" required>
                             <small>Usar minúsculas, números y guiones. Debe ser único.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Redes sociales asignadas:</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px;">
+                                <?php foreach ($redesSociales as $red): ?>
+                                    <label style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <input type="checkbox" name="redes_sociales[]" value="<?php echo (int)$red['id']; ?>">
+                                        <?php echo htmlspecialchars($red['nombre']); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <small>Selecciona al menos una red social.</small>
                         </div>
                         <button type="submit" class="btn btn-primary">Guardar Línea de Negocio</button>
                     </form>

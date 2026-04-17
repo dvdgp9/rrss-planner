@@ -521,7 +521,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (modalNuevaLinea) {
                             modalNuevaLinea.classList.remove('show');
                         }
-                    }, 2000);
+                        window.location.reload();
+                    }, 1200);
                 } else {
                     if (messageAreaNuevaLinea) messageAreaNuevaLinea.innerHTML = '<span style=\"color: red;\">Error: ' + (data.message || 'No se pudo crear la línea de negocio.') + '</span>';
                 }
